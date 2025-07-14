@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.loopers.application.user.JoinRequest;
+import com.loopers.domain.user.User;
+import com.loopers.infrastructure.user.UserJpaRepository;
 import com.loopers.interfaces.api.user.UserV1Dto.UserResponse;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +27,15 @@ import org.springframework.http.ResponseEntity;
 public class UserV1ApiE2ETest {
 
     private final TestRestTemplate testRestTemplate;
+    private final UserJpaRepository userJpaRepository;
     private final DatabaseCleanUp databaseCleanUp;
 
     @Autowired
     public UserV1ApiE2ETest(TestRestTemplate testRestTemplate,
+                            UserJpaRepository userJpaRepository,
                             DatabaseCleanUp databaseCleanUp) {
         this.testRestTemplate = testRestTemplate;
+        this.userJpaRepository = userJpaRepository;
         this.databaseCleanUp = databaseCleanUp;
     }
 
@@ -69,12 +75,59 @@ public class UserV1ApiE2ETest {
 
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
+
             ResponseEntity<ApiResponse<UserResponse>> response =
                     testRestTemplate.exchange(requestUrl, HttpMethod.POST, new HttpEntity<>(joinRequest), responseType);
 
             assertAll(
                     () -> assertTrue(response.getStatusCode().is4xxClientError()),
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)
+            );
+        }
+    }
+
+    @DisplayName("GET /api/v1/users/me")
+    @Nested
+    class GetUser {
+        @DisplayName("내 정보 조회에 성공할 경우, 해당하는 유저 정보를 응답으로 반환한다.")
+        @Test
+        void getMyInfo() {
+            User saved = userJpaRepository.save(
+                    User.create(new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            String requestUrl = "/api/v1/users/me";
+
+            ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-USER-ID", saved.getLoginId().getId());
+            ResponseEntity<ApiResponse<UserResponse>> response = testRestTemplate.exchange(requestUrl, HttpMethod.GET,
+                    new HttpEntity<>(headers), responseType);
+
+            assertAll(
+                    () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
+                    () -> assertThat(response.getBody().data().id()).isEqualTo(saved.getId()),
+                    () -> assertThat(response.getBody().data().loginId()).isEqualTo(saved.getLoginId().getId()),
+                    () -> assertThat(response.getBody().data().email()).isEqualTo(saved.getEmail().getAddress()),
+                    () -> assertThat(response.getBody().data().birthDate()).isEqualTo(saved.getBirthDate().getDate().toString()),
+                    () -> assertThat(response.getBody().data().gender()).isEqualTo(saved.getGender().name()),
+                    () -> assertThat(response.getBody().data().point()).isEqualTo(saved.getPoint())
+            );
+        }
+
+        @DisplayName("존재하지 않는 ID 로 조회할 경우, 404 Not Found 응답을 반환한다.")
+        @Test
+        void getMyInfo_withNonExistId() {
+            String requestUrl = "/api/v1/users/me";
+            ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-USER-ID", "NONEXIST");
+            ResponseEntity<ApiResponse<UserResponse>> response = testRestTemplate.exchange(requestUrl, HttpMethod.GET,
+                    new HttpEntity<>(headers), responseType);
+
+            assertAll(
+                    () -> assertTrue(response.getStatusCode().is4xxClientError()),
+                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND)
             );
         }
     }
