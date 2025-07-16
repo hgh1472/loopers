@@ -75,7 +75,7 @@ class UserServiceIntegrationTest {
             User savedUser = userRepository.save(
                     User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
 
-            User user = userService.getUserInfo(savedUser.getLoginId());
+            User user = userService.getUser(savedUser.getLoginId());
 
             assertAll(
                     () -> assertThat(user.getLoginId()).isEqualTo(savedUser.getLoginId()),
@@ -89,9 +89,30 @@ class UserServiceIntegrationTest {
         @DisplayName("해당 ID 회원이 존재하지 않는 경우, null이 반환된다.")
         @Test
         void getUserInfo_withNotFoundUserId() {
-            User user = userService.getUserInfo(new LoginId("NONEXIST"));
+            User user = userService.getUser(new LoginId("NONEXIST"));
 
             assertThat(user).isNull();
+        }
+    }
+
+    @Nested
+    class GetPoints {
+        @DisplayName("해당 ID의 회원이 존재할 경우, 보유 포인트가 반환된다.")
+        @Test
+        void getPoints() {
+            User saved = userRepository.save(User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+
+            Long point = userService.getPoints(saved.getLoginId());
+
+            assertThat(point).isEqualTo(0L);
+        }
+
+        @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
+        @Test
+        void getPoints_withNonExistId() {
+            Long point = userService.getPoints(new LoginId("NonExist"));
+
+            assertThat(point).isNull();
         }
     }
 }

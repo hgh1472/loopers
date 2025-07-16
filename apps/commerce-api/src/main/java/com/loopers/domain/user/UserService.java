@@ -20,7 +20,14 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User getUserInfo(LoginId loginId) {
+    public User getUser(LoginId loginId) {
         return userRepository.findByLoginId(loginId).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public Long getPoints(LoginId loginId) {
+        return userRepository.findByLoginId(loginId)
+                .map(User::getPoint)
+                .orElse(null);
     }
 }
