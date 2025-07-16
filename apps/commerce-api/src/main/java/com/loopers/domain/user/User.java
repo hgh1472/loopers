@@ -1,13 +1,9 @@
 package com.loopers.domain.user;
 
 import com.loopers.domain.BaseEntity;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 @Getter
@@ -49,5 +45,12 @@ public class User extends BaseEntity {
         Gender gender = command.toGender();
 
         return new User(loginId, email, birthDate, gender, 0L);
+    }
+
+    public void chargePoint(Long point) {
+        if (point <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "0 이하의 정수로 포인트를 충전할 수 없습니다.");
+        }
+        this.point += point;
     }
 }

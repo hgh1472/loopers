@@ -30,4 +30,9 @@ public class UserFacade {
         Long points = userService.getPoints(new LoginId(loginId));
         return new PointInfo(loginId, points);
     }
+
+    public PointInfo chargePoint(UserCriteria.Charge criteria) {
+        Long totalPoint = userService.chargePoint(criteria.toCommand());
+        return new PointInfo(criteria.loginId(), totalPoint);
+    }
 }

@@ -1,11 +1,5 @@
 package com.loopers.domain.user;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-
 import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class UserServiceIntegrationTest {
@@ -113,6 +113,17 @@ class UserServiceIntegrationTest {
             Long point = userService.getPoints(new LoginId("NonExist"));
 
             assertThat(point).isNull();
+        }
+    }
+
+    @Nested
+    class ChargePoint {
+        @DisplayName("존재하지 않는 유저 ID로 충전을 시도한 경우, 실패한다.")
+        @Test
+        void chargePoint() {
+            assertThatThrownBy(() -> userService.chargePoint(new UserCommand.Charge("NonExist", 1000L)))
+                    .isInstanceOf(CoreException.class)
+                    .hasMessage("NonExist 사용자를 찾을 수 없습니다.");
         }
     }
 }

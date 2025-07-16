@@ -18,4 +18,10 @@ public record UserCommand() {
             return Gender.from(gender);
         }
     }
+
+    public record Charge(String loginId, Long point) {
+        public LoginId toLoginId() {
+            return new LoginId(loginId);
+        }
+    }
 }
