@@ -1,10 +1,8 @@
 package com.loopers.interfaces.api.user;
 
-import com.loopers.application.user.JoinRequest;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.interfaces.api.ApiResponse;
-import com.loopers.interfaces.api.user.UserV1Dto.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,15 +20,15 @@ public class UserV1Controller implements UserV1ApiSpec {
 
     @PostMapping
     @Override
-    public ApiResponse<UserResponse> joinUser(@RequestBody JoinRequest joinRequest) {
-        UserInfo userInfo = userFacade.joinUser(joinRequest);
-        return ApiResponse.success(UserResponse.from(userInfo));
+    public ApiResponse<UserV1Dto.UserResponse> joinUser(@RequestBody UserV1Dto.JoinRequest joinRequest) {
+        UserInfo userInfo = userFacade.joinUser(joinRequest.toCriteria());
+        return ApiResponse.success(UserV1Dto.UserResponse.from(userInfo));
     }
 
     @GetMapping("/me")
     @Override
-    public ApiResponse<UserResponse> getMyInfo(@RequestHeader("X-USER-ID") String id) {
+    public ApiResponse<UserV1Dto.UserResponse> getMyInfo(@RequestHeader("X-USER-ID") String id) {
         UserInfo userInfo = userFacade.getUserInfo(id);
-        return ApiResponse.success(UserResponse.from(userInfo));
+        return ApiResponse.success(UserV1Dto.UserResponse.from(userInfo));
     }
 }

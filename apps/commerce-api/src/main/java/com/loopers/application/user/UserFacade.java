@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 public class UserFacade {
     private final UserService userService;
 
-    public UserInfo joinUser(JoinRequest joinRequest) {
-        User user = userService.join(joinRequest);
+    public UserInfo joinUser(UserCriteria.Join joinCriteria) {
+        User user = userService.join(joinCriteria.toCommand());
         return UserInfo.from(user);
     }
 

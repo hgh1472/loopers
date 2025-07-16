@@ -1,6 +1,5 @@
 package com.loopers.domain.user;
 
-import com.loopers.application.user.JoinRequest;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +12,11 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public User join(JoinRequest request) {
-        if (userRepository.findByLoginId(request.toLoginId()).isPresent()) {
+    public User join(UserCommand.Join command) {
+        if (userRepository.findByLoginId(command.toLoginId()).isPresent()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다.");
         }
-        return userRepository.save(User.create(request));
+        return userRepository.save(User.create(command));
     }
 
     @Transactional(readOnly = true)

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
-import com.loopers.application.user.JoinRequest;
 import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
@@ -39,17 +38,17 @@ class UserServiceIntegrationTest {
         @DisplayName("유저가 저장된다.")
         @Test
         void join() {
-            JoinRequest request = new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
+            UserCommand.Join command = new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
 
-            User user = userService.join(request);
+            User user = userService.join(command);
 
             verify(userRepository).save(any());
             assertAll(
                     () -> assertThat(user.getId()).isNotNull(),
-                    () -> assertThat(user.getLoginId()).isEqualTo(new LoginId(request.loginId())),
-                    () -> assertThat(user.getEmail()).isEqualTo(new Email(request.email())),
-                    () -> assertThat(user.getBirthDate()).isEqualTo(new BirthDate(request.birthDate())),
-                    () -> assertThat(user.getGender()).isEqualTo(Gender.from(request.gender())),
+                    () -> assertThat(user.getLoginId()).isEqualTo(new LoginId(command.loginId())),
+                    () -> assertThat(user.getEmail()).isEqualTo(new Email(command.email())),
+                    () -> assertThat(user.getBirthDate()).isEqualTo(new BirthDate(command.birthDate())),
+                    () -> assertThat(user.getGender()).isEqualTo(Gender.from(command.gender())),
                     () -> assertThat(user.getPoint()).isEqualTo(0)
             );
         }
@@ -57,9 +56,9 @@ class UserServiceIntegrationTest {
         @DisplayName("이미 가입된 ID로 시도할 경우, 실패한다.")
         @Test
         void join_withDuplicateLoginId() {
-            JoinRequest request = new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
-            userService.join(request);
-            JoinRequest duplicatedRequest = new JoinRequest("hgh1472", "hgh1472@naver.com", "1999-06-23", "MALE");
+            UserCommand.Join command = new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
+            userService.join(command);
+            UserCommand.Join duplicatedRequest = new UserCommand.Join("hgh1472", "hgh1472@naver.com", "1999-06-23", "MALE");
 
             assertThatThrownBy(() -> userService.join(duplicatedRequest))
                     .isInstanceOf(CoreException.class)
@@ -74,7 +73,7 @@ class UserServiceIntegrationTest {
         @Test
         void getUserInfo() {
             User savedUser = userRepository.save(
-                    User.create(new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+                    User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
 
             User user = userService.getUserInfo(savedUser.getLoginId());
 

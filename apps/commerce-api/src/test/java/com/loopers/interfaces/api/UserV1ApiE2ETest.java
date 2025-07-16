@@ -4,9 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.loopers.application.user.JoinRequest;
 import com.loopers.domain.user.User;
+import com.loopers.domain.user.UserCommand;
 import com.loopers.infrastructure.user.UserJpaRepository;
+import com.loopers.interfaces.api.user.UserV1Dto;
 import com.loopers.interfaces.api.user.UserV1Dto.UserResponse;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
@@ -50,7 +51,7 @@ public class UserV1ApiE2ETest {
         @DisplayName("회원가입이 성공할 경우, 생성된 유저 정보를 응답으로 반환한다.")
         @Test
         void returnUserInfo_success() {
-            JoinRequest joinRequest = new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
+            UserV1Dto.JoinRequest joinRequest = new UserV1Dto.JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
             String requestUrl = "/api/v1/users";
 
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
@@ -70,7 +71,7 @@ public class UserV1ApiE2ETest {
         @DisplayName("회원가입 시 성별이 없을 경우, 400 Bad Request 응답을 반환한다.")
         @Test
         void throwBadRequest_whenNoGender() {
-            JoinRequest joinRequest = new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "");
+            UserV1Dto.JoinRequest joinRequest = new UserV1Dto.JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "");
             String requestUrl = "/api/v1/users";
 
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
@@ -93,7 +94,7 @@ public class UserV1ApiE2ETest {
         @Test
         void getMyInfo() {
             User saved = userJpaRepository.save(
-                    User.create(new JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+                    User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
             String requestUrl = "/api/v1/users/me";
 
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {

@@ -1,6 +1,5 @@
 package com.loopers.domain.user;
 
-import com.loopers.application.user.JoinRequest;
 import com.loopers.domain.BaseEntity;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
@@ -43,11 +42,11 @@ public class User extends BaseEntity {
         this.point = point;
     }
 
-    public static User create(JoinRequest request) {
-        LoginId loginId = new LoginId(request.loginId());
-        Email email = new Email(request.email());
-        BirthDate birthDate = new BirthDate(request.birthDate());
-        Gender gender = Gender.from(request.gender());
+    public static User create(UserCommand.Join command) {
+        LoginId loginId = command.toLoginId();
+        Email email = command.toEmail();
+        BirthDate birthDate = command.toBirthDate();
+        Gender gender = command.toGender();
 
         return new User(loginId, email, birthDate, gender, 0L);
     }
