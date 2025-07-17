@@ -6,6 +6,4 @@ public interface UserRepository {
     User save(User user);
 
     Optional<User> findByLoginId(LoginId loginId);
-
-    Optional<User> findByLoginIdWithLock(LoginId loginId);
 }

@@ -13,13 +13,4 @@ public class UserCriteria {
             );
         }
     }
-
-    public record Charge(String loginId, Long point) {
-        public UserCommand.Charge toCommand() {
-            return new UserCommand.Charge(
-                    loginId,
-                    point
-            );
-        }
-    }
 }

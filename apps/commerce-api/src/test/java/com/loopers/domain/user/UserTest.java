@@ -4,8 +4,6 @@ import com.loopers.support.error.CoreException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -53,20 +51,6 @@ class UserTest {
             assertThatThrownBy(() -> User.create(command))
                     .isInstanceOf(CoreException.class)
                     .hasMessage("생년월일은 yyyy-MM-dd 형식이어야 합니다.");
-        }
-    }
-
-    @Nested
-    class Point {
-        @DisplayName("0 이하의 정수로 포인트를 충전 시 실패한다.")
-        @ValueSource(longs = {-1, 0})
-        @ParameterizedTest(name = "충전 포인트 = {0}")
-        void charge_withNonPositivePoint(Long point) {
-            User user = User.create(new UserCommand.Join("hgh1472", "user@loopers.com", "1999-06-23", "MALE"));
-
-            assertThatThrownBy(() -> user.chargePoint(point))
-                    .isInstanceOf(CoreException.class)
-                    .hasMessage("0 이하의 정수로 포인트를 충전할 수 없습니다.");
         }
     }
 }

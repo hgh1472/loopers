@@ -1,8 +1,6 @@
 package com.loopers.domain.user;
 
 import com.loopers.domain.BaseEntity;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -12,30 +10,27 @@ import lombok.Getter;
 public class User extends BaseEntity {
 
     @Embedded
-    @AttributeOverride(name = "id", column = @Column(name = "login_id"))
+    @AttributeOverride(name = "id", column = @Column(name = "login_id", nullable = false, unique = true))
     private LoginId loginId;
 
     @Embedded
-    @AttributeOverride(name = "email", column = @Column(name = "email"))
+    @AttributeOverride(name = "email", column = @Column(name = "email", nullable = false, unique = true))
     private Email email;
 
-    @AttributeOverride(name = "birthDate", column = @Column(name = "birth_date"))
+    @AttributeOverride(name = "birthDate", column = @Column(name = "birth_date", nullable = false))
     private BirthDate birthDate;
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private Long point;
-
     protected User() {
     }
 
-    private User(LoginId loginId, Email email, BirthDate birthDate, Gender gender, Long point) {
+    private User(LoginId loginId, Email email, BirthDate birthDate, Gender gender) {
         this.loginId = loginId;
         this.email = email;
         this.birthDate = birthDate;
         this.gender = gender;
-        this.point = point;
     }
 
     public static User create(UserCommand.Join command) {
@@ -44,13 +39,6 @@ public class User extends BaseEntity {
         BirthDate birthDate = command.toBirthDate();
         Gender gender = command.toGender();
 
-        return new User(loginId, email, birthDate, gender, 0L);
-    }
-
-    public void chargePoint(Long point) {
-        if (point <= 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "0 이하의 정수로 포인트를 충전할 수 없습니다.");
-        }
-        this.point += point;
+        return new User(loginId, email, birthDate, gender);
     }
 }

@@ -1,4 +1,4 @@
-package com.loopers.interfaces.api.user;
+package com.loopers.interfaces.api.point;
 
 import com.loopers.interfaces.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;

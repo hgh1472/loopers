@@ -48,8 +48,7 @@ class UserServiceIntegrationTest {
                     () -> assertThat(user.getLoginId()).isEqualTo(new LoginId(command.loginId())),
                     () -> assertThat(user.getEmail()).isEqualTo(new Email(command.email())),
                     () -> assertThat(user.getBirthDate()).isEqualTo(new BirthDate(command.birthDate())),
-                    () -> assertThat(user.getGender()).isEqualTo(Gender.from(command.gender())),
-                    () -> assertThat(user.getPoint()).isEqualTo(0)
+                    () -> assertThat(user.getGender()).isEqualTo(Gender.from(command.gender()))
             );
         }
 
@@ -81,8 +80,7 @@ class UserServiceIntegrationTest {
                     () -> assertThat(user.getLoginId()).isEqualTo(savedUser.getLoginId()),
                     () -> assertThat(user.getEmail()).isEqualTo(savedUser.getEmail()),
                     () -> assertThat(user.getBirthDate()).isEqualTo(savedUser.getBirthDate()),
-                    () -> assertThat(user.getGender()).isEqualTo(savedUser.getGender()),
-                    () -> assertThat(user.getPoint()).isEqualTo(savedUser.getPoint())
+                    () -> assertThat(user.getGender()).isEqualTo(savedUser.getGender())
             );
         }
 
@@ -92,38 +90,6 @@ class UserServiceIntegrationTest {
             User user = userService.getUser(new LoginId("NONEXIST"));
 
             assertThat(user).isNull();
-        }
-    }
-
-    @Nested
-    class GetPoints {
-        @DisplayName("해당 ID의 회원이 존재할 경우, 보유 포인트가 반환된다.")
-        @Test
-        void getPoints() {
-            User saved = userRepository.save(User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
-
-            Long point = userService.getPoints(saved.getLoginId());
-
-            assertThat(point).isEqualTo(0L);
-        }
-
-        @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
-        @Test
-        void getPoints_withNonExistId() {
-            Long point = userService.getPoints(new LoginId("NonExist"));
-
-            assertThat(point).isNull();
-        }
-    }
-
-    @Nested
-    class ChargePoint {
-        @DisplayName("존재하지 않는 유저 ID로 충전을 시도한 경우, 실패한다.")
-        @Test
-        void chargePoint() {
-            assertThatThrownBy(() -> userService.chargePoint(new UserCommand.Charge("NonExist", 1000L)))
-                    .isInstanceOf(CoreException.class)
-                    .hasMessage("NonExist 사용자를 찾을 수 없습니다.");
         }
     }
 }

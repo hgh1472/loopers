@@ -23,19 +23,4 @@ public class UserService {
     public User getUser(LoginId loginId) {
         return userRepository.findByLoginId(loginId).orElse(null);
     }
-
-    @Transactional(readOnly = true)
-    public Long getPoints(LoginId loginId) {
-        return userRepository.findByLoginId(loginId)
-                .map(User::getPoint)
-                .orElse(null);
-    }
-
-    @Transactional
-    public Long chargePoint(UserCommand.Charge command) {
-        User user = userRepository.findByLoginIdWithLock(command.toLoginId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, String.format("%s 사용자를 찾을 수 없습니다.", command.loginId())));
-        user.chargePoint(command.point());
-        return user.getPoint();
-    }
 }

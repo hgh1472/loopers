@@ -1,12 +1,10 @@
 package com.loopers.interfaces.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import com.loopers.domain.point.Point;
+import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
-import com.loopers.infrastructure.user.UserJpaRepository;
+import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.user.UserV1Dto;
 import com.loopers.interfaces.api.user.UserV1Dto.UserResponse;
 import com.loopers.utils.DatabaseCleanUp;
@@ -18,25 +16,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserV1ApiE2ETest {
 
     private final TestRestTemplate testRestTemplate;
-    private final UserJpaRepository userJpaRepository;
+    private final UserRepository userRepository;
+    private final PointRepository pointRepository;
     private final DatabaseCleanUp databaseCleanUp;
 
     @Autowired
     public UserV1ApiE2ETest(TestRestTemplate testRestTemplate,
-                            UserJpaRepository userJpaRepository,
+                            UserRepository userRepository,
+                            PointRepository pointRepository,
                             DatabaseCleanUp databaseCleanUp) {
         this.testRestTemplate = testRestTemplate;
-        this.userJpaRepository = userJpaRepository;
+        this.userRepository = userRepository;
+        this.pointRepository = pointRepository;
         this.databaseCleanUp = databaseCleanUp;
     }
 
@@ -53,9 +54,9 @@ public class UserV1ApiE2ETest {
         void returnUserInfo_success() {
             UserV1Dto.JoinRequest joinRequest = new UserV1Dto.JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
             String requestUrl = "/api/v1/users";
-
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
+
             ResponseEntity<ApiResponse<UserResponse>> response =
                     testRestTemplate.exchange(requestUrl, HttpMethod.POST, new HttpEntity<>(joinRequest), responseType);
 
@@ -73,7 +74,6 @@ public class UserV1ApiE2ETest {
         void throwBadRequest_whenNoGender() {
             UserV1Dto.JoinRequest joinRequest = new UserV1Dto.JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "");
             String requestUrl = "/api/v1/users";
-
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
 
@@ -93,14 +93,15 @@ public class UserV1ApiE2ETest {
         @DisplayName("내 정보 조회에 성공할 경우, 해당하는 유저 정보를 응답으로 반환한다.")
         @Test
         void getMyInfo() {
-            User saved = userJpaRepository.save(
-                    User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
-            String requestUrl = "/api/v1/users/me";
+            User saved = userRepository.save(User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            Point savedPoint = pointRepository.save(Point.from(saved.getId()));
 
+            String requestUrl = "/api/v1/users/me";
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
             headers.add("X-USER-ID", saved.getLoginId().getId());
+
             ResponseEntity<ApiResponse<UserResponse>> response = testRestTemplate.exchange(requestUrl, HttpMethod.GET,
                     new HttpEntity<>(headers), responseType);
 
@@ -111,7 +112,7 @@ public class UserV1ApiE2ETest {
                     () -> assertThat(response.getBody().data().email()).isEqualTo(saved.getEmail().getAddress()),
                     () -> assertThat(response.getBody().data().birthDate()).isEqualTo(saved.getBirthDate().getDate().toString()),
                     () -> assertThat(response.getBody().data().gender()).isEqualTo(saved.getGender().name()),
-                    () -> assertThat(response.getBody().data().point()).isEqualTo(saved.getPoint())
+                    () -> assertThat(response.getBody().data().point()).isEqualTo(savedPoint.getValue())
             );
         }
 
@@ -123,6 +124,7 @@ public class UserV1ApiE2ETest {
             };
             HttpHeaders headers = new HttpHeaders();
             headers.add("X-USER-ID", "NONEXIST");
+
             ResponseEntity<ApiResponse<UserResponse>> response = testRestTemplate.exchange(requestUrl, HttpMethod.GET,
                     new HttpEntity<>(headers), responseType);
 
