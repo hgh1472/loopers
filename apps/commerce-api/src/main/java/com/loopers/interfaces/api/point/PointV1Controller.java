@@ -4,8 +4,14 @@ import com.loopers.application.point.PointCriteria;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointInfo;
 import com.loopers.interfaces.api.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,7 +29,7 @@ public class PointV1Controller implements PointV1ApiSpec {
     @PostMapping("/charge")
     @Override
     public ApiResponse<PointV1Dto.PointResponse> chargePoint(@RequestHeader("X-USER-ID") String loginId,
-                                                             @RequestBody PointV1Dto.ChargeRequest chargeRequest) {
+                                                             @Valid @RequestBody PointV1Dto.ChargeRequest chargeRequest) {
         PointInfo pointInfo = pointFacade.charge(new PointCriteria.Charge(loginId, chargeRequest.point()));
         return ApiResponse.success(PointV1Dto.PointResponse.from(pointInfo));
     }

@@ -86,6 +86,7 @@ public class PointV1ApiE2ETest {
     }
 
     @Nested
+    @DisplayName("POST /api/v1/points/charge")
     class ChargePoint {
         @DisplayName("존재하는 유저가 1000원을 충전할 경우, 충전된 보유 총량을 응답으로 반환한다.")
         @Test

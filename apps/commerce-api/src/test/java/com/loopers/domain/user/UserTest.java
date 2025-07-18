@@ -35,7 +35,7 @@ class UserTest {
         @DisplayName("이메일이 xx@yy.zz 형식이 아니면 생성에 실패한다.")
         @Test
         void createEmailFormat() {
-            UserCommand.Join command = new UserCommand.Join("hgh1472", "user@loopers", "1999/06/23", "MALE");
+            UserCommand.Join command = new UserCommand.Join("hgh1472", "user@loopers", "1999-06-23", "MALE");
 
             assertThatThrownBy(() -> User.create(command))
                     .isInstanceOf(CoreException.class)

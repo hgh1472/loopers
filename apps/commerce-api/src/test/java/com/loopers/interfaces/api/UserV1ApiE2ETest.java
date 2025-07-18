@@ -72,7 +72,7 @@ public class UserV1ApiE2ETest {
         @DisplayName("회원가입 시 성별이 없을 경우, 400 Bad Request 응답을 반환한다.")
         @Test
         void throwBadRequest_whenNoGender() {
-            UserV1Dto.JoinRequest joinRequest = new UserV1Dto.JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", "");
+            UserV1Dto.JoinRequest joinRequest = new UserV1Dto.JoinRequest("hgh1472", "hgh1472@loopers.com", "1999-06-23", null);
             String requestUrl = "/api/v1/users";
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
