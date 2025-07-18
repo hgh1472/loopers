@@ -1,5 +1,11 @@
 package com.loopers.domain.user;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+
 import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
@@ -9,12 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class UserServiceIntegrationTest {
@@ -74,7 +74,7 @@ class UserServiceIntegrationTest {
             User savedUser = userRepository.save(
                     User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
 
-            User user = userService.getUser(savedUser.getLoginId());
+            User user = userService.getUser(savedUser.getLoginId().getId());
 
             assertAll(
                     () -> assertThat(user.getLoginId()).isEqualTo(savedUser.getLoginId()),
@@ -87,7 +87,7 @@ class UserServiceIntegrationTest {
         @DisplayName("해당 ID 회원이 존재하지 않는 경우, null이 반환된다.")
         @Test
         void getUserInfo_withNotFoundUserId() {
-            User user = userService.getUser(new LoginId("NONEXIST"));
+            User user = userService.getUser("NONEXIST");
 
             assertThat(user).isNull();
         }

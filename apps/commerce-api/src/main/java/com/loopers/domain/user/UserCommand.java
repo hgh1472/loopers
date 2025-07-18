@@ -1,6 +1,6 @@
 package com.loopers.domain.user;
 
-public record UserCommand() {
+public class UserCommand {
     public record Join(String loginId, String email, String birthDate, String gender) {
         public LoginId toLoginId() {
             return new LoginId(loginId);
@@ -16,12 +16,6 @@ public record UserCommand() {
 
         public Gender toGender() {
             return Gender.from(gender);
-        }
-    }
-
-    public record Charge(String loginId, Long point) {
-        public LoginId toLoginId() {
-            return new LoginId(loginId);
         }
     }
 }

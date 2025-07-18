@@ -20,7 +20,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User getUser(LoginId loginId) {
-        return userRepository.findByLoginId(loginId).orElse(null);
+    public User getUser(String loginId) {
+        return userRepository.findByLoginId(new LoginId(loginId)).orElse(null);
     }
 }
