@@ -1,7 +1,6 @@
 package com.loopers.application.point;
 
 import com.loopers.domain.point.Point;
-import com.loopers.domain.point.PointCommand;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
@@ -23,7 +22,7 @@ public class PointFacade {
             throw new CoreException(ErrorType.NOT_FOUND, String.format("%s 사용자를 찾을 수 없습니다.", loginId));
         }
         Point point = pointService.getPoint(user.getId());
-        return new PointInfo(user.getLoginId().getId(), point.getValue());
+        return PointInfo.of(user, point);
     }
 
     @Transactional
@@ -32,7 +31,7 @@ public class PointFacade {
         if (user == null) {
             throw new CoreException(ErrorType.NOT_FOUND, String.format("%s 사용자를 찾을 수 없습니다.", criteria.loginId()));
         }
-        Point chargedPoint = pointService.charge(new PointCommand.Charge(user.getId(), criteria.point()));
-        return new PointInfo(user.getLoginId().getId(), chargedPoint.getValue());
+        Point chargedPoint = pointService.charge(criteria.toCommand(user.getId()));
+        return PointInfo.of(user, chargedPoint);
     }
 }

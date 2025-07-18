@@ -1,6 +1,5 @@
 package com.loopers.interfaces.api.point;
 
-import com.loopers.application.point.PointCriteria;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointInfo;
 import com.loopers.interfaces.api.ApiResponse;
@@ -30,7 +29,7 @@ public class PointV1Controller implements PointV1ApiSpec {
     @Override
     public ApiResponse<PointV1Dto.PointResponse> chargePoint(@RequestHeader("X-USER-ID") String loginId,
                                                              @Valid @RequestBody PointV1Dto.ChargeRequest chargeRequest) {
-        PointInfo pointInfo = pointFacade.charge(new PointCriteria.Charge(loginId, chargeRequest.point()));
+        PointInfo pointInfo = pointFacade.charge(chargeRequest.toCriteria(loginId));
         return ApiResponse.success(PointV1Dto.PointResponse.from(pointInfo));
     }
 }
