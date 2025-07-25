@@ -290,7 +290,7 @@ sequenceDiagram
   Participant U as User
   Participant O as Order
   Participant Pd as Product
-  Participant P as point
+  Participant P as Point
   Participant S as Stock
   Participant Pay as Payment
   
@@ -316,18 +316,6 @@ sequenceDiagram
       Pd-->>OF: 상품 정보 반환
       deactivate Pd     
       activate OF
-      opt 포인트 사용
-        OF->>P: 사용 포인트 차감
-        deactivate OF
-        activate P
-        alt 포인트 부족
-          P-->>A: 409 Conflict
-          else 차감 성공
-          P-->>OF: 포인트 차감 결과 반환
-          deactivate P
-          activate OF
-          end
-      end
       OF->>O: 주문 생성
       deactivate OF
       activate O
@@ -348,6 +336,33 @@ sequenceDiagram
         Pay-->>OF: 결제 정보 반환
         deactivate Pay
         activate OF
+        opt 포인트 사용
+          OF->>P: 사용 포인트 차감
+          deactivate OF
+          activate P
+          alt 포인트 부족
+            P-->>OF: 차감 실패
+            deactivate P
+            activate OF
+	          OF->>Pay: 결제 환불 요청
+	          deactivate OF
+	          activate Pay
+	          Pay-->>OF: 결제 환불 성공
+	          deactivate Pay
+	          activate OF
+	          OF->>O: 주문 취소 처리
+	          deactivate OF
+	          activate O
+	          O-->>OF: 주문 취소 완료
+	          deactivate O
+	          activate OF
+	          OF-->>A: 409 Conflict
+	          deactivate OF
+          else 차감 성공
+	          P-->>OF: 포인트 차감 결과 반환
+	          activate OF
+          end
+        end
         OF->>S: 재고 차감 시도
         deactivate OF
         activate S
@@ -355,10 +370,10 @@ sequenceDiagram
           S-->>OF: 차감 실패 응답
           deactivate S
           activate OF
-          OF->>Pay: 주문 환불 처리 요청
+          OF->>Pay: 결제 환불 요청
           deactivate OF
           activate Pay
-          Pay-->>OF: 주문 환불 성공
+          Pay-->>OF: 결제 환불 성공
           deactivate Pay
           activate OF
           opt 주문 시 포인트 사용
@@ -371,17 +386,14 @@ sequenceDiagram
             OF->>A: 409 Conflict
             deactivate OF
           end
-          activate S
         else 재고 차감 성공
           S-->>OF: 재고 차감 결과 반환
-          deactivate S
           activate OF
           OF-->>A: 주문 결과 반환
           deactivate OF
         end
       end
     end 
-    
   end
     
   
