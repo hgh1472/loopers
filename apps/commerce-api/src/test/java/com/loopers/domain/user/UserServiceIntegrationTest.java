@@ -1,13 +1,15 @@
 package com.loopers.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
+import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,56 +42,58 @@ class UserServiceIntegrationTest {
         void join() {
             UserCommand.Join command = new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
 
-            User user = userService.join(command);
+            UserInfo userInfo = userService.join(command);
 
             verify(userRepository).save(any());
             assertAll(
-                    () -> assertThat(user.getId()).isNotNull(),
-                    () -> assertThat(user.getLoginId()).isEqualTo(new LoginId(command.loginId())),
-                    () -> assertThat(user.getEmail()).isEqualTo(new Email(command.email())),
-                    () -> assertThat(user.getBirthDate()).isEqualTo(new BirthDate(command.birthDate())),
-                    () -> assertThat(user.getGender()).isEqualTo(Gender.from(command.gender()))
+                    () -> assertThat(userInfo.id()).isNotNull(),
+                    () -> assertThat(userInfo.loginId()).isEqualTo(command.loginId()),
+                    () -> assertThat(userInfo.email()).isEqualTo(command.email()),
+                    () -> assertThat(userInfo.birthDate()).isEqualTo(LocalDate.parse(command.birthDate())),
+                    () -> assertThat(userInfo.gender()).isEqualTo(command.gender())
             );
         }
 
-        @DisplayName("이미 가입된 ID로 시도할 경우, 실패한다.")
+        @DisplayName("이미 가입된 ID로 시도할 경우, BAD_REQUEST 예외를 발생시킨다.")
         @Test
         void join_withDuplicateLoginId() {
             UserCommand.Join command = new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
             userService.join(command);
             UserCommand.Join duplicatedRequest = new UserCommand.Join("hgh1472", "hgh1472@naver.com", "1999-06-23", "MALE");
 
-            assertThatThrownBy(() -> userService.join(duplicatedRequest))
-                    .isInstanceOf(CoreException.class)
-                    .hasMessage("이미 가입된 ID입니다.");
+            CoreException thrown = assertThrows(CoreException.class, () -> userService.join(duplicatedRequest));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다."));
         }
     }
 
     @DisplayName("회원 정보 조회 시,")
     @Nested
-    class GetUserInfo {
+    class GetUserResult {
         @DisplayName("해당 ID 회원이 존재할 경우, 회원 정보가 반환된다.")
         @Test
         void getUserInfo() {
             User savedUser = userRepository.save(
                     User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
 
-            User user = userService.getUser(savedUser.getLoginId().getId());
+            UserInfo userInfo = userService.getUser(savedUser.getLoginId().getId());
 
             assertAll(
-                    () -> assertThat(user.getLoginId()).isEqualTo(savedUser.getLoginId()),
-                    () -> assertThat(user.getEmail()).isEqualTo(savedUser.getEmail()),
-                    () -> assertThat(user.getBirthDate()).isEqualTo(savedUser.getBirthDate()),
-                    () -> assertThat(user.getGender()).isEqualTo(savedUser.getGender())
+                    () -> assertThat(userInfo.loginId()).isEqualTo(savedUser.getLoginId().getId()),
+                    () -> assertThat(userInfo.email()).isEqualTo(savedUser.getEmail().getAddress()),
+                    () -> assertThat(userInfo.birthDate()).isEqualTo(savedUser.getBirthDate().getDate()),
+                    () -> assertThat(userInfo.gender()).isEqualTo(savedUser.getGender().name())
             );
         }
 
         @DisplayName("해당 ID 회원이 존재하지 않는 경우, null이 반환된다.")
         @Test
         void getUserInfo_withNotFoundUserId() {
-            User user = userService.getUser("NONEXIST");
+            UserInfo userInfo = userService.getUser("NONEXIST");
 
-            assertThat(user).isNull();
+            assertThat(userInfo).isNull();
         }
     }
 }

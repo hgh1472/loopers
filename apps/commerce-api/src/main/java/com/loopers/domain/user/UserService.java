@@ -12,15 +12,17 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public User join(UserCommand.Join command) {
+    public UserInfo join(UserCommand.Join command) {
         if (userRepository.findByLoginId(command.toLoginId()).isPresent()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다.");
         }
-        return userRepository.save(User.create(command));
+        return UserInfo.from(userRepository.save(User.create(command)));
     }
 
     @Transactional(readOnly = true)
-    public User getUser(String loginId) {
-        return userRepository.findByLoginId(new LoginId(loginId)).orElse(null);
+    public UserInfo getUser(String loginId) {
+        return userRepository.findByLoginId(new LoginId(loginId))
+                .map(UserInfo::from)
+                .orElse(null);
     }
 }

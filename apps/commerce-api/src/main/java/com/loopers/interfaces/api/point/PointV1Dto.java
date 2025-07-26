@@ -1,7 +1,7 @@
 package com.loopers.interfaces.api.point;
 
 import com.loopers.application.point.PointCriteria;
-import com.loopers.application.point.PointInfo;
+import com.loopers.application.point.PointResult;
 import jakarta.validation.constraints.NotNull;
 
 public class PointV1Dto {
@@ -15,8 +15,8 @@ public class PointV1Dto {
     }
 
     public record PointResponse(Long point) {
-        public static PointResponse from(PointInfo pointInfo) {
-            return new PointResponse(pointInfo.point());
+        public static PointResponse from(PointResult pointResult) {
+            return new PointResponse(pointResult.point());
         }
     }
 }

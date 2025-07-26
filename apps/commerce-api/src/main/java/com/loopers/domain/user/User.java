@@ -1,12 +1,14 @@
 package com.loopers.domain.user;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
 import lombok.Getter;
 
 @Getter
 @Entity
-@Table(name = "users")
+@Table(name = "member")
 public class User extends BaseEntity {
 
     @Embedded
@@ -40,5 +42,19 @@ public class User extends BaseEntity {
         Gender gender = command.toGender();
 
         return new User(loginId, email, birthDate, gender);
+    }
+
+    public enum Gender {
+        MALE,
+        FEMALE;
+
+        public static Gender from(String gender) {
+            for (Gender g : values()) {
+                if (g.name().equals(gender)) {
+                    return g;
+                }
+            }
+            throw new CoreException(ErrorType.BAD_REQUEST, "성별은 두 가지 중 선택해야 합니다.");
+        }
     }
 }

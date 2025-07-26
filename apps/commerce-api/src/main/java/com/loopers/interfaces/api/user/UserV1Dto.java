@@ -1,7 +1,7 @@
 package com.loopers.interfaces.api.user;
 
 import com.loopers.application.user.UserCriteria;
-import com.loopers.application.user.UserInfo;
+import com.loopers.application.user.UserResult;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -36,13 +36,13 @@ public class UserV1Dto {
     }
 
     public record UserResponse(Long id, String loginId, String email, String birthDate, String gender, Long point) {
-        public static UserResponse from(UserInfo info) {
+        public static UserResponse from(UserResult info) {
             return new UserResponse(
                     info.id(),
-                    info.loginId().getId(),
-                    info.email().getAddress(),
-                    info.birthDate().getDate().toString(),
-                    info.gender().name(),
+                    info.loginId(),
+                    info.email(),
+                    info.birthDate().toString(),
+                    info.gender(),
                     info.point()
             );
         }

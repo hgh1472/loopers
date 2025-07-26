@@ -12,22 +12,23 @@ public class PointService {
     private final PointRepository pointRepository;
 
     @Transactional
-    public Point initialize(Long userId) {
+    public PointInfo initialize(Long userId) {
         Point point = Point.from(userId);
-        return pointRepository.save(point);
+        return PointInfo.from(pointRepository.save(point));
     }
 
     @Transactional(readOnly = true)
-    public Point getPoint(Long userId) {
+    public PointInfo getPoint(Long userId) {
         return pointRepository.findByUserId(userId)
+                .map(PointInfo::from)
                 .orElse(null);
     }
 
     @Transactional
-    public Point charge(PointCommand.Charge command) {
+    public PointInfo charge(PointCommand.Charge command) {
         Point point = pointRepository.findByUserIdWithLock(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         point.charge(command.point());
-        return point;
+        return PointInfo.from(point);
     }
 }

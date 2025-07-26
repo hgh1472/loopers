@@ -14,8 +14,8 @@ public class UserCommand {
             return new BirthDate(birthDate);
         }
 
-        public Gender toGender() {
-            return Gender.from(gender);
+        public User.Gender toGender() {
+            return User.Gender.from(gender);
         }
     }
 }

@@ -1,13 +1,11 @@
-package com.loopers.domain.user;
+package com.loopers.domain.point;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertThrows;
 
-import com.loopers.domain.point.Point;
-import com.loopers.domain.point.PointCommand;
-import com.loopers.domain.point.PointRepository;
-import com.loopers.domain.point.PointService;
+import com.loopers.domain.point.PointCommand.Charge;
 import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,28 +38,31 @@ public class PointServiceIntegrationTest {
         void getPoints() {
             Point saved = pointRepository.save(Point.from(1L));
 
-            Point point = pointService.getPoint(saved.getUserId());
+            PointInfo pointInfo = pointService.getPoint(saved.getUserId());
 
-            assertThat(point.getValue()).isEqualTo(0L);
+            assertThat(pointInfo.value()).isEqualTo(0L);
         }
 
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
         @Test
         void getPoints_withNonExistId() {
-            Point point = pointService.getPoint(1L);
+            PointInfo pointInfo = pointService.getPoint(1L);
 
-            assertThat(point).isNull();
+            assertThat(pointInfo).isNull();
         }
     }
 
     @Nested
     class ChargePoint {
-        @DisplayName("존재하지 않는 유저 ID로 충전을 시도한 경우, 실패한다.")
+        @DisplayName("존재하지 않는 유저 ID로 충전을 시도한 경우, NOT_FOUND 예외를 발생시킨다.")
         @Test
         void chargePoint() {
-            assertThatThrownBy(() -> pointService.charge(new PointCommand.Charge(1L, 1000L)))
-                    .isInstanceOf(CoreException.class)
-                    .hasMessage("존재하지 않는 사용자입니다.");
+
+            CoreException thrown = assertThrows(CoreException.class, () -> pointService.charge(new Charge(1L, 1000L)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         }
     }
 }

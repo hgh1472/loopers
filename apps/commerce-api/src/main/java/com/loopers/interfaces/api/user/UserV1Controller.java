@@ -1,7 +1,7 @@
 package com.loopers.interfaces.api.user;
 
 import com.loopers.application.user.UserFacade;
-import com.loopers.application.user.UserInfo;
+import com.loopers.application.user.UserResult;
 import com.loopers.interfaces.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +22,14 @@ public class UserV1Controller implements UserV1ApiSpec {
     @PostMapping
     @Override
     public ApiResponse<UserV1Dto.UserResponse> joinUser(@Valid @RequestBody UserV1Dto.JoinRequest joinRequest) {
-        UserInfo userInfo = userFacade.joinUser(joinRequest.toCriteria());
-        return ApiResponse.success(UserV1Dto.UserResponse.from(userInfo));
+        UserResult userResult = userFacade.joinUser(joinRequest.toCriteria());
+        return ApiResponse.success(UserV1Dto.UserResponse.from(userResult));
     }
 
     @GetMapping("/me")
     @Override
     public ApiResponse<UserV1Dto.UserResponse> getMyInfo(@RequestHeader("X-USER-ID") String id) {
-        UserInfo userInfo = userFacade.getUserInfo(id);
-        return ApiResponse.success(UserV1Dto.UserResponse.from(userInfo));
+        UserResult userResult = userFacade.getUserInfo(id);
+        return ApiResponse.success(UserV1Dto.UserResponse.from(userResult));
     }
 }
