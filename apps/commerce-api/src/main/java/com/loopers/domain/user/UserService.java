@@ -17,6 +17,9 @@ public class UserService {
         if (userRepository.existsBy(user.getLoginId())) {
             throw new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다.");
         }
+        if (userRepository.existsBy(user.getEmail())) {
+            throw new CoreException(ErrorType.CONFLICT, "이미 가입된 이메일입니다.");
+        }
         return UserInfo.from(userRepository.save(user));
     }
 

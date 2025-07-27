@@ -8,4 +8,6 @@ public interface UserRepository {
     Optional<User> findById(Long userId);
 
     boolean existsBy(LoginId loginId);
+
+    boolean existsBy(Email email);
 }

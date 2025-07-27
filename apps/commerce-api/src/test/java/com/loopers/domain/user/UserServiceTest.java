@@ -40,6 +40,22 @@ class UserServiceTest {
                     .usingRecursiveComparison()
                     .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다."));
         }
+
+        @DisplayName("이미 존재하는 Email이 주어지면, CONFLICT 예외가 발생한다.")
+        @Test
+        void throwsConflictException_whenEmailAlreadyExists() {
+            UserCommand.Join command = new UserCommand.Join("exist", "email@email.com", "1999-06-23", "MALE");
+            given(userRepository.existsBy(command.toLoginId()))
+                    .willReturn(false);
+            given(userRepository.existsBy(command.toEmail()))
+                    .willReturn(true);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> userService.join(command));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 가입된 이메일입니다."));
+        }
     }
 
     @Nested
