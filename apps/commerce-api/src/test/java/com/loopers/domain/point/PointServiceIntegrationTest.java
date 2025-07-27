@@ -32,13 +32,13 @@ public class PointServiceIntegrationTest {
     }
 
     @Nested
-    class GetPoints {
+    class Find {
         @DisplayName("해당 ID의 회원이 존재할 경우, 보유 포인트가 반환된다.")
         @Test
         void getPoints() {
             Point saved = pointRepository.save(Point.from(1L));
 
-            PointInfo pointInfo = pointService.getPoint(saved.getUserId());
+            PointInfo pointInfo = pointService.findPoint(saved.getUserId());
 
             assertThat(pointInfo.value()).isEqualTo(0L);
         }
@@ -46,7 +46,7 @@ public class PointServiceIntegrationTest {
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
         @Test
         void getPoints_withNonExistId() {
-            PointInfo pointInfo = pointService.getPoint(1L);
+            PointInfo pointInfo = pointService.findPoint(1L);
 
             assertThat(pointInfo).isNull();
         }

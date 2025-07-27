@@ -65,13 +65,27 @@ class UserServiceIntegrationTest {
 
             assertThat(thrown)
                     .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다."));
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다."));
+        }
+
+        @DisplayName("이미 가입된 이메일로 시도할 경우, CONFLICT 예외를 발생시킨다.")
+        @Test
+        void throwsConflictException_whenEmailAlreadyExists() {
+            UserCommand.Join command = new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE");
+            userService.join(command);
+            UserCommand.Join duplicatedRequest = new UserCommand.Join("user2", "hgh1472@loopers.com", "1999-06-23", "MALE");
+
+            CoreException thrown = assertThrows(CoreException.class, () -> userService.join(duplicatedRequest));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 가입된 이메일입니다."));
         }
     }
 
     @DisplayName("회원 정보 조회 시,")
     @Nested
-    class GetUserResult {
+    class Find {
         @DisplayName("해당 ID 회원이 존재할 경우, 회원 정보가 반환된다.")
         @Test
         void getUserInfo() {

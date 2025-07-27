@@ -14,7 +14,7 @@ public class PointFacade {
     private final PointService pointService;
 
     public PointResult getPoint(Long userId) {
-        PointInfo pointInfo = pointService.getPoint(userId);
+        PointInfo pointInfo = pointService.findPoint(userId);
         if (pointInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, String.format("%s 사용자의 포인트 정보를 찾을 수 없습니다.", userId));
         }

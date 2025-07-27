@@ -1,5 +1,6 @@
 package com.loopers.infrastructure.user;
 
+import com.loopers.domain.user.Email;
 import com.loopers.domain.user.LoginId;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserRepository;
@@ -24,7 +25,12 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByLoginId(LoginId loginId) {
-        return userJpaRepository.findByLoginId(loginId);
+    public boolean existsBy(LoginId loginId) {
+        return userJpaRepository.existsByLoginId(loginId);
+    }
+
+    @Override
+    public boolean existsBy(Email email) {
+        return userJpaRepository.existsByEmail(email);
     }
 }
