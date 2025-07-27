@@ -1,12 +1,11 @@
 package com.loopers.application.point;
 
 import com.loopers.domain.point.PointInfo;
-import com.loopers.domain.user.UserInfo;
 
-public record PointResult(String loginId, Long point) {
-    public static PointResult of(UserInfo userInfo, PointInfo pointInfo) {
+public record PointResult(Long id, Long point) {
+    public static PointResult from(PointInfo pointInfo) {
         return new PointResult(
-                userInfo.loginId(),
+                pointInfo.id(),
                 pointInfo.value()
         );
     }

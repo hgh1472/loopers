@@ -26,7 +26,7 @@ public class PointService {
 
     @Transactional
     public PointInfo charge(PointCommand.Charge command) {
-        Point point = pointRepository.findByUserIdWithLock(command.userId())
+        Point point = pointRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         point.charge(command.point());
         return PointInfo.from(point);

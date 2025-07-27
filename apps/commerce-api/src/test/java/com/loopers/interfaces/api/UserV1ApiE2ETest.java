@@ -1,5 +1,9 @@
 package com.loopers.interfaces.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.user.User;
@@ -16,11 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserV1ApiE2ETest {
@@ -100,7 +104,7 @@ public class UserV1ApiE2ETest {
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
-            headers.add("X-USER-ID", saved.getLoginId().getId());
+            headers.add("X-USER-ID", saved.getId().toString());
 
             ResponseEntity<ApiResponse<UserResponse>> response = testRestTemplate.exchange(requestUrl, HttpMethod.GET,
                     new HttpEntity<>(headers), responseType);
@@ -123,7 +127,7 @@ public class UserV1ApiE2ETest {
             ParameterizedTypeReference<ApiResponse<UserResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
-            headers.add("X-USER-ID", "NONEXIST");
+            headers.add("X-USER-ID", "-1");
 
             ResponseEntity<ApiResponse<UserResponse>> response = testRestTemplate.exchange(requestUrl, HttpMethod.GET,
                     new HttpEntity<>(headers), responseType);
