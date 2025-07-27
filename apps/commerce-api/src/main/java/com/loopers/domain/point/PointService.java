@@ -14,6 +14,9 @@ public class PointService {
     @Transactional
     public PointInfo initialize(Long userId) {
         Point point = Point.from(userId);
+        if (pointRepository.existsByUserId(point.getUserId())) {
+            throw new CoreException(ErrorType.CONFLICT, "이미 회원의 포인트가 존재합니다.");
+        }
         return PointInfo.from(pointRepository.save(point));
     }
 

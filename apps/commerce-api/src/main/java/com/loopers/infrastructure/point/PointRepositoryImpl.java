@@ -20,4 +20,9 @@ public class PointRepositoryImpl implements PointRepository {
     public Optional<Point> findByUserId(Long userId) {
         return pointJpaRepository.findByUserId(userId);
     }
+
+    @Override
+    public boolean existsByUserId(Long userId) {
+        return pointJpaRepository.existsByUserId(userId);
+    }
 }

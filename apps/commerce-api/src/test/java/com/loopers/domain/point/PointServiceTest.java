@@ -2,8 +2,10 @@ package com.loopers.domain.point;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertThrows;
 
 import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +24,24 @@ class PointServiceTest {
 
     @Mock
     private PointRepository pointRepository;
+
+    @Nested
+    @DisplayName("포인트를 생성할 때,")
+    class Initialize {
+        @DisplayName("이미 유저의 포인트가 존재할 경우, CONFLICT 예외를 발생시킨다.")
+        @Test
+        void throwsConflictException_whenPointAlreadyExists() {
+            long userId = 1L;
+            BDDMockito.given(pointRepository.existsByUserId(userId))
+                    .willReturn(true);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> pointService.initialize(userId));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 회원의 포인트가 존재합니다."));
+        }
+    }
 
     @Nested
     @DisplayName("포인트를 조회할 때,")
