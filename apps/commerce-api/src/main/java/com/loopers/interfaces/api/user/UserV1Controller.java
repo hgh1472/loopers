@@ -28,8 +28,8 @@ public class UserV1Controller implements UserV1ApiSpec {
 
     @GetMapping("/me")
     @Override
-    public ApiResponse<UserV1Dto.UserResponse> getMyInfo(@RequestHeader("X-USER-ID") String id) {
-        UserResult userResult = userFacade.getUserInfo(id);
+    public ApiResponse<UserV1Dto.UserResponse> getMyInfo(@RequestHeader("X-USER-ID") Long userId) {
+        UserResult userResult = userFacade.getUser(userId);
         return ApiResponse.success(UserV1Dto.UserResponse.from(userResult));
     }
 }

@@ -47,7 +47,7 @@ class PointServiceTest {
         void throwsNotFoundException_whenPointDoesNotExist() {
 
             long nonExistUserId = 1L;
-            BDDMockito.given(pointRepository.findByUserIdWithLock(nonExistUserId))
+            BDDMockito.given(pointRepository.findByUserId(nonExistUserId))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> pointService.charge(new PointCommand.Charge(nonExistUserId, 1000L)))

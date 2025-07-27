@@ -20,8 +20,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserInfo getUser(String loginId) {
-        return userRepository.findByLoginId(new LoginId(loginId))
+    public UserInfo findUser(Long userId) {
+        return userRepository.findById(userId)
                 .map(UserInfo::from)
                 .orElse(null);
     }

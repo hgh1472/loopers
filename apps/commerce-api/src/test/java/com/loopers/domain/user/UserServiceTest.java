@@ -45,10 +45,10 @@ class UserServiceTest {
         @DisplayName("존재하지 않는 유저 ID로 조회하면, null을 반환한다.")
         @Test
         void throwsNotFoundException_whenNonExistId() {
-            given(userRepository.findByLoginId(new LoginId("nonExist")))
+            given(userRepository.findById(-1L))
                     .willReturn(Optional.empty());
 
-            UserInfo userInfo = userService.getUser("nonExist");
+            UserInfo userInfo = userService.findUser(-1L);
 
             assertThat(userInfo).isNull();
         }

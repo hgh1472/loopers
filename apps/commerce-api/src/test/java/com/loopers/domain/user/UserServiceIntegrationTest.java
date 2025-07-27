@@ -78,7 +78,7 @@ class UserServiceIntegrationTest {
             User savedUser = userRepository.save(
                     User.create(new UserCommand.Join("hgh1472", "hgh1472@loopers.com", "1999-06-23", "MALE")));
 
-            UserInfo userInfo = userService.getUser(savedUser.getLoginId().getId());
+            UserInfo userInfo = userService.findUser(savedUser.getId());
 
             assertAll(
                     () -> assertThat(userInfo.loginId()).isEqualTo(savedUser.getLoginId().getId()),
@@ -91,7 +91,7 @@ class UserServiceIntegrationTest {
         @DisplayName("해당 ID 회원이 존재하지 않는 경우, null이 반환된다.")
         @Test
         void getUserInfo_withNotFoundUserId() {
-            UserInfo userInfo = userService.getUser("NONEXIST");
+            UserInfo userInfo = userService.findUser(-1L);
 
             assertThat(userInfo).isNull();
         }

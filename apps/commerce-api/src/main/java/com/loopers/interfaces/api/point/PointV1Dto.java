@@ -9,8 +9,8 @@ public class PointV1Dto {
             @NotNull(message = "충전할 포인트는 필수입니다.")
             Long point
     ) {
-        public PointCriteria.Charge toCriteria(String loginId) {
-            return new PointCriteria.Charge(loginId, point);
+        public PointCriteria.Charge toCriteria(Long userId) {
+            return new PointCriteria.Charge(userId, point);
         }
     }
 

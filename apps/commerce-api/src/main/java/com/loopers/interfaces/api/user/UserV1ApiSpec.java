@@ -22,7 +22,7 @@ public interface UserV1ApiSpec {
             description = "X-USER-ID 헤더로 사용자 정보를 조회합니다."
     )
     ApiResponse<UserV1Dto.UserResponse> getMyInfo(
-            @Schema(name = "사용자 ID", description = "회원가입 시 가입한 ID")
-            String id
+            @Schema(name = "사용자 ID", description = "정보를 조회할 사용자의 ID")
+            Long userId
     );
 }
