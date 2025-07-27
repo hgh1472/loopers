@@ -21,7 +21,7 @@ public class PointService {
     }
 
     @Transactional(readOnly = true)
-    public PointInfo getPoint(Long userId) {
+    public PointInfo findPoint(Long userId) {
         return pointRepository.findByUserId(userId)
                 .map(PointInfo::from)
                 .orElse(null);

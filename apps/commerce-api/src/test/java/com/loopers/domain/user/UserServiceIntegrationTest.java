@@ -85,7 +85,7 @@ class UserServiceIntegrationTest {
 
     @DisplayName("회원 정보 조회 시,")
     @Nested
-    class GetUserResult {
+    class Find {
         @DisplayName("해당 ID 회원이 존재할 경우, 회원 정보가 반환된다.")
         @Test
         void getUserInfo() {

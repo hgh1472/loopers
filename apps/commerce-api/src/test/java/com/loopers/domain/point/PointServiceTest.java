@@ -45,7 +45,7 @@ class PointServiceTest {
 
     @Nested
     @DisplayName("포인트를 조회할 때,")
-    class Get {
+    class Find {
         @DisplayName("존재하지 않는 유저의 포인트를 조회하면, null을 반환한다.")
         @Test
         void returnNull_whenPointDoesNotExist() {
@@ -53,7 +53,7 @@ class PointServiceTest {
             BDDMockito.given(pointRepository.findByUserId(nonExistUserId))
                     .willReturn(Optional.empty());
 
-            PointInfo pointInfo = pointService.getPoint(nonExistUserId);
+            PointInfo pointInfo = pointService.findPoint(nonExistUserId);
 
             assertThat(pointInfo).isNull();
         }

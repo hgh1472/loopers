@@ -26,7 +26,7 @@ public class UserFacade {
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, String.format("%s 사용자를 찾을 수 없습니다.", userId));
         }
-        PointInfo pointInfo = pointService.getPoint(userInfo.id());
+        PointInfo pointInfo = pointService.findPoint(userInfo.id());
         return UserResult.of(userInfo, pointInfo);
     }
 }

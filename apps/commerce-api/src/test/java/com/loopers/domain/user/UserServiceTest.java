@@ -60,7 +60,7 @@ class UserServiceTest {
 
     @Nested
     @DisplayName("유저 정보를 조회할 때,")
-    class Get {
+    class Find {
         @DisplayName("존재하지 않는 유저 ID로 조회하면, null을 반환한다.")
         @Test
         void throwsNotFoundException_whenNonExistId() {
