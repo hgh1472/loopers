@@ -13,10 +13,11 @@ public class UserService {
 
     @Transactional
     public UserInfo join(UserCommand.Join command) {
-        if (userRepository.findByLoginId(command.toLoginId()).isPresent()) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다.");
+        User user = User.create(command);
+        if (userRepository.existsBy(user.getLoginId())) {
+            throw new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다.");
         }
-        return UserInfo.from(userRepository.save(User.create(command)));
+        return UserInfo.from(userRepository.save(user));
     }
 
     @Transactional(readOnly = true)

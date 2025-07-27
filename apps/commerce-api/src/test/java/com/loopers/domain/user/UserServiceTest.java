@@ -1,10 +1,11 @@
 package com.loopers.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.BDDMockito.given;
 
 import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,12 +31,14 @@ class UserServiceTest {
         @Test
         void throwsConflictException_whenLoginIdAlreadyExists() {
             UserCommand.Join command = new UserCommand.Join("exist", "email@email.com", "1999-06-23", "MALE");
-            given(userRepository.findByLoginId(new LoginId("exist")))
-                    .willReturn(Optional.of(User.create(command)));
+            given(userRepository.existsBy(command.toLoginId()))
+                    .willReturn(true);
 
-            assertThatThrownBy(() -> userService.join(command))
-                    .isInstanceOf(CoreException.class)
-                    .hasMessage("이미 가입된 ID입니다.");
+            CoreException thrown = assertThrows(CoreException.class, () -> userService.join(command));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다."));
         }
     }
 

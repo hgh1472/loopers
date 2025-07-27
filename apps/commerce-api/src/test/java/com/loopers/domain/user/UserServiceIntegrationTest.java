@@ -65,7 +65,7 @@ class UserServiceIntegrationTest {
 
             assertThat(thrown)
                     .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다."));
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다."));
         }
     }
 
