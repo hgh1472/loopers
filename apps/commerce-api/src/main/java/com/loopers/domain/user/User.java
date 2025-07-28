@@ -57,7 +57,7 @@ public class User extends BaseEntity {
     }
 
     public BirthDate getBirthDate() {
-        return new BirthDate(this.birthDate.toString());
+        return new BirthDate(this.birthDate.getDate().toString());
     }
 
     public Gender getGender() {
