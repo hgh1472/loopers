@@ -116,7 +116,7 @@ public class UserV1ApiE2ETest {
                     () -> assertThat(response.getBody().data().email()).isEqualTo(saved.getEmail().getAddress()),
                     () -> assertThat(response.getBody().data().birthDate()).isEqualTo(saved.getBirthDate().getDate().toString()),
                     () -> assertThat(response.getBody().data().gender()).isEqualTo(saved.getGender().name()),
-                    () -> assertThat(response.getBody().data().point()).isEqualTo(savedPoint.getValue())
+                    () -> assertThat(response.getBody().data().point()).isEqualTo(savedPoint.getAmount().getValue())
             );
         }
 

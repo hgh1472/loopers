@@ -40,7 +40,7 @@ public class PointServiceIntegrationTest {
 
             PointInfo pointInfo = pointService.findPoint(saved.getUserId());
 
-            assertThat(pointInfo.value()).isEqualTo(0L);
+            assertThat(pointInfo.amount()).isEqualTo(0L);
         }
 
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")

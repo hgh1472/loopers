@@ -3,10 +3,14 @@ package com.loopers.domain.user;
 import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.persistence.*;
-import lombok.Getter;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 
-@Getter
 @Entity
 @Table(name = "member")
 public class User extends BaseEntity {
@@ -42,6 +46,22 @@ public class User extends BaseEntity {
         Gender gender = command.toGender();
 
         return new User(loginId, email, birthDate, gender);
+    }
+
+    public LoginId getLoginId() {
+        return new LoginId(this.loginId.getId());
+    }
+
+    public Email getEmail() {
+        return new Email(this.email.getAddress());
+    }
+
+    public BirthDate getBirthDate() {
+        return new BirthDate(this.birthDate.toString());
+    }
+
+    public Gender getGender() {
+        return gender;
     }
 
     public enum Gender {

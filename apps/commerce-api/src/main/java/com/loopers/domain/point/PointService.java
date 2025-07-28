@@ -31,7 +31,17 @@ public class PointService {
     public PointInfo charge(PointCommand.Charge command) {
         Point point = pointRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
-        point.charge(command.point());
+        PointHistory chargeHistory = point.charge(command.amount());
+        pointRepository.record(chargeHistory);
+        return PointInfo.from(point);
+    }
+
+    @Transactional
+    public PointInfo use(PointCommand.Use command) {
+        Point point = pointRepository.findByUserId(command.userId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
+        PointHistory useHistory = point.use(command.amount());
+        pointRepository.record(useHistory);
         return PointInfo.from(point);
     }
 }
