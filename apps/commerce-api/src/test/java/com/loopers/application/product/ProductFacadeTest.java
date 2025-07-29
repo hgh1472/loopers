@@ -107,7 +107,7 @@ class ProductFacadeTest {
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
 
-            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), 1L));
+            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
 
             assertAll(
                     () -> assertThat(productResult.id()).isEqualTo(product.getId()),
