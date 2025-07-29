@@ -6,9 +6,15 @@ import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.Getter;
 
 @Entity
-@Table(name = "product_like")
+@Getter
+
+@Table(name = "product_like", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_product", columnNames = {"ref_user_id", "ref_product_id"})
+})
 public class ProductLike extends BaseEntity {
 
     @Column(name = "ref_product_id", nullable = false)
