@@ -7,4 +7,8 @@ public class StockCommand {
 
     public record Find(Long productId) {
     }
+
+    public record Deduct(Long productId, Long quantity) {
+    } {
+    }
 }
