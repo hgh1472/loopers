@@ -26,10 +26,12 @@ public class ProductLikeService {
         return new ProductLikeInfo(command.productId(), command.userId());
     }
 
+    @Transactional(readOnly = true)
     public Long countLikes(ProductLikeCommand.Count command) {
         return productLikeRepository.countByProductId(command.productId());
     }
 
+    @Transactional(readOnly = true)
     public boolean isLiked(ProductLikeCommand.IsLiked command) {
         return productLikeRepository.existsByProductIdAndUserId(command.productId(), command.userId());
     }

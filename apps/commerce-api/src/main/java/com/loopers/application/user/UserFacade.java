@@ -8,6 +8,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Component
@@ -15,6 +16,7 @@ public class UserFacade {
     private final UserService userService;
     private final PointService pointService;
 
+    @Transactional
     public UserResult joinUser(UserCriteria.Join joinCriteria) {
         UserInfo userInfo = userService.join(joinCriteria.toCommand());
         PointInfo pointInfo = pointService.initialize(userInfo.id());

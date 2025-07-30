@@ -17,6 +17,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class ProductFacade {
 
     private final UserService userService;
 
+    @Transactional(readOnly = true)
     public ProductResult getProduct(ProductCriteria.Get criteria) {
         ProductInfo productInfo = productService.findProduct(new Find(criteria.productId()));
         if (productInfo == null) {
