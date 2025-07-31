@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandCommand.Create;
 import com.loopers.domain.brand.BrandRepository;
+import com.loopers.domain.count.ProductCount;
+import com.loopers.domain.count.ProductCountRepository;
 import com.loopers.domain.like.ProductLike;
 import com.loopers.domain.like.ProductLikeCommand;
 import com.loopers.domain.like.ProductLikeRepository;
@@ -46,6 +48,8 @@ class ProductFacadeTest {
     @Autowired
     private BrandRepository brandRepository;
     @Autowired
+    private ProductCountRepository productCountRepository;
+    @Autowired
     private DatabaseCleanUp databaseCleanUp;
 
     @AfterEach
@@ -79,8 +83,12 @@ class ProductFacadeTest {
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
             Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
+            productCount.incrementLike();
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
 
             ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), user.getId()));
 
@@ -104,8 +112,12 @@ class ProductFacadeTest {
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
             Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
+            productCount.incrementLike();
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
 
             ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
 

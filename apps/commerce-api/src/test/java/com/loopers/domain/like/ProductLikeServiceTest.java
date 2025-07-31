@@ -23,24 +23,6 @@ class ProductLikeServiceTest {
     @Mock
     private ProductLikeRepository productLikeRepository;
 
-
-    @Nested
-    @DisplayName("상품의 좋아요 개수 조회 시,")
-    class CountLikes {
-
-        @DisplayName("상품의 좋아요가 없으면, 0을 반환한다.")
-        @Test
-        void returnZero_whenProductDoesNotExist() {
-            ProductLikeCommand.Count command = new ProductLikeCommand.Count(1L);
-            given(productLikeRepository.countByProductId(command.productId()))
-                    .willReturn(0L);
-
-            Long count = productLikeService.countLikes(command);
-
-            assertThat(count).isZero();
-        }
-    }
-
     @Nested
     @DisplayName("유저의 상품 좋아요 여부 조회 시,")
     class IsLiked {
@@ -77,6 +59,41 @@ class ProductLikeServiceTest {
                     () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId())
             );
         }
+
+        @DisplayName("좋아요가 이미 존재할 경우, 변경 여부는 false로 반환한다.")
+        @Test
+        void returnProductLikeInfoWithFalse_whenDuplicateProductLikeExists() {
+            ProductLikeCommand.Create command = new ProductLikeCommand.Create(1L, 1L);
+            given(productLikeRepository.save(any(ProductLike.class)))
+                    .willThrow(new DataIntegrityViolationException("유니크 제약조건"));
+
+            ProductLikeInfo productLikeInfo = productLikeService.like(command);
+
+            assertAll(
+                    () -> assertThat(productLikeInfo).isNotNull(),
+                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeInfo.changed()).isFalse()
+            );
+        }
+
+        @DisplayName("좋아요가 존재할 경우, 변경 여부는 true로 반환한다.")
+        @Test
+        void returnProductLikeInfoWithTrue_whenProductLikeCreated() {
+            ProductLikeCommand.Create command = new ProductLikeCommand.Create(1L, 1L);
+            ProductLike productLike = ProductLike.create(command);
+            given(productLikeRepository.save(any(ProductLike.class)))
+                    .willReturn(productLike);
+
+            ProductLikeInfo productLikeInfo = productLikeService.like(command);
+
+            assertAll(
+                    () -> assertThat(productLikeInfo).isNotNull(),
+                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeInfo.changed()).isTrue()
+            );
+        }
     }
 
     @Nested
@@ -93,6 +110,40 @@ class ProductLikeServiceTest {
                     () -> assertThat(productLikeInfo).isNotNull(),
                     () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
                     () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId())
+            );
+        }
+
+        @DisplayName("좋아요가 존재하지 않을 경우, 변경 여부는 false로 반환한다.")
+        @Test
+        void returnProductLikeInfoWithFalse_whenProductLikeDoesNotExist() {
+            ProductLikeCommand.Delete command = new ProductLikeCommand.Delete(1L, 1L);
+            given(productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId()))
+                    .willReturn(false);
+
+            ProductLikeInfo productLikeInfo = productLikeService.cancelLike(command);
+
+            assertAll(
+                    () -> assertThat(productLikeInfo).isNotNull(),
+                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeInfo.changed()).isFalse()
+            );
+        }
+
+        @DisplayName("좋아요가 존재할 경우, 변경 여부는 true로 반환한다.")
+        @Test
+        void returnProductLikeInfoWithTrue_whenProductLikeExists() {
+            ProductLikeCommand.Delete command = new ProductLikeCommand.Delete(1L, 1L);
+            given(productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId()))
+                    .willReturn(true);
+
+            ProductLikeInfo productLikeInfo = productLikeService.cancelLike(command);
+
+            assertAll(
+                    () -> assertThat(productLikeInfo).isNotNull(),
+                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeInfo.changed()).isTrue()
             );
         }
     }

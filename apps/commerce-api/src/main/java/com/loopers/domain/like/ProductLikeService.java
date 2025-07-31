@@ -3,6 +3,7 @@ package com.loopers.domain.like;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -11,24 +12,21 @@ public class ProductLikeService {
 
     private final ProductLikeRepository productLikeRepository;
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductLikeInfo like(ProductLikeCommand.Create command) {
         ProductLike productLike = ProductLike.create(command);
         try {
-            return ProductLikeInfo.from(productLikeRepository.save(productLike));
+            productLikeRepository.save(productLike);
+            return ProductLikeInfo.of(productLike, true);
         } catch (DataIntegrityViolationException e) {
-            return ProductLikeInfo.from(productLike);
+            return ProductLikeInfo.of(productLike, false);
         }
     }
 
     @Transactional
     public ProductLikeInfo cancelLike(ProductLikeCommand.Delete command) {
-        productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId());
-        return new ProductLikeInfo(command.productId(), command.userId());
-    }
-
-    @Transactional(readOnly = true)
-    public Long countLikes(ProductLikeCommand.Count command) {
-        return productLikeRepository.countByProductId(command.productId());
+        boolean deleted = productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId());
+        return new ProductLikeInfo(command.productId(), command.userId(), deleted);
     }
 
     @Transactional(readOnly = true)

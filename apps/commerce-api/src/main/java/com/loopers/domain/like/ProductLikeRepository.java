@@ -4,7 +4,7 @@ public interface ProductLikeRepository {
 
     ProductLike save(ProductLike productLike);
 
-    void deleteByProductIdAndUserId(Long productId, Long userId);
+    boolean deleteByProductIdAndUserId(Long productId, Long userId);
 
     Long countByProductId(Long productId);
 

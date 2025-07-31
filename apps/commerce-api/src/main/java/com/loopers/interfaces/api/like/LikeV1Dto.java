@@ -1,16 +1,16 @@
 package com.loopers.interfaces.api.like;
 
-import com.loopers.domain.like.ProductLikeInfo;
+import com.loopers.application.like.LikeResult;
 
 public class LikeV1Dto {
     public record ProductLikeResponse(
             Long productId,
             Long userId
     ) {
-        public static ProductLikeResponse from(ProductLikeInfo productLikeInfo) {
+        public static ProductLikeResponse from(LikeResult.Product result) {
             return new ProductLikeResponse(
-                    productLikeInfo.productId(),
-                    productLikeInfo.userId()
+                    result.productId(),
+                    result.userId()
             );
         }
     }
