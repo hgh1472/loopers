@@ -25,6 +25,10 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserInfo findUser(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+
         return userRepository.findById(userId)
                 .map(UserInfo::from)
                 .orElse(null);
