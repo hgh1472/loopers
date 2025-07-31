@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.loopers.domain.PageResponse;
 import com.loopers.domain.brand.Brand;
-import com.loopers.domain.brand.BrandCommand.Create;
+import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.count.ProductCount;
 import com.loopers.domain.count.ProductCountRepository;
@@ -19,7 +20,7 @@ import com.loopers.domain.stock.Stock;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
-import com.loopers.domain.user.UserCommand.Join;
+import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 
 @SpringBootTest
 class ProductFacadeTest {
@@ -78,10 +80,10 @@ class ProductFacadeTest {
         @DisplayName("유저 ID와 함께 존재하는 상품을 조회하면, 상품 좋아요 여부를 포함한 상세 정보를 반환한다.")
         @Test
         void returnProductInfo_whenProductExistsWithUser() {
-            User user = userRepository.save(User.create(new Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
             Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
@@ -107,10 +109,10 @@ class ProductFacadeTest {
         @DisplayName("유저 ID 없이 존재하는 상품을 조회하면, 좋아요 여부를 제외한 상세 정보를 반환한다.")
         @Test
         void returnProductInfo_whenProductExistsWithoutUser() {
-            User user = userRepository.save(User.create(new Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
             Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
@@ -130,6 +132,65 @@ class ProductFacadeTest {
                     () -> assertThat(productResult.quantity()).isEqualTo(stock.getQuantity().getValue()),
                     () -> assertThat(productResult.likeCount()).isEqualTo(2L),
                     () -> assertThat(productResult.isLiked()).isFalse()
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("상품 목록 조회 시,")
+    class Search {
+        @DisplayName("로그인한 사용자의 경우, 상품 목록과 좋아요 여부를 포함한 페이지 결과를 반환한다.")
+        @Test
+        void returnProductPageResult_whenUserIsLoggedIn() {
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
+            for (int i = 1; i <= 20; i++) {
+                Product product = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "제품" + i, new BigDecimal(1000L * i), "ON_SALE")));
+                productCountRepository.save(ProductCount.from(product.getId()));
+                if (i <= 10) {
+                    productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
+                }
+            }
+
+            PageResponse<ProductPageResult> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 1, 7, "LATEST"));
+
+            assertAll(
+                    () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
+                    () -> assertThat(latest.getTotalPages()).isEqualTo(3),
+                    () -> assertThat(latest.getContent().size()).isEqualTo(7),
+                    () -> assertThat(latest.getContent().get(0).id()).isEqualTo(13L),
+                    () -> assertThat(latest.getContent().get(0).isLiked()).isFalse(),
+                    () -> assertThat(latest.getContent().get(3).id()).isEqualTo(10L),
+                    () -> assertThat(latest.getContent().get(6).isLiked()).isTrue(),
+                    () -> assertThat(latest.getContent().get(6).id()).isEqualTo(7L),
+                    () -> assertThat(latest.getContent().get(6).isLiked()).isTrue()
+                    );
+        }
+
+        @DisplayName("로그인하지 않은 사용자의 경우, 좋아여 여부는 전부 false로 페이지 결과를 반환한다.")
+        @Test
+        void returnProductPageResultWithoutLikes_whenUserIsNotLoggedIn() {
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
+            for (int i = 1; i <= 20; i++) {
+                Product product = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "제품" + i, new BigDecimal(1000L * i), "ON_SALE")));
+                productCountRepository.save(ProductCount.from(product.getId()));
+                if (i <= 10) {
+                    productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
+                }
+            }
+
+            PageResponse<ProductPageResult> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 1, 7, "LATEST"));
+
+            assertAll(
+                    () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
+                    () -> assertThat(latest.getTotalPages()).isEqualTo(3),
+                    () -> assertThat(latest.getContent().size()).isEqualTo(7),
+                    () -> assertThat(latest.getContent().get(0).id()).isEqualTo(13L),
+                    () -> assertThat(latest.getContent().get(0).isLiked()).isFalse(),
+                    () -> assertThat(latest.getContent().get(3).id()).isEqualTo(10L),
+                    () -> assertThat(latest.getContent().get(6).id()).isEqualTo(7L),
+                    () -> assertThat(latest.getContent().get(6).isLiked()).isFalse()
             );
         }
     }

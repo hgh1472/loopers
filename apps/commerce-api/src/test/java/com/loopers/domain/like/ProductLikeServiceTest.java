@@ -1,10 +1,13 @@
 package com.loopers.domain.like;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -144,6 +147,33 @@ class ProductLikeServiceTest {
                     () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
                     () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
                     () -> assertThat(productLikeInfo.changed()).isTrue()
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("여러 상품 좋아요 여부 조회 시,")
+    class AreLiked {
+
+        @DisplayName("유저가 좋아요를 등록한 상품만 반환한다.")
+        @Test
+        void returnMapOfProductIdsAndLikedStatus() {
+            ProductLikeCommand.AreLiked command = new ProductLikeCommand.AreLiked(Set.of(1L, 2L), 1L);
+            given(productLikeRepository.findProductLikesOf(1L, Set.of(1L, 2L)))
+                    .willReturn(List.of(
+                            ProductLike.create(new ProductLikeCommand.Create(1L, 1L))
+                    ));
+
+            List<ProductLikeStateInfo> productLikeStateInfos = productLikeService.areLiked(command);
+
+            assertAll(
+                    () -> assertThat(productLikeStateInfos).hasSize(2),
+                    () -> assertThat(productLikeStateInfos)
+                            .extracting("productId", "userId", "liked")
+                            .contains(
+                                    tuple(1L, 1L, true),
+                                    tuple(2L, 1L, false)
+                            )
             );
         }
     }

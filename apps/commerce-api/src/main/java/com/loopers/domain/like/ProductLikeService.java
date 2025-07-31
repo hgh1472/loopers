@@ -1,5 +1,8 @@
 package com.loopers.domain.like;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -32,5 +35,22 @@ public class ProductLikeService {
     @Transactional(readOnly = true)
     public boolean isLiked(ProductLikeCommand.IsLiked command) {
         return productLikeRepository.existsByProductIdAndUserId(command.productId(), command.userId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductLikeStateInfo> areLiked(ProductLikeCommand.AreLiked command) {
+        List<ProductLike> productLikes = productLikeRepository.findProductLikesOf(command.userId(), command.productIds());
+
+        Set<Long> likedProductIds = productLikes.stream()
+                .map(ProductLike::getProductId)
+                .collect(Collectors.toSet());
+
+        return command.productIds().stream()
+                .map(productId -> new ProductLikeStateInfo(
+                        productId,
+                        command.userId(),
+                        likedProductIds.contains(productId)
+                ))
+                .collect(Collectors.toList());
     }
 }
