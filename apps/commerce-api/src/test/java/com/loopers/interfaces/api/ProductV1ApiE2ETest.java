@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandCommand.Create;
 import com.loopers.domain.brand.BrandRepository;
+import com.loopers.domain.count.ProductCount;
+import com.loopers.domain.count.ProductCountRepository;
 import com.loopers.domain.like.ProductLike;
 import com.loopers.domain.like.ProductLikeCommand;
 import com.loopers.domain.like.ProductLikeRepository;
@@ -45,12 +47,13 @@ public class ProductV1ApiE2ETest {
     private final StockRepository stockRepository;
     private final ProductLikeRepository productLikeRepository;
     private final UserRepository userRepository;
+    private final ProductCountRepository productCountRepository;
 
     @Autowired
     public ProductV1ApiE2ETest(TestRestTemplate testRestTemplate, DatabaseCleanUp databaseCleanUp,
                                ProductRepository productRepository, BrandRepository brandRepository,
                                StockRepository stockRepository, ProductLikeRepository productLikeRepository,
-                               UserRepository userRepository) {
+                               UserRepository userRepository, ProductCountRepository productCountRepository) {
         this.testRestTemplate = testRestTemplate;
         this.databaseCleanUp = databaseCleanUp;
         this.productRepository = productRepository;
@@ -58,6 +61,7 @@ public class ProductV1ApiE2ETest {
         this.stockRepository = stockRepository;
         this.productLikeRepository = productLikeRepository;
         this.userRepository = userRepository;
+        this.productCountRepository = productCountRepository;
     }
 
     @AfterEach
@@ -93,8 +97,12 @@ public class ProductV1ApiE2ETest {
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
             Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
+            productCount.incrementLike();
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
 
             String requestUrl = "/api/v1/products/" + product.getId();
             ParameterizedTypeReference<ApiResponse<ProductV1Dto.ProductResponse>> responseType = new ParameterizedTypeReference<>() {
@@ -123,8 +131,12 @@ public class ProductV1ApiE2ETest {
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
             Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
+            productCount.incrementLike();
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
 
             String requestUrl = "/api/v1/products/" + product.getId().toString();
             ParameterizedTypeReference<ApiResponse<ProductV1Dto.ProductResponse>> responseType = new ParameterizedTypeReference<>() {
