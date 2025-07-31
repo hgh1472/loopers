@@ -25,4 +25,7 @@ public class OrderCommand {
             String requirements
     ) {
     }
+
+    public record Get(Long orderId) {
+    }
 }

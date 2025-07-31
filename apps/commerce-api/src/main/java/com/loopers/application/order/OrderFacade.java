@@ -63,4 +63,13 @@ public class OrderFacade {
 
         return OrderResult.from(orderInfo);
     }
+
+    @Transactional(readOnly = true)
+    public OrderResult get(OrderCriteria.Get criteria) {
+        UserInfo userInfo = userService.findUser(criteria.userId());
+        if (userInfo == null) {
+            throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+        return OrderResult.from(orderService.get(new OrderCommand.Get(criteria.orderId())));
+    }
 }

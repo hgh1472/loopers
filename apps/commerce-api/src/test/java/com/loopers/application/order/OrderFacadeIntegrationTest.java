@@ -138,4 +138,15 @@ class OrderFacadeIntegrationTest {
             );
         }
     }
+
+    @DisplayName("단일 주문 조회 시, 유저 ID가 유효하지 않은 경우, NOT_FOUND 예외를 발생시킨다.")
+    @Test
+    void throwNotFoundException_whenUserDoesNotExist() {
+        CoreException thrown = assertThrows(CoreException.class,
+                () -> orderFacade.get(new OrderCriteria.Get(-1L, 1L)));
+
+        assertThat(thrown)
+                .usingRecursiveComparison()
+                .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    }
 }

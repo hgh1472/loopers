@@ -38,4 +38,10 @@ public class OrderCriteria {
             String requirements
     ) {
     }
+
+    public record Get(
+            Long userId,
+            Long orderId
+    ) {
+    }
 }

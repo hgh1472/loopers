@@ -1,10 +1,11 @@
 package com.loopers.interfaces.api;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import com.loopers.domain.order.Order;
+import com.loopers.domain.order.OrderCommand;
+import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
@@ -123,5 +124,42 @@ public class OrderV1ApiE2ETest {
                     () -> assertThat(response.getBody().data().delivery()).isEqualTo(delivery)
             );
         }
+    }
+
+    @DisplayName("단일 주문 조회 시, 사용자 주문 정보를 반환한다.")
+    @Test
+    void returnOrderResponse() {
+        User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+        OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
+        Order order = Order.of(user.getId(), delivery);
+        order.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000"))));
+        order.addLine(OrderLine.from(new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))));
+        Order saved = orderRepository.save(order);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("X-USER-ID", String.valueOf(user.getId()));
+        String url = "/api/v1/orders/" + saved.getId();
+        ParameterizedTypeReference<ApiResponse<OrderV1Dto.OrderResponse>> responseType = new ParameterizedTypeReference<>() {
+        };
+
+        ResponseEntity<ApiResponse<OrderV1Dto.OrderResponse>> response =
+                testRestTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null, httpHeaders), responseType);
+
+        assertAll(
+                () -> assertThat(response.getStatusCode().is2xxSuccessful()).isTrue(),
+                () -> assertThat(response.getBody()).isNotNull(),
+                () -> assertThat(response.getBody().data()).isNotNull(),
+                () -> assertThat(response.getBody().data().orderId()).isEqualTo(saved.getId()),
+                () -> assertThat(response.getBody().data().lines()).hasSize(2),
+                () -> assertThat(response.getBody().data().lines()).contains(new OrderV1Dto.Line(1L, 2L), new OrderV1Dto.Line(2L, 3L)),
+                () -> assertThat(response.getBody().data().payment().paymentAmount().longValue()).isEqualTo(saved.getOrderPayment().getPaymentAmount().longValue()),
+                () -> assertThat(response.getBody().data().delivery()).isEqualTo(new OrderV1Dto.Delivery(
+                        delivery.receiverName(),
+                        delivery.phoneNumber(),
+                        delivery.baseAddress(),
+                        delivery.detailAddress(),
+                        delivery.requirements())
+                )
+        );
     }
 }

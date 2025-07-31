@@ -15,4 +15,12 @@ public interface OrderV1ApiSpec {
     ApiResponse<OrderV1Dto.OrderResponse> order(
             @Schema(name = "주문 요청", description = "주문에 필요한 정보") OrderV1Dto.OrderRequest orderRequest,
             @Schema(name = "사용자 ID", description = "주문하는 사용자 ID") Long userId);
+
+    @Operation(
+            summary = "주문 단일 조회",
+            description = "주문 ID로 주문을 조회합니다."
+    )
+    ApiResponse<OrderV1Dto.OrderResponse> get(
+            @Schema(name = "사용자 ID", description = "주문을 조회하는 사용자 ID") Long userId,
+            @Schema(name = "주문 ID", description = "조회할 주문의 ID") Long orderId);
 }
