@@ -2,12 +2,14 @@ package com.loopers.domain.like;
 
 public record ProductLikeInfo(
         Long productId,
-        Long userId
+        Long userId,
+        boolean changed
 ) {
-    public static ProductLikeInfo from(ProductLike productLike) {
+    public static ProductLikeInfo of(ProductLike productLike, boolean changed) {
         return new ProductLikeInfo(
                 productLike.getProductId(),
-                productLike.getUserId()
+                productLike.getUserId(),
+                changed
         );
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductLikeJpaRepository extends JpaRepository<ProductLike, Long> {
 
-    void deleteByProductIdAndUserId(Long productId, Long userId);
+    int deleteByProductIdAndUserId(Long productId, Long userId);
 
     Long countByProductId(Long productId);
 

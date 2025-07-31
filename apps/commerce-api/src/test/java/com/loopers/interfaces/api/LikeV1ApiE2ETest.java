@@ -4,11 +4,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.loopers.domain.count.ProductCount;
+import com.loopers.domain.count.ProductCountRepository;
 import com.loopers.domain.like.ProductLike;
 import com.loopers.domain.like.ProductLikeCommand;
 import com.loopers.domain.like.ProductLikeRepository;
+import com.loopers.domain.product.Product;
+import com.loopers.domain.product.ProductCommand;
+import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.user.User;
+import com.loopers.domain.user.UserCommand;
+import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.like.LikeV1Dto;
 import com.loopers.utils.DatabaseCleanUp;
+import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,13 +37,20 @@ public class LikeV1ApiE2ETest {
     private final TestRestTemplate testRestTemplate;
     private final DatabaseCleanUp databaseCleanUp;
     private final ProductLikeRepository productLikeRepository;
+    private final ProductCountRepository productCountRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
     @Autowired
     public LikeV1ApiE2ETest(TestRestTemplate testRestTemplate, DatabaseCleanUp databaseCleanUp,
-                            ProductLikeRepository productLikeRepository) {
+                            ProductLikeRepository productLikeRepository, ProductCountRepository productCountRepository,
+                            UserRepository userRepository, ProductRepository productRepository) {
         this.testRestTemplate = testRestTemplate;
         this.databaseCleanUp = databaseCleanUp;
         this.productLikeRepository = productLikeRepository;
+        this.productCountRepository = productCountRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
     }
 
     @AfterEach
@@ -50,17 +66,19 @@ public class LikeV1ApiE2ETest {
         @DisplayName("상품 좋아요 생성 시, 기존 좋아요 여부 상관없이, 같은 응답을 반환한다.")
         @Test
         void returnSameResponse_RegardlessOfProductLikeExist() {
-            Long productId = 1L;
-            Long userId = 1L;
+            User user = userRepository.save(User.create(new UserCommand.Join("LoginId", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product", new BigDecimal("2000"), "ON_SALE")));
+            productCountRepository.save(ProductCount.from(product.getId()));
+
             ParameterizedTypeReference<ApiResponse<LikeV1Dto.ProductLikeResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", userId.toString());
+            headers.set("X-USER-ID", user.getId().toString());
             ResponseEntity<ApiResponse<LikeV1Dto.ProductLikeResponse>> first =
-                    testRestTemplate.exchange(BASE_URL + productId, HttpMethod.POST, new HttpEntity<>(headers), responseType);
+                    testRestTemplate.exchange(BASE_URL + product.getId(), HttpMethod.POST, new HttpEntity<>(headers), responseType);
 
             ResponseEntity<ApiResponse<LikeV1Dto.ProductLikeResponse>> second =
-                    testRestTemplate.exchange(BASE_URL + productId, HttpMethod.POST, new HttpEntity<>(headers), responseType);
+                    testRestTemplate.exchange(BASE_URL + product.getId(), HttpMethod.POST, new HttpEntity<>(headers), responseType);
 
             assertAll(
                     () -> assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK),
@@ -72,20 +90,21 @@ public class LikeV1ApiE2ETest {
         @DisplayName("상품 좋아요 생성 시, 상품 좋아요 정보를 반환한다.")
         @Test
         void returnProductLikeInfo_whenCreatingLike() {
-            Long productId = 1L;
-            Long userId = 1L;
+            User user = userRepository.save(User.create(new UserCommand.Join("LoginId", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product", new BigDecimal("2000"), "ON_SALE")));
+            productCountRepository.save(ProductCount.from(product.getId()));
             ParameterizedTypeReference<ApiResponse<LikeV1Dto.ProductLikeResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", userId.toString());
+            headers.set("X-USER-ID", user.getId().toString());
 
             ResponseEntity<ApiResponse<LikeV1Dto.ProductLikeResponse>> response =
-                    testRestTemplate.exchange(BASE_URL + productId, HttpMethod.POST, new HttpEntity<>(headers), responseType);
+                    testRestTemplate.exchange(BASE_URL + product.getId(), HttpMethod.POST, new HttpEntity<>(headers), responseType);
 
             assertAll(
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                    () -> assertThat(response.getBody().data().productId()).isEqualTo(productId),
-                    () -> assertThat(response.getBody().data().userId()).isEqualTo(userId)
+                    () -> assertThat(response.getBody().data().productId()).isEqualTo(product.getId()),
+                    () -> assertThat(response.getBody().data().userId()).isEqualTo(user.getId())
             );
         }
     }
@@ -98,17 +117,18 @@ public class LikeV1ApiE2ETest {
         @DisplayName("상품 좋아요 취소 시, 기존 좋아요 여부 상관없이, 같은 응답을 반환한다.")
         @Test
         void returnSameResponse_regardlessOfProductLikeExist() {
-            Long productId = 1L;
-            Long userId = 1L;
+            User user = userRepository.save(User.create(new UserCommand.Join("LoginId", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product", new BigDecimal("2000"), "ON_SALE")));
+            productCountRepository.save(ProductCount.from(product.getId()));
             ParameterizedTypeReference<ApiResponse<LikeV1Dto.ProductLikeResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", userId.toString());
+            headers.set("X-USER-ID", user.getId().toString());
             ResponseEntity<ApiResponse<LikeV1Dto.ProductLikeResponse>> first =
-                    testRestTemplate.exchange(BASE_URL + productId, HttpMethod.DELETE, new HttpEntity<>(headers), responseType);
+                    testRestTemplate.exchange(BASE_URL + product.getId(), HttpMethod.DELETE, new HttpEntity<>(headers), responseType);
 
             ResponseEntity<ApiResponse<LikeV1Dto.ProductLikeResponse>> second =
-                    testRestTemplate.exchange(BASE_URL + productId, HttpMethod.DELETE, new HttpEntity<>(headers), responseType);
+                    testRestTemplate.exchange(BASE_URL + product.getId(), HttpMethod.DELETE, new HttpEntity<>(headers), responseType);
 
             assertAll(
                     () -> assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK),
@@ -120,21 +140,25 @@ public class LikeV1ApiE2ETest {
         @DisplayName("상품 좋아요 취소 시, 취소한 좋아요 정보를 반환한다.")
         @Test
         void returnProductLikeInfo_whenCreatingLike() {
-            Long productId = 1L;
-            Long userId = 1L;
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(productId, userId)));
+            User user = userRepository.save(User.create(new UserCommand.Join("LoginId", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product", new BigDecimal("2000"), "ON_SALE")));
+            ProductCount productCount = ProductCount.from(product.getId());
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
+
+            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
             ParameterizedTypeReference<ApiResponse<LikeV1Dto.ProductLikeResponse>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", userId.toString());
+            headers.set("X-USER-ID", user.getId().toString());
 
             ResponseEntity<ApiResponse<LikeV1Dto.ProductLikeResponse>> response =
-                    testRestTemplate.exchange(BASE_URL + productId, HttpMethod.DELETE, new HttpEntity<>(headers), responseType);
+                    testRestTemplate.exchange(BASE_URL + product.getId(), HttpMethod.DELETE, new HttpEntity<>(headers), responseType);
 
             assertAll(
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                    () -> assertThat(response.getBody().data().productId()).isEqualTo(productId),
-                    () -> assertThat(response.getBody().data().userId()).isEqualTo(userId)
+                    () -> assertThat(response.getBody().data().productId()).isEqualTo(product.getId()),
+                    () -> assertThat(response.getBody().data().userId()).isEqualTo(user.getId())
             );
         }
     }

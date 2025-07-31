@@ -3,6 +3,8 @@ package com.loopers.application.product;
 import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandInfo;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.count.ProductCountInfo;
+import com.loopers.domain.count.ProductCountService;
 import com.loopers.domain.like.ProductLikeCommand;
 import com.loopers.domain.like.ProductLikeService;
 import com.loopers.domain.product.ProductCommand.Find;
@@ -24,13 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductFacade {
 
     private final ProductService productService;
-
     private final BrandService brandService;
-
     private final ProductLikeService productLikeService;
-
     private final StockService stockService;
-
+    private final ProductCountService productCountService;
     private final UserService userService;
 
     @Transactional(readOnly = true)
@@ -41,7 +40,7 @@ public class ProductFacade {
         }
         BrandInfo brandInfo = brandService.findBy(new BrandCommand.Find(productInfo.brandId()));
         StockInfo stockInfo = stockService.findStock(new StockCommand.Find(productInfo.id()));
-        Long likeCount = productLikeService.countLikes(new ProductLikeCommand.Count(productInfo.id()));
+        ProductCountInfo countInfo = productCountService.getProductCount(productInfo.id());
 
         boolean isLiked = false;
         if (criteria.userId() != null) {
@@ -50,6 +49,6 @@ public class ProductFacade {
                 isLiked = productLikeService.isLiked(new ProductLikeCommand.IsLiked(productInfo.id(), userInfo.id()));
             }
         }
-        return ProductResult.from(productInfo, brandInfo, stockInfo, likeCount, isLiked);
+        return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), isLiked);
     }
 }
