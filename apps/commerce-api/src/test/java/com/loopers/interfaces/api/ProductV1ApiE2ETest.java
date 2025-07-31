@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import com.loopers.domain.brand.Brand;
-import com.loopers.domain.brand.BrandCommand.Create;
+import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.count.ProductCount;
 import com.loopers.domain.count.ProductCountRepository;
@@ -18,7 +18,7 @@ import com.loopers.domain.stock.Stock;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
-import com.loopers.domain.user.UserCommand.Join;
+import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.product.ProductV1Dto;
 import com.loopers.utils.DatabaseCleanUp;
@@ -92,10 +92,10 @@ public class ProductV1ApiE2ETest {
         @DisplayName("미로그인 유저가 상품 조회 시, 상품 좋아요 여부는 false로 반환한다.")
         @Test
         void returnLikeFalse_whenUserDoesNotLogin() {
-            User user = userRepository.save(User.create(new Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
             Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
@@ -126,10 +126,10 @@ public class ProductV1ApiE2ETest {
         @DisplayName("로그인 유저가 상품 조회 시, 좋아요 한 상품일 경우, 상품 좋아요 여부는 true로 반환한다.")
         @Test
         void returnLikeTrue_whenProductLikeExists_withUser() {
-            User user = userRepository.save(User.create(new Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
             Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
             Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
             Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             ProductCount productCount = ProductCount.from(product.getId());
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
@@ -157,6 +157,37 @@ public class ProductV1ApiE2ETest {
                     () -> assertThat(response.getBody().data().likeCount()).isEqualTo(2L),
                     () -> assertThat(response.getBody().data().isLiked()).isTrue()
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/products")
+    class Search {
+        @DisplayName("상품 검색 시, 최신순 상품 목록을 반환한다.")
+        @Test
+        void returnProductList_whenSearchProducts() {
+            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
+            for (int i = 1; i <= 20; i++) {
+                Product product = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "제품", new BigDecimal(1000L), "ON_SALE")));
+                productCountRepository.save(ProductCount.from(product.getId()));
+            }
+
+            String requestUrl = "/api/v1/products";
+            ProductV1Dto.ProductSearchRequest request = new ProductV1Dto.ProductSearchRequest(brand.getId(), 1, 10, "LATEST");
+            ParameterizedTypeReference<ApiResponse<ProductV1Dto.ProductPageResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.add("X-USER-ID", user.getId().toString());
+            ResponseEntity<ApiResponse<ProductV1Dto.ProductPageResponse>> response =
+                    testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(request, httpHeaders), responseType);
+
+            assertAll(
+                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
+                    () -> assertThat(response.getBody().data().productPage().getTotalPages()).isEqualTo(2),
+                    () -> assertThat(response.getBody().data().productPage().getTotalElements()).isEqualTo(20L),
+                    () -> assertThat(response.getBody().data().productPage().getContent().get(0).id()).isEqualTo(10L))
+            ;
         }
     }
 }

@@ -14,4 +14,12 @@ public interface ProductV1ApiSpec {
     ApiResponse<ProductV1Dto.ProductResponse> getProduct(
             Long productId, Long userId
     );
+
+    @Operation(
+            summary = "상품 목록 조회",
+            description = "상품 목록을 조회합니다."
+    )
+    ApiResponse<ProductV1Dto.ProductPageResponse> searchProducts(
+            ProductV1Dto.ProductSearchRequest request, Long userId
+    );
 }
