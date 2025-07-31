@@ -1,12 +1,13 @@
 package com.loopers.application.order;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.loopers.domain.order.Order;
+import com.loopers.domain.order.OrderCommand;
+import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
@@ -78,7 +79,6 @@ class OrderFacadeIntegrationTest {
         }
 
 
-
         @DisplayName("같은 아이템이 구분되어 요청되는 경우, 하나의 요청으로 처리한다.")
         @Test
         void orderDuplicateLine() {
@@ -139,14 +139,56 @@ class OrderFacadeIntegrationTest {
         }
     }
 
-    @DisplayName("단일 주문 조회 시, 유저 ID가 유효하지 않은 경우, NOT_FOUND 예외를 발생시킨다.")
-    @Test
-    void throwNotFoundException_whenUserDoesNotExist() {
-        CoreException thrown = assertThrows(CoreException.class,
-                () -> orderFacade.get(new OrderCriteria.Get(-1L, 1L)));
+    @Nested
+    @DisplayName("단일 주문 조회 시,")
+    class Get {
+        @DisplayName("유저 ID가 유효하지 않은 경우, NOT_FOUND 예외를 발생시킨다.")
+        @Test
+        void throwNotFoundException_whenUserDoesNotExist() {
+            CoreException thrown = assertThrows(CoreException.class,
+                    () -> orderFacade.get(new OrderCriteria.Get(-1L, 1L)));
 
-        assertThat(thrown)
-                .usingRecursiveComparison()
-                .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        }
+
+        @DisplayName("유저의 주문이 아닌 경우, CONFLICT 예외를 발생시킨다.")
+        @Test
+        void throwConflictException_whenOrderDoesNotBelongToUser() {
+            User user1 = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            User user2 = userRepository.save(User.create(new UserCommand.Join("test2", "zofldi500@loopers.im", "1999-06-23", "MALE")));
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항");
+            Order order = Order.of(user1.getId(), delivery);
+            order.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00"))));
+            Order saved = orderRepository.save(order);
+
+            CoreException thrown = assertThrows(CoreException.class,
+                    () -> orderFacade.get(new OrderCriteria.Get(user2.getId(), saved.getId())));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "주문 정보에 접근할 수 없습니다."));
+        }
+
+        @Nested
+        @DisplayName("주문 목록 조회 시,")
+        class GetOrders {
+            @DisplayName("사용자가 존재하지 않는 경우, NOT_FOUND 예외를 발생시킨다.")
+            @Test
+            void throwNotFoundException_whenUserDoesNotExist() {
+                CoreException thrown = assertThrows(CoreException.class,
+                        () -> orderFacade.getOrdersOf(new OrderCriteria.GetOrders(-1L)));
+
+                assertThat(thrown)
+                        .usingRecursiveComparison()
+                        .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+            }
+        }
     }
 }

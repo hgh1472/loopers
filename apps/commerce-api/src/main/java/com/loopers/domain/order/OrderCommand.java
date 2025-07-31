@@ -28,4 +28,7 @@ public class OrderCommand {
 
     public record Get(Long orderId) {
     }
+
+    public record GetOrders(Long userId) {
+    }
 }

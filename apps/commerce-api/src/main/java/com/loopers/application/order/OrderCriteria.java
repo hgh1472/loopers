@@ -44,4 +44,9 @@ public class OrderCriteria {
             Long orderId
     ) {
     }
+
+    public record GetOrders(
+            Long userId
+    ) {
+    }
 }

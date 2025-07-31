@@ -4,6 +4,7 @@ import com.loopers.interfaces.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 
 @Tag(name = "Order API", description = "Loopers Order API 입니다.")
 public interface OrderV1ApiSpec {
@@ -23,4 +24,12 @@ public interface OrderV1ApiSpec {
     ApiResponse<OrderV1Dto.OrderResponse> get(
             @Schema(name = "사용자 ID", description = "주문을 조회하는 사용자 ID") Long userId,
             @Schema(name = "주문 ID", description = "조회할 주문의 ID") Long orderId);
+
+    @Operation(
+            summary = "주문 목록 조회",
+            description = "사용자의 모든 주문을 조회합니다."
+    )
+    ApiResponse<List<OrderV1Dto.OrderResponse>> getOrders(
+            @Schema(name = "사용자 ID", description = "주문 목록을 조회하는 사용자 ID") Long userId
+    );
 }

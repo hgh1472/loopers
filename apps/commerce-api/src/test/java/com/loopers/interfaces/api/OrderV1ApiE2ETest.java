@@ -162,4 +162,43 @@ public class OrderV1ApiE2ETest {
                 )
         );
     }
+
+    @DisplayName("주문 목록 조회 시, 사용자의 주문 목록을 반환한다.")
+    @Test
+    void returnOrderList() {
+        User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+        OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
+        Order order1 = Order.of(user.getId(), delivery);
+        order1.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000"))));
+        order1.addLine(OrderLine.from(new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))));
+        Order saved1 = orderRepository.save(order1);
+
+        Order order2 = Order.of(user.getId(), delivery);
+        order2.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000"))));
+        order2.addLine(OrderLine.from(new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))));
+        Order saved2 = orderRepository.save(order2);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("X-USER-ID", String.valueOf(user.getId()));
+        String url = "/api/v1/orders";
+        ParameterizedTypeReference<ApiResponse<List<OrderV1Dto.OrderResponse>>> responseType = new ParameterizedTypeReference<>() {
+        };
+
+        ResponseEntity<ApiResponse<List<OrderV1Dto.OrderResponse>>> response =
+                testRestTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null, httpHeaders), responseType);
+
+        assertAll(
+                () -> assertThat(response.getStatusCode().is2xxSuccessful()).isTrue(),
+                () -> assertThat(response.getBody()).isNotNull(),
+                () -> assertThat(response.getBody().data()).isNotNull(),
+                () -> assertThat(response.getBody().data()).hasSize(2),
+                () -> assertThat(response.getBody().data()).extracting(OrderV1Dto.OrderResponse::orderId)
+                        .containsExactlyInAnyOrder(saved1.getId(), saved2.getId()),
+                () -> assertThat(response.getBody().data()).extracting(OrderV1Dto.OrderResponse::lines)
+                        .allSatisfy(lines -> assertThat(lines).hasSize(2)),
+                () -> assertThat(response.getBody().data()).extracting(OrderV1Dto.OrderResponse::payment)
+                        .allSatisfy(payment -> assertThat(payment.paymentAmount().longValue())
+                                .isEqualTo(saved1.getOrderPayment().getPaymentAmount().longValue()))
+        );
+    }
 }

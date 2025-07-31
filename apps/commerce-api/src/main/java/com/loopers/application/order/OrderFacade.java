@@ -70,6 +70,23 @@ public class OrderFacade {
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
-        return OrderResult.from(orderService.get(new OrderCommand.Get(criteria.orderId())));
+        OrderInfo orderInfo =  orderService.get(new OrderCommand.Get(criteria.orderId()));
+        if (!userInfo.id().equals(orderInfo.userId())) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 정보에 접근할 수 없습니다.");
+        }
+        return OrderResult.from(orderInfo);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResult> getOrdersOf(OrderCriteria.GetOrders criteria) {
+        UserInfo userInfo = userService.findUser(criteria.userId());
+        if (userInfo == null) {
+            throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+
+        return orderService.getOrdersOf(new OrderCommand.GetOrders(criteria.userId()))
+                .stream()
+                .map(OrderResult::from)
+                .toList();
     }
 }
