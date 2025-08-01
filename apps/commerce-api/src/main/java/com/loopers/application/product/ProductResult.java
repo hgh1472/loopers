@@ -27,4 +27,26 @@ public record ProductResult(
                 isLiked
         );
     }
+
+    public record Search(
+            Long id,
+            String brandName,
+            String productName,
+            BigDecimal price,
+            String status,
+            Long likeCount,
+            boolean isLiked
+    ) {
+        public static Search from(ProductInfo.Search searchInfo, boolean isLiked) {
+            return new Search(
+                    searchInfo.id(),
+                    searchInfo.brandName(),
+                    searchInfo.name(),
+                    searchInfo.price(),
+                    searchInfo.status(),
+                    searchInfo.likeCount(),
+                    isLiked
+            );
+        }
+    }
 }

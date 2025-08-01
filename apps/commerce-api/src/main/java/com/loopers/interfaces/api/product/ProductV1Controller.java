@@ -2,7 +2,6 @@ package com.loopers.interfaces.api.product;
 
 import com.loopers.application.product.ProductCriteria;
 import com.loopers.application.product.ProductFacade;
-import com.loopers.application.product.ProductListResult;
 import com.loopers.application.product.ProductResult;
 import com.loopers.domain.PageResponse;
 import com.loopers.interfaces.api.ApiResponse;
@@ -37,8 +36,9 @@ public class ProductV1Controller implements ProductV1ApiSpec {
     @GetMapping
     public ApiResponse<ProductPageResponse> searchProducts(@Valid @RequestBody ProductSearchRequest request,
                                                            @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        PageResponse<ProductListResult> results = productFacade.searchProducts(new ProductCriteria.Search(request.brandId(), userId,
-                request.page(), request.size(), request.sort()));
+        PageResponse<ProductResult.Search> results = productFacade.searchProducts(
+                new ProductCriteria.Search(request.brandId(), userId,
+                        request.page(), request.size(), request.sort()));
 
         return ApiResponse.success(ProductPageResponse.from(results));
     }

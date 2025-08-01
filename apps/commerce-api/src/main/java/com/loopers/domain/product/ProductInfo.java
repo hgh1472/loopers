@@ -18,4 +18,26 @@ public record ProductInfo(
                 product.getStatus().name()
         );
     }
+
+    public record Search(
+            Long id,
+            Long brandId,
+            String brandName,
+            String name,
+            BigDecimal price,
+            String status,
+            Long likeCount
+    ) {
+        public static Search from(ProductSearchView view) {
+            return new Search(
+                    view.id(),
+                    view.brandId(),
+                    view.brandName(),
+                    view.name(),
+                    view.price().getValue(),
+                    view.status().name(),
+                    view.likeCount()
+            );
+        }
+    }
 }

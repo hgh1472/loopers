@@ -16,29 +16,29 @@ public class ProductLikeService {
     private final ProductLikeRepository productLikeRepository;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public ProductLikeActionInfo like(ProductLikeCommand.Create command) {
+    public LikeInfo.ProductAction like(ProductLikeCommand.Create command) {
         ProductLike productLike = ProductLike.create(command);
         try {
             productLikeRepository.save(productLike);
-            return ProductLikeActionInfo.of(productLike, true);
+            return LikeInfo.ProductAction.of(productLike, true);
         } catch (DataIntegrityViolationException e) {
-            return ProductLikeActionInfo.of(productLike, false);
+            return LikeInfo.ProductAction.of(productLike, false);
         }
     }
 
     @Transactional
-    public ProductLikeActionInfo cancelLike(ProductLikeCommand.Delete command) {
+    public LikeInfo.ProductAction cancelLike(ProductLikeCommand.Delete command) {
         boolean deleted = productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId());
-        return new ProductLikeActionInfo(command.productId(), command.userId(), deleted);
+        return new LikeInfo.ProductAction(command.productId(), command.userId(), deleted);
     }
 
     @Transactional(readOnly = true)
-    public boolean isLiked(ProductLikeCommand.IsLiked command) {
-        return productLikeRepository.existsByProductIdAndUserId(command.productId(), command.userId());
+    public LikeInfo.IsLiked isLiked(ProductLikeCommand.IsLiked command) {
+        return new LikeInfo.IsLiked(productLikeRepository.existsByProductIdAndUserId(command.productId(), command.userId()));
     }
 
     @Transactional(readOnly = true)
-    public List<ProductLikeStateInfo> areLiked(ProductLikeCommand.AreLiked command) {
+    public List<LikeInfo.ProductState> areLiked(ProductLikeCommand.AreLiked command) {
         List<ProductLike> productLikes = productLikeRepository.findProductLikesOf(command.userId(), command.productIds());
 
         Set<Long> likedProductIds = productLikes.stream()
@@ -46,7 +46,7 @@ public class ProductLikeService {
                 .collect(Collectors.toSet());
 
         return command.productIds().stream()
-                .map(productId -> new ProductLikeStateInfo(
+                .map(productId -> new LikeInfo.ProductState(
                         productId,
                         command.userId(),
                         likedProductIds.contains(productId)
@@ -55,10 +55,10 @@ public class ProductLikeService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductLikeInfo> getMyProductLikes(ProductLikeCommand.Get command) {
+    public List<LikeInfo.Product> getMyProductLikes(ProductLikeCommand.Get command) {
         List<ProductLike> productLikes = productLikeRepository.findAllByUserId(command.userId());
         return productLikes.stream()
-                .map(ProductLikeInfo::from)
+                .map(LikeInfo.Product::from)
                 .collect(Collectors.toList());
     }
 }

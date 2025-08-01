@@ -1,6 +1,5 @@
 package com.loopers.interfaces.api.product;
 
-import com.loopers.application.product.ProductListResult;
 import com.loopers.application.product.ProductResult;
 import com.loopers.domain.PageResponse;
 import jakarta.validation.constraints.Min;
@@ -43,7 +42,7 @@ public class ProductV1Dto {
     public record ProductPageResponse(
             PageResponse<ProductSearchResponse> productPage
     ) {
-        public static ProductPageResponse from(PageResponse<ProductListResult> productPageResults) {
+        public static ProductPageResponse from(PageResponse<ProductResult.Search> productPageResults) {
             return new ProductPageResponse(
                     productPageResults.map(ProductSearchResponse::from)
             );
@@ -58,7 +57,7 @@ public class ProductV1Dto {
                 Long likeCount,
                 boolean isLiked
         ) {
-            public static ProductSearchResponse from(ProductListResult productListResult) {
+            public static ProductSearchResponse from(ProductResult.Search productListResult) {
                 return new ProductSearchResponse(
                         productListResult.id(),
                         productListResult.brandName(),

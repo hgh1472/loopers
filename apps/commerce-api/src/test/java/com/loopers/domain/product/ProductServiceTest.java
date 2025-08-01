@@ -104,7 +104,7 @@ class ProductServiceTest {
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
 
-            PageResponse<ProductSearchInfo> result = productService.search(command);
+            PageResponse<ProductInfo.Search> result = productService.search(command);
 
             verify(productRepository, times(1))
                     .search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST));
@@ -117,7 +117,7 @@ class ProductServiceTest {
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
 
-            PageResponse<ProductSearchInfo> result = productService.search(command);
+            PageResponse<ProductInfo.Search> result = productService.search(command);
 
             verify(productRepository, times(1))
                     .search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST));
@@ -130,7 +130,7 @@ class ProductServiceTest {
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
 
-            PageResponse<ProductSearchInfo> result = productService.search(command);
+            PageResponse<ProductInfo.Search> result = productService.search(command);
 
             verify(productRepository, times(1))
                     .search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST));
@@ -143,7 +143,7 @@ class ProductServiceTest {
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
 
-            PageResponse<ProductSearchInfo> result = productService.search(command);
+            PageResponse<ProductInfo.Search> result = productService.search(command);
 
             verify(productRepository, times(1))
                     .search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST));

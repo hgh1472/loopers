@@ -1,8 +1,8 @@
 package com.loopers.application.like;
 
 import com.loopers.domain.count.ProductCountInfo;
-import com.loopers.domain.like.ProductLikeActionInfo;
-import com.loopers.domain.product.ProductSearchInfo;
+import com.loopers.domain.like.LikeInfo;
+import com.loopers.domain.product.ProductInfo;
 import java.math.BigDecimal;
 
 public class LikeResult {
@@ -10,10 +10,10 @@ public class LikeResult {
             Long userId,
             Long productId
     ) {
-        public static LikeResult.Product from(ProductLikeActionInfo productLikeActionInfo) {
+        public static LikeResult.Product from(LikeInfo.ProductAction actionInfo) {
             return new LikeResult.Product(
-                    productLikeActionInfo.userId(),
-                    productLikeActionInfo.productId()
+                    actionInfo.userId(),
+                    actionInfo.productId()
             );
         }
     }
@@ -28,14 +28,14 @@ public class LikeResult {
             boolean isLiked
     ) {
         public static LikeResult.ProductList from(ProductCountInfo productCountInfo,
-                                                  ProductSearchInfo productSearchInfo,
+                                                  ProductInfo.Search searchInfo,
                                                   boolean isLiked) {
             return new LikeResult.ProductList(
-                    productSearchInfo.id(),
-                    productSearchInfo.brandName(),
-                    productSearchInfo.name(),
-                    productSearchInfo.price(),
-                    productSearchInfo.status(),
+                    searchInfo.id(),
+                    searchInfo.brandName(),
+                    searchInfo.name(),
+                    searchInfo.price(),
+                    searchInfo.status(),
                     productCountInfo.likeCount(),
                     isLiked
             );

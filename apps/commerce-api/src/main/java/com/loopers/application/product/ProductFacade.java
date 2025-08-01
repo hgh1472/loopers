@@ -7,12 +7,11 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.count.ProductCountCommand;
 import com.loopers.domain.count.ProductCountInfo;
 import com.loopers.domain.count.ProductCountService;
+import com.loopers.domain.like.LikeInfo;
 import com.loopers.domain.like.ProductLikeCommand;
 import com.loopers.domain.like.ProductLikeService;
-import com.loopers.domain.like.ProductLikeStateInfo;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
-import com.loopers.domain.product.ProductSearchInfo;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockInfo;
@@ -50,31 +49,30 @@ public class ProductFacade {
         StockInfo stockInfo = stockService.findStock(new StockCommand.Find(productInfo.id()));
         ProductCountInfo countInfo = productCountService.getProductCount(new ProductCountCommand.Get(productInfo.id()));
 
-        boolean isLiked = false;
-        if (criteria.userId() != null) {
-            UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
-            if (userInfo != null) {
-                isLiked = productLikeService.isLiked(new ProductLikeCommand.IsLiked(productInfo.id(), userInfo.id()));
-            }
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
+        if (userInfo != null) {
+            LikeInfo.IsLiked isLiked = productLikeService.isLiked(
+                    new ProductLikeCommand.IsLiked(productInfo.id(), userInfo.id()));
+            return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), isLiked.liked());
         }
-        return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), isLiked);
+        return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), false);
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ProductListResult> searchProducts(ProductCriteria.Search criteria) {
-        PageResponse<ProductSearchInfo> infos = productService.search(criteria.toPageCommand());
+    public PageResponse<ProductResult.Search> searchProducts(ProductCriteria.Search criteria) {
+        PageResponse<ProductInfo.Search> infos = productService.search(criteria.toPageCommand());
 
         UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
-            return infos.map(info -> ProductListResult.from(info, false));
+            return infos.map(info -> ProductResult.Search.from(info, false));
         }
 
-        Set<Long> productIds = infos.getContent().stream().map(ProductSearchInfo::id).collect(Collectors.toSet());
-        Map<Long, ProductLikeStateInfo> stateMap = productLikeService.areLiked(
+        Set<Long> productIds = infos.getContent().stream().map(ProductInfo.Search::id).collect(Collectors.toSet());
+        Map<Long, LikeInfo.ProductState> stateMap = productLikeService.areLiked(
                         new ProductLikeCommand.AreLiked(productIds, userInfo.id()))
                 .stream()
-                .collect(Collectors.toMap(ProductLikeStateInfo::productId, info -> info));
+                .collect(Collectors.toMap(LikeInfo.ProductState::productId, info -> info));
 
-        return infos.map(info -> ProductListResult.from(info, stateMap.get(info.id()).isLiked()));
+        return infos.map(info -> ProductResult.Search.from(info, stateMap.get(info.id()).isLiked()));
     }
 }

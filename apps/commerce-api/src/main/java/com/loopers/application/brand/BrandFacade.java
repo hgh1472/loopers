@@ -1,6 +1,5 @@
 package com.loopers.application.brand;
 
-import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandInfo;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.support.error.CoreException;

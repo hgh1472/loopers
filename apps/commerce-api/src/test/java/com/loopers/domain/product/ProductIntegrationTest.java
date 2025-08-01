@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 
 @SpringBootTest
 public class ProductIntegrationTest {
@@ -51,7 +50,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(ProductCount.from(i));
             }
 
-            PageResponse<ProductSearchInfo> latest = productService.search(new ProductCommand.Page(null, 1, 5, "LATEST"));
+            PageResponse<ProductInfo.Search> latest = productService.search(new ProductCommand.Page(null, 1, 5, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(25),
@@ -74,7 +73,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(ProductCount.from(i));
             }
 
-            PageResponse<ProductSearchInfo> priceAsc = productService.search(new ProductCommand.Page(null, 2, 5, "PRICE_ASC"));
+            PageResponse<ProductInfo.Search> priceAsc = productService.search(new ProductCommand.Page(null, 2, 5, "PRICE_ASC"));
 
             assertAll(
                     () -> assertThat(priceAsc.getTotalElements()).isEqualTo(25),
@@ -101,7 +100,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(productCount);
             }
 
-            PageResponse<ProductSearchInfo> likeDesc = productService.search(new ProductCommand.Page(null, 1, 5, "LIKE_DESC"));
+            PageResponse<ProductInfo.Search> likeDesc = productService.search(new ProductCommand.Page(null, 1, 5, "LIKE_DESC"));
 
             assertAll(
                     () -> assertThat(likeDesc.getTotalElements()).isEqualTo(25),
@@ -124,7 +123,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(ProductCount.from(i));
             }
 
-            PageResponse<ProductSearchInfo> latest = productService.search(new ProductCommand.Page(brand.getId(), 0, 30, "LATEST"));
+            PageResponse<ProductInfo.Search> latest = productService.search(new ProductCommand.Page(brand.getId(), 0, 30, "LATEST"));
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(10),
                     () -> assertThat(latest.getTotalPages()).isEqualTo(1),
@@ -145,7 +144,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(ProductCount.from(i));
             }
 
-            PageResponse<ProductSearchInfo> priceAsc = productService.search(new ProductCommand.Page(brand.getId(), 1, 6, "PRICE_ASC"));
+            PageResponse<ProductInfo.Search> priceAsc = productService.search(new ProductCommand.Page(brand.getId(), 1, 6, "PRICE_ASC"));
 
             assertAll(
                     () -> assertThat(priceAsc.getTotalElements()).isEqualTo(10),
@@ -175,7 +174,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(ProductCount.from(product.getId()));
             }
 
-            PageResponse<ProductSearchInfo> likeDesc = productService.search(new ProductCommand.Page(1L, 2, 3, "LIKE_DESC"));
+            PageResponse<ProductInfo.Search> likeDesc = productService.search(new ProductCommand.Page(1L, 2, 3, "LIKE_DESC"));
 
             assertAll(
                     () -> assertThat(likeDesc.getTotalElements()).isEqualTo(10),
@@ -196,7 +195,7 @@ public class ProductIntegrationTest {
                 productCountRepository.save(ProductCount.from(i));
             }
 
-            PageResponse<ProductSearchInfo> latest = productService.search(new ProductCommand.Page(null, 0, 30, "LATEST"));
+            PageResponse<ProductInfo.Search> latest = productService.search(new ProductCommand.Page(null, 0, 30, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(25),
