@@ -1,10 +1,10 @@
 package com.loopers.application.like;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.loopers.application.like.LikeResult.ProductCard;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandCommand.Create;
 import com.loopers.domain.brand.BrandRepository;
@@ -202,12 +202,12 @@ class LikeFacadeIntegrationTest {
             productCount2.incrementLike();
             productCountRepository.save(productCount2);
 
-            List<LikeResult.ProductList> result = likeFacade.getLikedProducts(new LikeCriteria.LikedProducts(user.getId()));
+            List<ProductCard> result = likeFacade.getLikedProducts(new LikeCriteria.LikedProducts(user.getId()));
 
             assertThat(result.size()).isEqualTo(2);
             assertThat(result).extracting("productId")
                     .contains(product1.getId(), product2.getId());
-            assertThat(result).contains(new LikeResult.ProductList(
+            assertThat(result).contains(new ProductCard(
                     product1.getId(),
                     brand.getName(),
                     product1.getName(),

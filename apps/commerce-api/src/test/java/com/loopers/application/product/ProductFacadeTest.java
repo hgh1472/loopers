@@ -137,7 +137,7 @@ class ProductFacadeTest {
 
     @Nested
     @DisplayName("상품 목록 조회 시,")
-    class Search {
+    class ProductCard {
         @DisplayName("로그인한 사용자의 경우, 상품 목록과 좋아요 여부를 포함한 페이지 결과를 반환한다.")
         @Test
         void returnProductPageResult_whenUserIsLoggedIn() {
@@ -151,7 +151,7 @@ class ProductFacadeTest {
                 }
             }
 
-            PageResponse<ProductResult.Search> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 1, 7, "LATEST"));
+            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 1, 7, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
@@ -179,7 +179,7 @@ class ProductFacadeTest {
                 }
             }
 
-            PageResponse<ProductResult.Search> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 1, 7, "LATEST"));
+            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 1, 7, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(20L),

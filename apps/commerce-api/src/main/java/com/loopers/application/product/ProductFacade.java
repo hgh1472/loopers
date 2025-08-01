@@ -59,12 +59,12 @@ public class ProductFacade {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ProductResult.Search> searchProducts(ProductCriteria.Search criteria) {
+    public PageResponse<ProductResult.Card> searchProducts(ProductCriteria.Search criteria) {
         PageResponse<ProductInfo.Search> infos = productService.search(criteria.toPageCommand());
 
         UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
-            return infos.map(info -> ProductResult.Search.from(info, false));
+            return infos.map(info -> ProductResult.Card.from(info, false));
         }
 
         Set<Long> productIds = infos.getContent().stream().map(ProductInfo.Search::id).collect(Collectors.toSet());
@@ -73,6 +73,6 @@ public class ProductFacade {
                 .stream()
                 .collect(Collectors.toMap(LikeInfo.ProductState::productId, info -> info));
 
-        return infos.map(info -> ProductResult.Search.from(info, stateMap.get(info.id()).isLiked()));
+        return infos.map(info -> ProductResult.Card.from(info, stateMap.get(info.id()).isLiked()));
     }
 }

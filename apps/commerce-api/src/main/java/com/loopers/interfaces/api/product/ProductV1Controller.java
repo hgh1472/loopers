@@ -5,9 +5,6 @@ import com.loopers.application.product.ProductFacade;
 import com.loopers.application.product.ProductResult;
 import com.loopers.domain.PageResponse;
 import com.loopers.interfaces.api.ApiResponse;
-import com.loopers.interfaces.api.product.ProductV1Dto.ProductPageResponse;
-import com.loopers.interfaces.api.product.ProductV1Dto.ProductResponse;
-import com.loopers.interfaces.api.product.ProductV1Dto.ProductSearchRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,21 +23,22 @@ public class ProductV1Controller implements ProductV1ApiSpec {
 
     @Override
     @GetMapping("/{productId}")
-    public ApiResponse<ProductResponse> getProduct(@PathVariable Long productId,
-                                                   @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
+    public ApiResponse<ProductV1Dto.ProductResponse> getProduct(@PathVariable Long productId,
+                                                                @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
         ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(productId, userId));
-        return ApiResponse.success(ProductResponse.from(productResult));
+        return ApiResponse.success(ProductV1Dto.ProductResponse.from(productResult));
     }
 
     @Override
     @GetMapping
-    public ApiResponse<ProductPageResponse> searchProducts(@Valid @RequestBody ProductSearchRequest request,
-                                                           @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        PageResponse<ProductResult.Search> results = productFacade.searchProducts(
+    public ApiResponse<PageResponse<ProductV1Dto.ProductCard>> searchProducts(
+            @Valid @RequestBody ProductV1Dto.ProductSearchRequest request,
+            @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
+        PageResponse<ProductResult.Card> results = productFacade.searchProducts(
                 new ProductCriteria.Search(request.brandId(), userId,
                         request.page(), request.size(), request.sort()));
 
-        return ApiResponse.success(ProductPageResponse.from(results));
+        return ApiResponse.success(results.map(ProductV1Dto.ProductCard::from));
     }
 
 

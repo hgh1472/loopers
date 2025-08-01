@@ -18,7 +18,7 @@ public class LikeResult {
         }
     }
 
-    public record ProductList(
+    public record ProductCard(
             Long productId,
             String brandName,
             String productName,
@@ -27,10 +27,10 @@ public class LikeResult {
             Long likeCount,
             boolean isLiked
     ) {
-        public static LikeResult.ProductList from(ProductCountInfo productCountInfo,
-                                                  ProductInfo.Search searchInfo,
-                                                  boolean isLiked) {
-            return new LikeResult.ProductList(
+        public static ProductCard from(ProductCountInfo productCountInfo,
+                                       ProductInfo.Search searchInfo,
+                                       boolean isLiked) {
+            return new ProductCard(
                     searchInfo.id(),
                     searchInfo.brandName(),
                     searchInfo.name(),

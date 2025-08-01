@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.product;
 
+import com.loopers.domain.PageResponse;
 import com.loopers.interfaces.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +20,7 @@ public interface ProductV1ApiSpec {
             summary = "상품 목록 조회",
             description = "상품 목록을 조회합니다."
     )
-    ApiResponse<ProductV1Dto.ProductPageResponse> searchProducts(
+    ApiResponse<PageResponse<ProductV1Dto.ProductCard>> searchProducts(
             ProductV1Dto.ProductSearchRequest request, Long userId
     );
 }

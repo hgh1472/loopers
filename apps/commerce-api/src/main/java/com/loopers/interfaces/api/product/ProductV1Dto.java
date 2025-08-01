@@ -39,35 +39,25 @@ public class ProductV1Dto {
         }
     }
 
-    public record ProductPageResponse(
-            PageResponse<ProductSearchResponse> productPage
+    public record ProductCard(
+            Long id,
+            String brandName,
+            String productName,
+            BigDecimal price,
+            String status,
+            Long likeCount,
+            boolean isLiked
     ) {
-        public static ProductPageResponse from(PageResponse<ProductResult.Search> productPageResults) {
-            return new ProductPageResponse(
-                    productPageResults.map(ProductSearchResponse::from)
+        public static ProductCard from(ProductResult.Card card) {
+            return new ProductCard(
+                    card.id(),
+                    card.brandName(),
+                    card.productName(),
+                    card.price(),
+                    card.status(),
+                    card.likeCount(),
+                    card.isLiked()
             );
-        }
-
-        public record ProductSearchResponse(
-                Long id,
-                String brandName,
-                String productName,
-                BigDecimal price,
-                String status,
-                Long likeCount,
-                boolean isLiked
-        ) {
-            public static ProductSearchResponse from(ProductResult.Search productListResult) {
-                return new ProductSearchResponse(
-                        productListResult.id(),
-                        productListResult.brandName(),
-                        productListResult.productName(),
-                        productListResult.price(),
-                        productListResult.status(),
-                        productListResult.likeCount(),
-                        productListResult.isLiked()
-                );
-            }
         }
     }
 }

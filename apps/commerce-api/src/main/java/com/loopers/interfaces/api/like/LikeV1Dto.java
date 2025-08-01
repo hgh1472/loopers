@@ -1,6 +1,7 @@
 package com.loopers.interfaces.api.like;
 
 import com.loopers.application.like.LikeResult;
+import com.loopers.application.like.LikeResult.ProductCard;
 import java.math.BigDecimal;
 
 public class LikeV1Dto {
@@ -25,7 +26,7 @@ public class LikeV1Dto {
             Long likeCount,
             boolean isLiked
     ) {
-        public static LikedProductResponse from(LikeResult.ProductList result) {
+        public static LikedProductResponse from(ProductCard result) {
             return new LikedProductResponse(
                     result.productId(),
                     result.brandName(),

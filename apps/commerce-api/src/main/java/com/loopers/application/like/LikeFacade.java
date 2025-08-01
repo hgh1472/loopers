@@ -51,7 +51,7 @@ public class LikeFacade {
     }
 
     @Transactional(readOnly = true)
-    public List<LikeResult.ProductList> getLikedProducts(LikeCriteria.LikedProducts criteria) {
+    public List<LikeResult.ProductCard> getLikedProducts(LikeCriteria.LikedProducts criteria) {
         UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
@@ -70,7 +70,7 @@ public class LikeFacade {
                 .collect(Collectors.toMap(ProductInfo.Search::id, productSearchInfo -> productSearchInfo));
 
         return countMap.keySet().stream()
-                .map(productId -> LikeResult.ProductList.from(countMap.get(productId), productMap.get(productId), true))
+                .map(productId -> LikeResult.ProductCard.from(countMap.get(productId), productMap.get(productId), true))
                 .toList();
     }
 

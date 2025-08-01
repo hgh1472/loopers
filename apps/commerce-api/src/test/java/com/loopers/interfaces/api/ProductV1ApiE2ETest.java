@@ -3,6 +3,7 @@ package com.loopers.interfaces.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import com.loopers.domain.PageResponse;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandRepository;
@@ -162,7 +163,7 @@ public class ProductV1ApiE2ETest {
 
     @Nested
     @DisplayName("GET /api/v1/products")
-    class Search {
+    class ProductCard {
         @DisplayName("상품 검색 시, 최신순 상품 목록을 반환한다.")
         @Test
         void returnProductList_whenSearchProducts() {
@@ -175,18 +176,18 @@ public class ProductV1ApiE2ETest {
 
             String requestUrl = "/api/v1/products";
             ProductV1Dto.ProductSearchRequest request = new ProductV1Dto.ProductSearchRequest(brand.getId(), 1, 10, "LATEST");
-            ParameterizedTypeReference<ApiResponse<ProductV1Dto.ProductPageResponse>> responseType = new ParameterizedTypeReference<>() {
+            ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dto.ProductCard>>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add("X-USER-ID", user.getId().toString());
-            ResponseEntity<ApiResponse<ProductV1Dto.ProductPageResponse>> response =
+            ResponseEntity<ApiResponse<PageResponse<ProductV1Dto.ProductCard>>> response =
                     testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(request, httpHeaders), responseType);
 
             assertAll(
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                    () -> assertThat(response.getBody().data().productPage().getTotalPages()).isEqualTo(2),
-                    () -> assertThat(response.getBody().data().productPage().getTotalElements()).isEqualTo(20L),
-                    () -> assertThat(response.getBody().data().productPage().getContent().get(0).id()).isEqualTo(10L))
+                    () -> assertThat(response.getBody().data().getTotalPages()).isEqualTo(2),
+                    () -> assertThat(response.getBody().data().getTotalElements()).isEqualTo(20L),
+                    () -> assertThat(response.getBody().data().getContent().get(0).id()).isEqualTo(10L))
             ;
         }
     }

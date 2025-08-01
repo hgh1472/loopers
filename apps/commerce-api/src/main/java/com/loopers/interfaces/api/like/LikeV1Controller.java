@@ -40,7 +40,7 @@ public class LikeV1Controller implements LikeV1ApiSpec {
     @Override
     @GetMapping
     public ApiResponse<List<LikeV1Dto.LikedProductResponse>> getLikedProducts(@RequestHeader("X-USER-ID") Long userId) {
-        List<LikeResult.ProductList> results = likeFacade.getLikedProducts(new LikeCriteria.LikedProducts(userId));
+        List<LikeResult.ProductCard> results = likeFacade.getLikedProducts(new LikeCriteria.LikedProducts(userId));
         return ApiResponse.success(results.stream()
                 .map(LikeV1Dto.LikedProductResponse::from)
                 .toList());

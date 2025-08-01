@@ -28,7 +28,7 @@ public record ProductResult(
         );
     }
 
-    public record Search(
+    public record Card(
             Long id,
             String brandName,
             String productName,
@@ -37,8 +37,8 @@ public record ProductResult(
             Long likeCount,
             boolean isLiked
     ) {
-        public static Search from(ProductInfo.Search searchInfo, boolean isLiked) {
-            return new Search(
+        public static Card from(ProductInfo.Search searchInfo, boolean isLiked) {
+            return new Card(
                     searchInfo.id(),
                     searchInfo.brandName(),
                     searchInfo.name(),
