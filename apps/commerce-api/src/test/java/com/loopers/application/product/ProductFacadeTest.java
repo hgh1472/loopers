@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 
 @SpringBootTest
 class ProductFacadeTest {
@@ -152,7 +151,7 @@ class ProductFacadeTest {
                 }
             }
 
-            PageResponse<ProductPageResult> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 1, 7, "LATEST"));
+            PageResponse<ProductListResult> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 1, 7, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
@@ -164,7 +163,7 @@ class ProductFacadeTest {
                     () -> assertThat(latest.getContent().get(6).isLiked()).isTrue(),
                     () -> assertThat(latest.getContent().get(6).id()).isEqualTo(7L),
                     () -> assertThat(latest.getContent().get(6).isLiked()).isTrue()
-                    );
+            );
         }
 
         @DisplayName("로그인하지 않은 사용자의 경우, 좋아여 여부는 전부 false로 페이지 결과를 반환한다.")
@@ -180,7 +179,7 @@ class ProductFacadeTest {
                 }
             }
 
-            PageResponse<ProductPageResult> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 1, 7, "LATEST"));
+            PageResponse<ProductListResult> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 1, 7, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(20L),

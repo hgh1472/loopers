@@ -15,4 +15,7 @@ public class ProductLikeCommand {
 
     public record AreLiked(Set<Long> productIds, Long userId) {
     }
+
+    public record Get(Long userId) {
+    }
 }

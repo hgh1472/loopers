@@ -12,4 +12,6 @@ public interface ProductLikeRepository {
     boolean existsByProductIdAndUserId(Long productId, Long userId);
 
     List<ProductLike> findProductLikesOf(Long userId, Set<Long> productIds);
+
+    List<ProductLike> findAllByUserId(Long userId);
 }

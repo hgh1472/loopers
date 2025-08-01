@@ -12,4 +12,6 @@ public interface ProductLikeJpaRepository extends JpaRepository<ProductLike, Lon
     boolean existsByProductIdAndUserId(Long productId, Long userId);
 
     List<ProductLike> findProductLikesByUserIdAndProductIdIn(Long userId, Set<Long> productIds);
+
+    List<ProductLike> findAllByUserId(Long userId);
 }

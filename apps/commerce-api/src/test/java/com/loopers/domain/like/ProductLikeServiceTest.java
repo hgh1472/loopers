@@ -54,12 +54,12 @@ class ProductLikeServiceTest {
             given(productLikeRepository.save(any(ProductLike.class)))
                     .willThrow(new DataIntegrityViolationException("유니크 제약조건"));
 
-            ProductLikeInfo productLikeInfo = productLikeService.like(command);
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.like(command);
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId())
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(command.userId())
             );
         }
 
@@ -70,13 +70,13 @@ class ProductLikeServiceTest {
             given(productLikeRepository.save(any(ProductLike.class)))
                     .willThrow(new DataIntegrityViolationException("유니크 제약조건"));
 
-            ProductLikeInfo productLikeInfo = productLikeService.like(command);
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.like(command);
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
-                    () -> assertThat(productLikeInfo.changed()).isFalse()
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeActionInfo.changed()).isFalse()
             );
         }
 
@@ -88,13 +88,13 @@ class ProductLikeServiceTest {
             given(productLikeRepository.save(any(ProductLike.class)))
                     .willReturn(productLike);
 
-            ProductLikeInfo productLikeInfo = productLikeService.like(command);
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.like(command);
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
-                    () -> assertThat(productLikeInfo.changed()).isTrue()
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeActionInfo.changed()).isTrue()
             );
         }
     }
@@ -107,12 +107,12 @@ class ProductLikeServiceTest {
         void returnProductLikeInfo_whenProductLikeDoesNotExist() {
             ProductLikeCommand.Delete command = new ProductLikeCommand.Delete(1L, 1L);
 
-            ProductLikeInfo productLikeInfo = productLikeService.cancelLike(command);
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.cancelLike(command);
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId())
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(command.userId())
             );
         }
 
@@ -123,13 +123,13 @@ class ProductLikeServiceTest {
             given(productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId()))
                     .willReturn(false);
 
-            ProductLikeInfo productLikeInfo = productLikeService.cancelLike(command);
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.cancelLike(command);
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
-                    () -> assertThat(productLikeInfo.changed()).isFalse()
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeActionInfo.changed()).isFalse()
             );
         }
 
@@ -140,13 +140,13 @@ class ProductLikeServiceTest {
             given(productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId()))
                     .willReturn(true);
 
-            ProductLikeInfo productLikeInfo = productLikeService.cancelLike(command);
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.cancelLike(command);
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(command.productId()),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(command.userId()),
-                    () -> assertThat(productLikeInfo.changed()).isTrue()
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(command.productId()),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(command.userId()),
+                    () -> assertThat(productLikeActionInfo.changed()).isTrue()
             );
         }
     }

@@ -1,9 +1,13 @@
 package com.loopers.application.like;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.loopers.domain.brand.Brand;
+import com.loopers.domain.brand.BrandCommand.Create;
+import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.count.ProductCount;
 import com.loopers.domain.count.ProductCountRepository;
 import com.loopers.domain.like.ProductLike;
@@ -19,6 +23,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +44,8 @@ class LikeFacadeIntegrationTest {
     private ProductLikeRepository productLikeRepository;
     @Autowired
     private ProductCountRepository productCountRepository;
+    @Autowired
+    private BrandRepository brandRepository;
     @Autowired
     private UserRepository userRepository;
 
@@ -158,6 +165,57 @@ class LikeFacadeIntegrationTest {
                     () -> assertThat(likeExists).isFalse(),
                     () -> assertThat(after.get().getLikeCount()).isEqualTo(before.getLikeCount() - 1)
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("좋아요한 상품 목록 조회 시,")
+    class GetLikedProducts {
+
+        @DisplayName("존재하지 않는 사용자 요청일 경우, NOT_FOUND 예외가 발생한다.")
+        @Test
+        void throwNotFoundException_whenUserNotExists() {
+            LikeCriteria.LikedProducts cri = new LikeCriteria.LikedProducts(-1L);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> likeFacade.getLikedProducts(cri));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        }
+
+        @DisplayName("좋아요한 상품 목록을 조회한다.")
+        @Test
+        void getLikedProducts() {
+            User user = userRepository.save(User.create(new UserCommand.Join("LoginId", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Brand brand = brandRepository.save(Brand.create(new Create("브랜드", "브랜드 설명")));
+
+            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "Test Product", new BigDecimal("2000.00"), "ON_SALE")));
+            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product1.getId(), user.getId())));
+            ProductCount productCount1 = ProductCount.from(product1.getId());
+            productCount1.incrementLike();
+            productCountRepository.save(productCount1);
+
+            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "Test Product", new BigDecimal("2000.00"), "ON_SALE")));
+            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product2.getId(), user.getId())));
+            ProductCount productCount2 = ProductCount.from(product2.getId());
+            productCount2.incrementLike();
+            productCountRepository.save(productCount2);
+
+            List<LikeResult.ProductList> result = likeFacade.getLikedProducts(new LikeCriteria.LikedProducts(user.getId()));
+
+            assertThat(result.size()).isEqualTo(2);
+            assertThat(result).extracting("productId")
+                    .contains(product1.getId(), product2.getId());
+            assertThat(result).contains(new LikeResult.ProductList(
+                    product1.getId(),
+                    brand.getName(),
+                    product1.getName(),
+                    product1.getPrice().getValue(),
+                    product1.getStatus().name(),
+                    productCount1.getLikeCount(),
+                    true
+            ));
         }
     }
 }

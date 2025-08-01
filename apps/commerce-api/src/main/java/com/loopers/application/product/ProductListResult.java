@@ -3,7 +3,7 @@ package com.loopers.application.product;
 import com.loopers.domain.product.ProductSearchInfo;
 import java.math.BigDecimal;
 
-public record ProductPageResult(
+public record ProductListResult(
         Long id,
         String brandName,
         String productName,
@@ -12,8 +12,8 @@ public record ProductPageResult(
         Long likeCount,
         boolean isLiked
 ) {
-    public static ProductPageResult from(ProductSearchInfo productSearchInfo, boolean isLiked) {
-        return new ProductPageResult(
+    public static ProductListResult from(ProductSearchInfo productSearchInfo, boolean isLiked) {
+        return new ProductListResult(
                 productSearchInfo.id(),
                 productSearchInfo.brandName(),
                 productSearchInfo.name(),

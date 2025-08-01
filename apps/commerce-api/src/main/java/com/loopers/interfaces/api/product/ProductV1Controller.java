@@ -2,7 +2,7 @@ package com.loopers.interfaces.api.product;
 
 import com.loopers.application.product.ProductCriteria;
 import com.loopers.application.product.ProductFacade;
-import com.loopers.application.product.ProductPageResult;
+import com.loopers.application.product.ProductListResult;
 import com.loopers.application.product.ProductResult;
 import com.loopers.domain.PageResponse;
 import com.loopers.interfaces.api.ApiResponse;
@@ -11,7 +11,6 @@ import com.loopers.interfaces.api.product.ProductV1Dto.ProductResponse;
 import com.loopers.interfaces.api.product.ProductV1Dto.ProductSearchRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,7 +37,7 @@ public class ProductV1Controller implements ProductV1ApiSpec {
     @GetMapping
     public ApiResponse<ProductPageResponse> searchProducts(@Valid @RequestBody ProductSearchRequest request,
                                                            @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        PageResponse<ProductPageResult> results = productFacade.searchProducts(new ProductCriteria.Search(request.brandId(), userId,
+        PageResponse<ProductListResult> results = productFacade.searchProducts(new ProductCriteria.Search(request.brandId(), userId,
                 request.page(), request.size(), request.sort()));
 
         return ApiResponse.success(ProductPageResponse.from(results));

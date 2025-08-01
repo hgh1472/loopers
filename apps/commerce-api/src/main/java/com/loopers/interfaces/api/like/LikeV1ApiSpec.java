@@ -2,7 +2,9 @@ package com.loopers.interfaces.api.like;
 
 import com.loopers.interfaces.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 
 @Tag(name = "Like API", description = "Loopers Like API입니다.")
 public interface LikeV1ApiSpec {
@@ -21,5 +23,13 @@ public interface LikeV1ApiSpec {
     )
     ApiResponse<LikeV1Dto.ProductLikeResponse> cancelLike(
             Long userId, Long productId
+    );
+
+    @Operation(
+            summary = "좋아요한 상품 목록 조회",
+            description = "사용자가 좋아요한 상품 목록을 조회합니다."
+    )
+    ApiResponse<List<LikeV1Dto.LikedProductResponse>> getLikedProducts(
+            @Schema(name = "사용자 ID", description = "상품들을 좋아요한 사용자 ID") Long userId
     );
 }

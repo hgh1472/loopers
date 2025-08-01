@@ -43,4 +43,8 @@ public class ProductRepositoryImpl implements ProductRepository {
         };
     }
 
+    @Override
+    public List<ProductSearchView> searchProducts(Set<Long> productIds) {
+        return productJpaRepository.searchAllByProductIds(productIds);
+    }
 }

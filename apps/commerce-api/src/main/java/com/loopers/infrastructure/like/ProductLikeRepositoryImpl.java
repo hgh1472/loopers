@@ -33,4 +33,9 @@ public class ProductLikeRepositoryImpl implements ProductLikeRepository {
     public List<ProductLike> findProductLikesOf(Long userId, Set<Long> productIds) {
         return productLikeJpaRepository.findProductLikesByUserIdAndProductIdIn(userId, productIds);
     }
+
+    @Override
+    public List<ProductLike> findAllByUserId(Long userId) {
+        return productLikeJpaRepository.findAllByUserId(userId);
+    }
 }

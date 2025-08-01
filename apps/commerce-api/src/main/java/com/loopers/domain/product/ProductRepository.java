@@ -14,4 +14,6 @@ public interface ProductRepository {
     List<Product> findByIds(Set<Long> ids);
 
     Page<ProductSearchView> search(ProductParams.Search params);
+
+    List<ProductSearchView> searchProducts(Set<Long> productIds);
 }

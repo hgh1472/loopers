@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,12 +59,12 @@ public class ProductFacade {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ProductPageResult> searchProducts(ProductCriteria.Search criteria) {
+    public PageResponse<ProductListResult> searchProducts(ProductCriteria.Search criteria) {
         PageResponse<ProductSearchInfo> infos = productService.search(criteria.toPageCommand());
 
         UserInfo userInfo = userService.findUser(criteria.userId());
         if (userInfo == null) {
-            return infos.map(info -> ProductPageResult.from(info, false));
+            return infos.map(info -> ProductListResult.from(info, false));
         }
 
         Set<Long> productIds = infos.getContent().stream().map(ProductSearchInfo::id).collect(Collectors.toSet());
@@ -74,6 +73,6 @@ public class ProductFacade {
                 .stream()
                 .collect(Collectors.toMap(ProductLikeStateInfo::productId, info -> info));
 
-        return infos.map(info -> ProductPageResult.from(info, stateMap.get(info.id()).isLiked()));
+        return infos.map(info -> ProductListResult.from(info, stateMap.get(info.id()).isLiked()));
     }
 }

@@ -47,4 +47,12 @@ public class ProductService {
         Page<ProductSearchView> views = productRepository.search(new ProductParams.Search(command.brandId(), page, size, sort));
         return PageResponse.from(views.map(ProductSearchInfo::from));
     }
+
+    @Transactional(readOnly = true)
+    public List<ProductSearchInfo> searchProducts(ProductCommand.Search command) {
+        List<ProductSearchView> productSearchViews = productRepository.searchProducts(command.productIds());
+        return productSearchViews.stream()
+                .map(ProductSearchInfo::from)
+                .toList();
+    }
 }

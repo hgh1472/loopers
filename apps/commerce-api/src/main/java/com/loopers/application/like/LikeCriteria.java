@@ -15,4 +15,9 @@ public class LikeCriteria {
             return new ProductLikeCommand.Delete(userId, productId);
         }
     }
+
+    public record LikedProducts(
+            Long userId
+    ) {
+    }
 }

@@ -35,12 +35,12 @@ class ProductLikeServiceIntegrationTest {
         void returnProductLikeInfo_whenDuplicateProductLikeExists() {
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(1L, 1L)));
 
-            ProductLikeInfo productLikeInfo = productLikeService.like(new Create(1L, 1L));
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.like(new Create(1L, 1L));
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(1L),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(1L)
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(1L),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(1L)
             );
         }
     }
@@ -54,12 +54,12 @@ class ProductLikeServiceIntegrationTest {
         void returnProductLikeInfo_whenProductLikeExists() {
             productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(1L, 1L)));
 
-            ProductLikeInfo productLikeInfo = productLikeService.cancelLike(new ProductLikeCommand.Delete(1L, 1L));
+            ProductLikeActionInfo productLikeActionInfo = productLikeService.cancelLike(new ProductLikeCommand.Delete(1L, 1L));
 
             assertAll(
-                    () -> assertThat(productLikeInfo).isNotNull(),
-                    () -> assertThat(productLikeInfo.productId()).isEqualTo(1L),
-                    () -> assertThat(productLikeInfo.userId()).isEqualTo(1L)
+                    () -> assertThat(productLikeActionInfo).isNotNull(),
+                    () -> assertThat(productLikeActionInfo.productId()).isEqualTo(1L),
+                    () -> assertThat(productLikeActionInfo.userId()).isEqualTo(1L)
             );
         }
     }

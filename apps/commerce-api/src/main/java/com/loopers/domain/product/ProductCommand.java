@@ -1,6 +1,7 @@
 package com.loopers.domain.product;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 public class ProductCommand {
     public record Create(
@@ -19,6 +20,11 @@ public class ProductCommand {
             Integer page,
             Integer size,
             String sort
+    ) {
+    }
+
+    public record Search(
+            Set<Long> productIds
     ) {
     }
 }
