@@ -7,60 +7,60 @@ import java.util.List;
 public record OrderResult(
         Long id,
         String orderStatus,
-        List<OrderLineResult> orderLineResults,
-        OrderDeliveryResult orderDeliveryResult,
-        OrderPaymentResult orderPaymentResult
+        List<Line> lines,
+        Delivery delivery,
+        Payment payment
 ) {
     public static OrderResult from(OrderInfo orderInfo) {
         return new OrderResult(
                 orderInfo.id(),
                 orderInfo.orderStatus(),
-                orderInfo.orderLineInfos().stream()
-                        .map(OrderLineResult::from)
+                orderInfo.lines().stream()
+                        .map(OrderResult.Line::from)
                         .toList(),
-                OrderDeliveryResult.from(orderInfo.orderDeliveryInfo()),
-                OrderPaymentResult.from(orderInfo.orderPaymentInfo())
+                OrderResult.Delivery.from(orderInfo.delivery()),
+                OrderResult.Payment.from(orderInfo.payment())
         );
     }
 
-    public record OrderLineResult(
+    public record Line(
             Long productId,
             Long quantity,
             BigDecimal amount
     ) {
-        public static OrderLineResult from(OrderInfo.OrderLineInfo orderLineInfo) {
-            return new OrderLineResult(
-                    orderLineInfo.productId(),
-                    orderLineInfo.quantity(),
-                    orderLineInfo.amount()
+        public static Line from(OrderInfo.Line line) {
+            return new Line(
+                    line.productId(),
+                    line.quantity(),
+                    line.amount()
             );
         }
     }
 
-    public record OrderDeliveryResult(
+    public record Delivery(
             String receiverName,
             String phoneNumber,
             String baseAddress,
             String detailAddress,
             String requirements
     ) {
-        public static OrderDeliveryResult from(OrderInfo.OrderDeliveryInfo orderDeliveryInfo) {
-            return new OrderDeliveryResult(
-                    orderDeliveryInfo.receiverName(),
-                    orderDeliveryInfo.phoneNumber(),
-                    orderDeliveryInfo.baseAddress(),
-                    orderDeliveryInfo.detailAddress(),
-                    orderDeliveryInfo.requirements()
+        public static Delivery from(OrderInfo.Delivery delivery) {
+            return new Delivery(
+                    delivery.receiverName(),
+                    delivery.phoneNumber(),
+                    delivery.baseAddress(),
+                    delivery.detailAddress(),
+                    delivery.requirements()
             );
         }
     }
 
-    public record OrderPaymentResult(
+    public record Payment(
             BigDecimal paymentAmount
     ) {
-        public static OrderPaymentResult from(OrderInfo.OrderPaymentInfo orderPaymentInfo) {
-            return new OrderPaymentResult(
-                    orderPaymentInfo.paymentAmount()
+        public static Payment from(OrderInfo.Payment payment) {
+            return new Payment(
+                    payment.paymentAmount()
             );
         }
     }

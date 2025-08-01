@@ -48,7 +48,7 @@ public class OrderFacade {
 
         OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines));
 
-        pointService.use(new PointCommand.Use(criteria.userId(), orderInfo.orderPaymentInfo().paymentAmount().longValue()));
+        pointService.use(new PointCommand.Use(criteria.userId(), orderInfo.payment().paymentAmount().longValue()));
 
         stockService.deductAll(criteria.toCommandDeduct());
 

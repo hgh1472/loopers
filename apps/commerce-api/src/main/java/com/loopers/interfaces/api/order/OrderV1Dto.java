@@ -47,17 +47,17 @@ public class OrderV1Dto {
             Payment payment
             ) {
         public static OrderResponse from(OrderResult orderResult) {
-            List<Line> lines = orderResult.orderLineResults().stream()
+            List<Line> lines = orderResult.lines().stream()
                     .map(line -> new Line(line.productId(), line.quantity()))
                     .toList();
             Delivery delivery = new Delivery(
-                    orderResult.orderDeliveryResult().receiverName(),
-                    orderResult.orderDeliveryResult().phoneNumber(),
-                    orderResult.orderDeliveryResult().baseAddress(),
-                    orderResult.orderDeliveryResult().detailAddress(),
-                    orderResult.orderDeliveryResult().requirements()
+                    orderResult.delivery().receiverName(),
+                    orderResult.delivery().phoneNumber(),
+                    orderResult.delivery().baseAddress(),
+                    orderResult.delivery().detailAddress(),
+                    orderResult.delivery().requirements()
             );
-            Payment payment = new Payment(orderResult.orderPaymentResult().paymentAmount());
+            Payment payment = new Payment(orderResult.payment().paymentAmount());
             return new OrderResponse(orderResult.id(), lines, delivery, payment);
         }
     }

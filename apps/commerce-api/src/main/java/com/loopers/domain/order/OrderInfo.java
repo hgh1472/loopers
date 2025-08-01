@@ -7,9 +7,9 @@ public record OrderInfo(
         Long id,
         Long userId,
         String orderStatus,
-        List<OrderLineInfo> orderLineInfos,
-        OrderDeliveryInfo orderDeliveryInfo,
-        OrderPaymentInfo orderPaymentInfo
+        List<Line> lines,
+        Delivery delivery,
+        Payment payment
 ) {
     public static OrderInfo from(Order order) {
         return new OrderInfo(
@@ -17,20 +17,20 @@ public record OrderInfo(
                 order.getUserId(),
                 order.getStatus().name(),
                 order.getOrderLines().stream()
-                        .map(OrderLineInfo::from)
+                        .map(Line::from)
                         .toList(),
-                OrderDeliveryInfo.from(order.getOrderDelivery()),
-                OrderPaymentInfo.from(order.getOrderPayment())
+                Delivery.from(order.getOrderDelivery()),
+                Payment.from(order.getOrderPayment())
         );
     }
 
-    public record OrderLineInfo(
+    public record Line(
             Long productId,
             Long quantity,
             BigDecimal amount
     ) {
-        public static OrderLineInfo from(OrderLine orderLine) {
-            return new OrderLineInfo(
+        public static Line from(OrderLine orderLine) {
+            return new Line(
                     orderLine.getProductId(),
                     orderLine.getQuantity(),
                     orderLine.getAmount()
@@ -38,15 +38,15 @@ public record OrderInfo(
         }
     }
 
-    public record OrderDeliveryInfo(
+    public record Delivery(
             String receiverName,
             String phoneNumber,
             String baseAddress,
             String detailAddress,
             String requirements
     ) {
-        public static OrderDeliveryInfo from(OrderDelivery orderDelivery) {
-            return new OrderDeliveryInfo(
+        public static Delivery from(OrderDelivery orderDelivery) {
+            return new Delivery(
                     orderDelivery.getReceiverName(),
                     orderDelivery.getPhoneNumber(),
                     orderDelivery.getBaseAddress(),
@@ -56,11 +56,11 @@ public record OrderInfo(
         }
     }
 
-    public record OrderPaymentInfo(
+    public record Payment(
             BigDecimal paymentAmount
     ) {
-        public static OrderPaymentInfo from(OrderPayment orderPayment) {
-            return new OrderPaymentInfo(
+        public static Payment from(OrderPayment orderPayment) {
+            return new Payment(
                     orderPayment.getPaymentAmount()
             );
         }

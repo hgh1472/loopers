@@ -98,10 +98,10 @@ class OrderFacadeIntegrationTest {
             OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), List.of(new OrderCriteria.Line(product.getId(), 3L), new OrderCriteria.Line(product.getId(), 2L)), delivery));
 
             assertAll(
-                    () -> assertThat(orderResult.orderLineResults().size()).isEqualTo(1),
-                    () -> assertThat(orderResult.orderLineResults().get(0).productId()).isEqualTo(product.getId()),
-                    () -> assertThat(orderResult.orderLineResults().get(0).quantity()).isEqualTo(5L),
-                    () -> assertThat(orderResult.orderPaymentResult().paymentAmount()).isEqualTo(product.getPrice().getValue().multiply(BigDecimal.valueOf(5)))
+                    () -> assertThat(orderResult.lines().size()).isEqualTo(1),
+                    () -> assertThat(orderResult.lines().get(0).productId()).isEqualTo(product.getId()),
+                    () -> assertThat(orderResult.lines().get(0).quantity()).isEqualTo(5L),
+                    () -> assertThat(orderResult.payment().paymentAmount()).isEqualTo(product.getPrice().getValue().multiply(BigDecimal.valueOf(5)))
             );
         }
 
