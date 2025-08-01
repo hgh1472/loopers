@@ -30,6 +30,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -78,6 +80,80 @@ class OrderFacadeIntegrationTest {
                     .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
         }
 
+        @DisplayName("주문 수량이 0 이하인 경우, BAD_REQUEST 예외를 발생시킨다.")
+        @ValueSource(longs = {0, -1})
+        @ParameterizedTest
+        void throwBadRequestException_whenOrderQuantityIsNegative(Long quantity) {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            point.charge(10000L);
+            pointRepository.save(point);
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), quantity));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "수량은 1 이상이어야 합니다."));
+        }
+
+        @DisplayName("소유 표인트가 부족한 경우, CONFLICT 예외를 발생시킨다.")
+        @Test
+        void throwConflictException_whenPointIsInsufficient() {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            pointRepository.save(point);
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 1L));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다."));
+        }
+
+        @DisplayName("재고가 부족한 경우, CONFLICT 예외를 발생시킨다.")
+        @Test
+        void throwConflictException_whenStockIsInsufficient() {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            point.charge(10000L);
+            pointRepository.save(point);
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 1L)));
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 2L));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "재고가 부족합니다."));
+        }
 
         @DisplayName("같은 아이템이 구분되어 요청되는 경우, 하나의 요청으로 처리한다.")
         @Test

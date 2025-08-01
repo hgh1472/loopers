@@ -43,6 +43,12 @@ public class OrderFacade {
 
         Map<Long, ProductInfo> productInfos = productService.getProducts(new ProductCommand.GetProducts(productIds)).stream()
                 .collect(Collectors.toMap(ProductInfo::id, product -> product));
+        productInfos.values().forEach(info -> {
+            if (!info.status().equals("ON_SALE")) {
+                throw new CoreException(ErrorType.BAD_REQUEST, "상품이 판매 중이 아닙니다.");
+            }
+        });
+
         List<OrderCommand.Line> lines = criteria.lines().stream()
                 .map(line ->
                         new OrderCommand.Line(line.productId(), line.quantity(), productInfos.get(line.productId()).price()))
