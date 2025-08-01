@@ -7,16 +7,15 @@ import com.loopers.domain.point.PointCommand;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
-import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockService;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,28 +37,20 @@ public class OrderFacade {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
 
-        Map<Long, Long> productQuantity = new HashMap<>();
-        criteria.lines().forEach(line -> {
-            productQuantity.put(line.productId(), productQuantity.getOrDefault(line.productId(), 0L) + line.quantity());
-        });
-        Set<Long> productIds = productQuantity.keySet();
+        Set<Long> productIds = criteria.lines().stream().map(OrderCriteria.Line::productId).collect(Collectors.toSet());
 
-        List<ProductInfo> productInfos = productService.getProducts(productIds);
-
-        List<OrderCommand.Line> lines = productInfos.stream()
-                .map(product -> {
-                    Long quantity = productQuantity.get(product.id());
-                    return new OrderCommand.Line(product.id(), quantity, product.price());
-                })
+        Map<Long, ProductInfo> productInfos = productService.getProducts(productIds).stream()
+                .collect(Collectors.toMap(ProductInfo::id, product -> product));
+        List<OrderCommand.Line> lines = criteria.lines().stream()
+                .map(line ->
+                        new OrderCommand.Line(line.productId(), line.quantity(), productInfos.get(line.productId()).price()))
                 .toList();
 
         OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines));
 
         pointService.use(new PointCommand.Use(criteria.userId(), orderInfo.orderPaymentInfo().paymentAmount().longValue()));
 
-        orderInfo.orderLineInfos().forEach(line -> {
-            stockService.deduct(new StockCommand.Deduct(line.productId(), line.quantity()));
-        });
+        stockService.deductAll(criteria.toCommandDeduct());
 
         return OrderResult.from(orderInfo);
     }
@@ -70,7 +61,7 @@ public class OrderFacade {
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
-        OrderInfo orderInfo =  orderService.get(new OrderCommand.Get(criteria.orderId()));
+        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
         if (!userInfo.id().equals(orderInfo.userId())) {
             throw new CoreException(ErrorType.CONFLICT, "주문 정보에 접근할 수 없습니다.");
         }

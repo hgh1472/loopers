@@ -1,6 +1,7 @@
 package com.loopers.application.order;
 
 import com.loopers.domain.order.OrderCommand;
+import com.loopers.domain.stock.StockCommand;
 import java.util.List;
 
 public class OrderCriteria {
@@ -21,6 +22,12 @@ public class OrderCriteria {
                     delivery.detailAddress(),
                     delivery.requirements()
             );
+        }
+
+        public List<StockCommand.Deduct> toCommandDeduct() {
+            return lines.stream()
+                    .map(line -> new StockCommand.Deduct(line.productId(), line.quantity()))
+                    .toList();
         }
     }
 

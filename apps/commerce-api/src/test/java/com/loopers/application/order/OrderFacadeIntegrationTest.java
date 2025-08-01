@@ -84,9 +84,9 @@ class OrderFacadeIntegrationTest {
         void orderDuplicateLine() {
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             Point point = Point.from(user.getId());
-            point.charge(10000L);
+            point.charge(30000L);
             pointRepository.save(point);
-            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", BigDecimal.valueOf(1000L), "ON_SALE")));
+            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("5000.00"), "ON_SALE")));
             stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
@@ -101,7 +101,7 @@ class OrderFacadeIntegrationTest {
                     () -> assertThat(orderResult.orderLineResults().size()).isEqualTo(1),
                     () -> assertThat(orderResult.orderLineResults().get(0).productId()).isEqualTo(product.getId()),
                     () -> assertThat(orderResult.orderLineResults().get(0).quantity()).isEqualTo(5L),
-                    () -> assertThat(orderResult.orderPaymentResult().paymentAmount()).isEqualTo(new BigDecimal("5000.00"))
+                    () -> assertThat(orderResult.orderPaymentResult().paymentAmount()).isEqualTo(product.getPrice().getValue().multiply(BigDecimal.valueOf(5)))
             );
         }
 
@@ -112,9 +112,9 @@ class OrderFacadeIntegrationTest {
             Point point = Point.from(user.getId());
             point.charge(10000L);
             pointRepository.save(point);
-            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", BigDecimal.valueOf(1000L), "ON_SALE")));
+            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
             stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
-            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", BigDecimal.valueOf(2000L), "ON_SALE")));
+            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
             stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
@@ -132,8 +132,8 @@ class OrderFacadeIntegrationTest {
                     () -> assertThat(order).isPresent(),
                     () -> assertThat(afterPoint.getAmount().getValue()).isEqualTo(3000L),
                     () -> assertThat(order.get().getOrderLines()).extracting("productId", "quantity", "amount")
-                            .contains(tuple(product1.getId(), 3L, new BigDecimal("1000.00")),
-                                    tuple(product2.getId(), 2L, new BigDecimal("2000.00"))),
+                            .contains(tuple(product1.getId(), 3L, product1.getPrice().getValue().multiply(BigDecimal.valueOf(3))),
+                                    tuple(product2.getId(), 2L, product2.getPrice().getValue().multiply(BigDecimal.valueOf(2)))),
                     () -> assertThat(order.get().getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("7000.00"))
             );
         }

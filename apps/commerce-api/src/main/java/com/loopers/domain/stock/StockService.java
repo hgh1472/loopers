@@ -2,6 +2,7 @@ package com.loopers.domain.stock;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,5 +26,12 @@ public class StockService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
         stock.deduct(command.quantity());
         return StockInfo.from(stock);
+    }
+
+    @Transactional
+    public List<StockInfo> deductAll(List<StockCommand.Deduct> commands) {
+        return commands.stream()
+                .map(this::deduct)
+                .toList();
     }
 }

@@ -13,7 +13,7 @@ public class OrderCommand {
     public record Line(
             Long productId,
             Long quantity,
-            BigDecimal price
+            BigDecimal unitPrice
     ) {
     }
 
