@@ -39,7 +39,8 @@ public class Order extends BaseEntity {
     private OrderDelivery orderDelivery;
 
     @AttributeOverrides(value = {
-            @AttributeOverride(name = "paymentAmount", column = @Column(name = "payment_amount", nullable = false))
+            @AttributeOverride(name = "paymentAmount",
+                    column = @Column(name = "payment_amount", nullable = false, precision = 10, scale = 2))
     })
     private OrderPayment orderPayment;
 
@@ -70,7 +71,7 @@ public class Order extends BaseEntity {
         }
         orderLine.assign(this);
         this.orderLines.add(orderLine);
-        this.orderPayment = this.orderPayment.add(orderLine.getAmount().multiply(BigDecimal.valueOf(orderLine.getQuantity())));
+        this.orderPayment = this.orderPayment.add(orderLine.getAmount());
     }
 
     public enum OrderStatus {

@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Getter;
 
 @Entity
@@ -37,7 +38,7 @@ public class OrderLine extends BaseEntity {
     public OrderLine(OrderCommand.Line line) {
         this.productId = line.productId();
         this.quantity = line.quantity();
-        this.amount = line.price();
+        this.amount = line.unitPrice().multiply(BigDecimal.valueOf(line.quantity()));
     }
 
     public static OrderLine from(OrderCommand.Line line) {
@@ -53,7 +54,7 @@ public class OrderLine extends BaseEntity {
             throw new CoreException(ErrorType.BAD_REQUEST, "수량은 1 이상이어야 합니다.");
         }
 
-        if (line.price() == null || line.price().compareTo(BigDecimal.ZERO) < 0) {
+        if (line.unitPrice() == null || line.unitPrice().compareTo(BigDecimal.ZERO) < 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "가격은 0 이상이어야 합니다.");
         }
 
@@ -65,7 +66,16 @@ public class OrderLine extends BaseEntity {
             throw new CoreException(ErrorType.BAD_REQUEST, "주문 항목이 존재하지 않습니다.");
         }
 
-        return lines.stream()
+        List<OrderCommand.Line> mergedLines = lines.stream()
+                .collect(Collectors.toMap(OrderCommand.Line::productId, line -> line,
+                        (l1, l2) ->
+                                new OrderCommand.Line(l1.productId(),
+                                        l1.quantity() + l2.quantity(),
+                                        l1.unitPrice()))
+                ).values().stream()
+                .toList();
+
+        return mergedLines.stream()
                 .map(OrderLine::from)
                 .toList();
     }

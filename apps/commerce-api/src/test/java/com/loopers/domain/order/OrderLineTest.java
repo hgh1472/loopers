@@ -60,7 +60,7 @@ class OrderLineTest {
 
             assertThat(orderLine.getProductId()).isEqualTo(line.productId());
             assertThat(orderLine.getQuantity()).isEqualTo(line.quantity());
-            assertThat(orderLine.getAmount()).isEqualTo(line.price());
+            assertThat(orderLine.getAmount()).isEqualTo(line.unitPrice());
         }
 
         @DisplayName("가격이 음수라면, BAD_REQUEST 예외를 반환한다.")
@@ -81,7 +81,7 @@ class OrderLineTest {
 
             assertThat(orderLine.getProductId()).isEqualTo(line.productId());
             assertThat(orderLine.getQuantity()).isEqualTo(line.quantity());
-            assertThat(orderLine.getAmount()).isEqualTo(line.price());
+            assertThat(orderLine.getAmount()).isEqualTo(line.unitPrice());
         }
     }
 
@@ -98,6 +98,27 @@ class OrderLineTest {
             assertThat(thrown)
                     .usingRecursiveComparison()
                     .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "주문 항목이 존재하지 않습니다."));
+        }
+
+        @DisplayName("같은 상품 ID를 가진 주문 항목이 여러 개 있으면, 수량과 가격을 합산하여 하나의 주문 항목으로 생성한다.")
+        @Test
+        void createOrderLine_withMergedLines() {
+            List<OrderCommand.Line> lines = List.of(
+                    new Line(1L, 2L, new BigDecimal("1000")),
+                    new Line(1L, 3L, new BigDecimal("1000")),
+                    new Line(2L, 1L, new BigDecimal("2000"))
+            );
+
+            List<OrderLine> orderLines = OrderLine.of(lines);
+
+            assertThat(orderLines).hasSize(2);
+            assertThat(orderLines.get(0).getProductId()).isEqualTo(1L);
+            assertThat(orderLines.get(0).getQuantity()).isEqualTo(5L);
+            assertThat(orderLines.get(0).getAmount()).isEqualTo(new BigDecimal("5000"));
+
+            assertThat(orderLines.get(1).getProductId()).isEqualTo(2L);
+            assertThat(orderLines.get(1).getQuantity()).isEqualTo(1L);
+            assertThat(orderLines.get(1).getAmount()).isEqualTo(new BigDecimal("2000"));
         }
     }
 }
