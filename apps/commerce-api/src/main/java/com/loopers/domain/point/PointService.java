@@ -12,8 +12,8 @@ public class PointService {
     private final PointRepository pointRepository;
 
     @Transactional
-    public PointInfo initialize(Long userId) {
-        Point point = Point.from(userId);
+    public PointInfo initialize(PointCommand.Initialize command) {
+        Point point = Point.from(command.userId());
         if (pointRepository.existsByUserId(point.getUserId())) {
             throw new CoreException(ErrorType.CONFLICT, "이미 회원의 포인트가 존재합니다.");
         }
@@ -21,8 +21,8 @@ public class PointService {
     }
 
     @Transactional(readOnly = true)
-    public PointInfo findPoint(Long userId) {
-        return pointRepository.findByUserId(userId)
+    public PointInfo findPoint(PointCommand.Find command) {
+        return pointRepository.findByUserId(command.userId())
                 .map(PointInfo::from)
                 .orElse(null);
     }

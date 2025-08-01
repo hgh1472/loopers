@@ -15,6 +15,9 @@ public class ProductCommand {
     public record Find(Long productId) {
     }
 
+    public record GetProducts(Set<Long> productIds) {
+    }
+
     public record Page(
             Long brandId,
             Integer page,

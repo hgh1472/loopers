@@ -38,7 +38,7 @@ class PointServiceTest {
             given(pointRepository.existsByUserId(userId))
                     .willReturn(true);
 
-            CoreException thrown = assertThrows(CoreException.class, () -> pointService.initialize(userId));
+            CoreException thrown = assertThrows(CoreException.class, () -> pointService.initialize(new PointCommand.Initialize(userId)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -56,7 +56,7 @@ class PointServiceTest {
             given(pointRepository.findByUserId(nonExistUserId))
                     .willReturn(Optional.empty());
 
-            PointInfo pointInfo = pointService.findPoint(nonExistUserId);
+            PointInfo pointInfo = pointService.findPoint(new PointCommand.Find(nonExistUserId));
 
             assertThat(pointInfo).isNull();
         }

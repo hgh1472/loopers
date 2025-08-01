@@ -5,9 +5,11 @@ import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.point.PointCommand;
 import com.loopers.domain.point.PointService;
+import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.stock.StockService;
+import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
@@ -32,14 +34,14 @@ public class OrderFacade {
 
     @Transactional
     public OrderResult order(OrderCriteria.Order criteria) {
-        UserInfo userInfo = userService.findUser(criteria.userId());
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
 
         Set<Long> productIds = criteria.lines().stream().map(OrderCriteria.Line::productId).collect(Collectors.toSet());
 
-        Map<Long, ProductInfo> productInfos = productService.getProducts(productIds).stream()
+        Map<Long, ProductInfo> productInfos = productService.getProducts(new ProductCommand.GetProducts(productIds)).stream()
                 .collect(Collectors.toMap(ProductInfo::id, product -> product));
         List<OrderCommand.Line> lines = criteria.lines().stream()
                 .map(line ->
@@ -57,7 +59,7 @@ public class OrderFacade {
 
     @Transactional(readOnly = true)
     public OrderResult get(OrderCriteria.Get criteria) {
-        UserInfo userInfo = userService.findUser(criteria.userId());
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
@@ -70,7 +72,7 @@ public class OrderFacade {
 
     @Transactional(readOnly = true)
     public List<OrderResult> getOrdersOf(OrderCriteria.GetOrders criteria) {
-        UserInfo userInfo = userService.findUser(criteria.userId());
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }

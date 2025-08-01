@@ -4,7 +4,6 @@ import com.loopers.domain.PageResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -24,13 +23,13 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProducts(Set<Long> productIds) {
-        if (productIds == null || productIds.isEmpty()) {
+    public List<ProductInfo> getProducts(ProductCommand.GetProducts command) {
+        if (command.productIds() == null || command.productIds().isEmpty()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "상품 ID 목록이 비어 있습니다.");
         }
 
-        List<Product> products = productRepository.findByIds(productIds);
-        if (products.isEmpty() || products.size() != productIds.size()) {
+        List<Product> products = productRepository.findByIds(command.productIds());
+        if (products.isEmpty() || products.size() != command.productIds().size()) {
             throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품이 포함되어 있습니다.");
         }
 

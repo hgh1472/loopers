@@ -15,31 +15,31 @@ public class ProductCountService {
     private final ProductCountRepository productCountRepository;
 
     @Transactional(readOnly = true)
-    public ProductCountInfo getProductCount(Long productId) {
-        return productCountRepository.findBy(productId)
+    public ProductCountInfo getProductCount(ProductCountCommand.Get command) {
+        return productCountRepository.findBy(command.productId())
                 .map(ProductCountInfo::from)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
     }
 
     @Transactional
-    public ProductCountInfo incrementLike(Long productId) {
-        ProductCount productCount = productCountRepository.findBy(productId)
+    public ProductCountInfo incrementLike(ProductCountCommand.Increment command) {
+        ProductCount productCount = productCountRepository.findBy(command.productId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
         productCount.incrementLike();
         return ProductCountInfo.from(productCount);
     }
 
     @Transactional
-    public ProductCountInfo decrementLike(Long productId) {
-        ProductCount productCount = productCountRepository.findBy(productId)
+    public ProductCountInfo decrementLike(ProductCountCommand.Decrement command) {
+        ProductCount productCount = productCountRepository.findBy(command.productId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
         productCount.decrementLike();
         return ProductCountInfo.from(productCount);
     }
 
     @Transactional(readOnly = true)
-    public List<ProductCountInfo> getProductCounts(Set<Long> productIds) {
-        return productCountRepository.findByProductIds(productIds).stream()
+    public List<ProductCountInfo> getProductCounts(ProductCountCommand.GetList command) {
+        return productCountRepository.findByProductIds(command.productIds()).stream()
                 .map(ProductCountInfo::from)
                 .toList();
     }

@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.point;
 
+import com.loopers.application.point.PointCriteria;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointResult;
 import com.loopers.interfaces.api.ApiResponse;
@@ -21,7 +22,7 @@ public class PointV1Controller implements PointV1ApiSpec {
     @GetMapping
     @Override
     public ApiResponse<PointV1Dto.PointResponse> getPoints(@RequestHeader("X-USER-ID") Long userId) {
-        PointResult pointResult = pointFacade.getPoint(userId);
+        PointResult pointResult = pointFacade.getPoint(new PointCriteria.Get(userId));
         return ApiResponse.success(PointV1Dto.PointResponse.from(pointResult));
     }
 

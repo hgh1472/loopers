@@ -13,4 +13,6 @@ public class UserCriteria {
             );
         }
     }
+
+    public record Get(Long userId) {}
 }

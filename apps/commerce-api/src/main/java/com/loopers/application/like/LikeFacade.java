@@ -1,5 +1,6 @@
 package com.loopers.application.like;
 
+import com.loopers.domain.count.ProductCountCommand;
 import com.loopers.domain.count.ProductCountInfo;
 import com.loopers.domain.count.ProductCountService;
 import com.loopers.domain.like.ProductLikeActionInfo;
@@ -10,6 +11,7 @@ import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductSearchInfo;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
@@ -35,7 +37,7 @@ public class LikeFacade {
         validateProductCriteria(criteria);
         ProductLikeActionInfo productLikeActionInfo = productLikeService.like(criteria.toLikeCreateCommand());
         if (productLikeActionInfo.changed()) {
-            productCountService.incrementLike(criteria.productId());
+            productCountService.incrementLike(new ProductCountCommand.Increment(criteria.productId()));
         }
         return LikeResult.Product.from(productLikeActionInfo);
     }
@@ -45,14 +47,14 @@ public class LikeFacade {
         validateProductCriteria(criteria);
         ProductLikeActionInfo productLikeActionInfo = productLikeService.cancelLike(criteria.toLikeDeleteCommand());
         if (productLikeActionInfo.changed()) {
-            productCountService.decrementLike(criteria.productId());
+            productCountService.decrementLike(new ProductCountCommand.Decrement(criteria.productId()));
         }
         return LikeResult.Product.from(productLikeActionInfo);
     }
 
     @Transactional(readOnly = true)
     public List<LikeResult.ProductList> getLikedProducts(LikeCriteria.LikedProducts criteria) {
-        UserInfo userInfo = userService.findUser(criteria.userId());
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
@@ -61,7 +63,8 @@ public class LikeFacade {
                 .stream()
                 .collect(Collectors.toMap(ProductLikeInfo::productId, productLikeInfo -> productLikeInfo));
 
-        Map<Long, ProductCountInfo> countMap = productCountService.getProductCounts(likeMap.keySet()).stream()
+        Map<Long, ProductCountInfo> countMap = productCountService.getProductCounts(
+                new ProductCountCommand.GetList(likeMap.keySet())).stream()
                 .collect(Collectors.toMap(ProductCountInfo::productId, productCountInfo -> productCountInfo));
 
         Map<Long, ProductSearchInfo> productMap = productService.searchProducts(new ProductCommand.Search(likeMap.keySet())).stream()
@@ -73,7 +76,7 @@ public class LikeFacade {
     }
 
     private void validateProductCriteria(LikeCriteria.Product criteria) {
-        UserInfo userInfo = userService.findUser(criteria.userId());
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }

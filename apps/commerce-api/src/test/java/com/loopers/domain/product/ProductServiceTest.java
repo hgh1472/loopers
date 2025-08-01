@@ -56,7 +56,7 @@ class ProductServiceTest {
         @NullAndEmptySource
         @ParameterizedTest(name = "productIds = {0}")
         void throwBadRequestException_whenProductIdsIsEmpty(Set<Long> productIds) {
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(productIds));
+            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(new ProductCommand.GetProducts(productIds)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -70,7 +70,7 @@ class ProductServiceTest {
             given(productRepository.findByIds(productIds))
                     .willReturn(List.of());
 
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(productIds));
+            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(new ProductCommand.GetProducts(productIds)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -85,7 +85,7 @@ class ProductServiceTest {
             given(productRepository.findByIds(productIds))
                     .willReturn(List.of(product));
 
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(productIds));
+            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(new ProductCommand.GetProducts(productIds)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()

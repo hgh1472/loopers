@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.user;
 
+import com.loopers.application.user.UserCriteria;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserResult;
 import com.loopers.interfaces.api.ApiResponse;
@@ -29,7 +30,7 @@ public class UserV1Controller implements UserV1ApiSpec {
     @GetMapping("/me")
     @Override
     public ApiResponse<UserV1Dto.UserResponse> getMyInfo(@RequestHeader("X-USER-ID") Long userId) {
-        UserResult userResult = userFacade.getUser(userId);
+        UserResult userResult = userFacade.getUser(new UserCriteria.Get(userId));
         return ApiResponse.success(UserV1Dto.UserResponse.from(userResult));
     }
 }

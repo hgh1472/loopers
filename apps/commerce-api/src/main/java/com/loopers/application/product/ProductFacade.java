@@ -4,6 +4,7 @@ import com.loopers.domain.PageResponse;
 import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandInfo;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.count.ProductCountCommand;
 import com.loopers.domain.count.ProductCountInfo;
 import com.loopers.domain.count.ProductCountService;
 import com.loopers.domain.like.ProductLikeCommand;
@@ -16,6 +17,7 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockInfo;
 import com.loopers.domain.stock.StockService;
+import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
@@ -46,11 +48,11 @@ public class ProductFacade {
         }
         BrandInfo brandInfo = brandService.findBy(new BrandCommand.Find(productInfo.brandId()));
         StockInfo stockInfo = stockService.findStock(new StockCommand.Find(productInfo.id()));
-        ProductCountInfo countInfo = productCountService.getProductCount(productInfo.id());
+        ProductCountInfo countInfo = productCountService.getProductCount(new ProductCountCommand.Get(productInfo.id()));
 
         boolean isLiked = false;
         if (criteria.userId() != null) {
-            UserInfo userInfo = userService.findUser(criteria.userId());
+            UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
             if (userInfo != null) {
                 isLiked = productLikeService.isLiked(new ProductLikeCommand.IsLiked(productInfo.id(), userInfo.id()));
             }
@@ -62,7 +64,7 @@ public class ProductFacade {
     public PageResponse<ProductListResult> searchProducts(ProductCriteria.Search criteria) {
         PageResponse<ProductSearchInfo> infos = productService.search(criteria.toPageCommand());
 
-        UserInfo userInfo = userService.findUser(criteria.userId());
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
         if (userInfo == null) {
             return infos.map(info -> ProductListResult.from(info, false));
         }

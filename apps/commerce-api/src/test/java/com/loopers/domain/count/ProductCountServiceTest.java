@@ -30,7 +30,7 @@ public class ProductCountServiceTest {
         given(productCountRepository.findBy(productId))
                 .willReturn(Optional.empty());
 
-        CoreException thrown = assertThrows(CoreException.class, () -> productCountService.getProductCount(productId));
+        CoreException thrown = assertThrows(CoreException.class, () -> productCountService.getProductCount(new ProductCountCommand.Get(productId)));
 
         assertThat(thrown)
                 .usingRecursiveComparison()
@@ -48,7 +48,7 @@ public class ProductCountServiceTest {
             given(productCountRepository.findBy(productId))
                     .willReturn(Optional.empty());
 
-            CoreException thrown = assertThrows(CoreException.class, () -> productCountService.incrementLike(productId));
+            CoreException thrown = assertThrows(CoreException.class, () -> productCountService.incrementLike(new ProductCountCommand.Increment(productId)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -64,7 +64,7 @@ public class ProductCountServiceTest {
             given(productCountRepository.findBy(productId))
                     .willReturn(Optional.of(productCount));
 
-            ProductCountInfo result = productCountService.incrementLike(productId);
+            ProductCountInfo result = productCountService.incrementLike(new ProductCountCommand.Increment(productId));
 
             assertThat(result.likeCount()).isEqualTo(before + 1);
         }
@@ -81,7 +81,7 @@ public class ProductCountServiceTest {
             given(productCountRepository.findBy(productId))
                     .willReturn(Optional.empty());
 
-            CoreException thrown = assertThrows(CoreException.class, () -> productCountService.decrementLike(productId));
+            CoreException thrown = assertThrows(CoreException.class, () -> productCountService.decrementLike(new ProductCountCommand.Decrement(productId)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -98,7 +98,7 @@ public class ProductCountServiceTest {
             given(productCountRepository.findBy(productId))
                     .willReturn(Optional.of(productCount));
 
-            ProductCountInfo result = productCountService.decrementLike(productId);
+            ProductCountInfo result = productCountService.decrementLike(new ProductCountCommand.Decrement(productId));
 
             assertThat(result.likeCount()).isEqualTo(before - 1);
         }

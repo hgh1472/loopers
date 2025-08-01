@@ -38,7 +38,7 @@ public class PointServiceIntegrationTest {
         void getPoints() {
             Point saved = pointRepository.save(Point.from(1L));
 
-            PointInfo pointInfo = pointService.findPoint(saved.getUserId());
+            PointInfo pointInfo = pointService.findPoint(new PointCommand.Find(saved.getUserId()));
 
             assertThat(pointInfo.amount()).isEqualTo(0L);
         }
@@ -46,7 +46,7 @@ public class PointServiceIntegrationTest {
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
         @Test
         void getPoints_withNonExistId() {
-            PointInfo pointInfo = pointService.findPoint(1L);
+            PointInfo pointInfo = pointService.findPoint(new PointCommand.Find(-1L));
 
             assertThat(pointInfo).isNull();
         }
