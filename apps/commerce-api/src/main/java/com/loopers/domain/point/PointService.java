@@ -12,8 +12,8 @@ public class PointService {
     private final PointRepository pointRepository;
 
     @Transactional
-    public PointInfo initialize(Long userId) {
-        Point point = Point.from(userId);
+    public PointInfo initialize(PointCommand.Initialize command) {
+        Point point = Point.from(command.userId());
         if (pointRepository.existsByUserId(point.getUserId())) {
             throw new CoreException(ErrorType.CONFLICT, "이미 회원의 포인트가 존재합니다.");
         }
@@ -21,8 +21,8 @@ public class PointService {
     }
 
     @Transactional(readOnly = true)
-    public PointInfo findPoint(Long userId) {
-        return pointRepository.findByUserId(userId)
+    public PointInfo findPoint(PointCommand.Find command) {
+        return pointRepository.findByUserId(command.userId())
                 .map(PointInfo::from)
                 .orElse(null);
     }
@@ -31,7 +31,17 @@ public class PointService {
     public PointInfo charge(PointCommand.Charge command) {
         Point point = pointRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
-        point.charge(command.point());
+        PointHistory chargeHistory = point.charge(command.amount());
+        pointRepository.record(chargeHistory);
+        return PointInfo.from(point);
+    }
+
+    @Transactional
+    public PointInfo use(PointCommand.Use command) {
+        Point point = pointRepository.findByUserId(command.userId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
+        PointHistory useHistory = point.use(command.amount());
+        pointRepository.record(useHistory);
         return PointInfo.from(point);
     }
 }

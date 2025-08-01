@@ -67,7 +67,7 @@ class UserServiceTest {
             given(userRepository.findById(-1L))
                     .willReturn(Optional.empty());
 
-            UserInfo userInfo = userService.findUser(-1L);
+            UserInfo userInfo = userService.findUser(new UserCommand.Find(-1L));
 
             assertThat(userInfo).isNull();
         }

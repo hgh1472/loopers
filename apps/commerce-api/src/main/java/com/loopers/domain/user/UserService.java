@@ -24,8 +24,12 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserInfo findUser(Long userId) {
-        return userRepository.findById(userId)
+    public UserInfo findUser(UserCommand.Find command) {
+        if (command.userId() == null) {
+            return null;
+        }
+
+        return userRepository.findById(command.userId())
                 .map(UserInfo::from)
                 .orElse(null);
     }

@@ -9,4 +9,6 @@ public interface PointRepository {
     Optional<Point> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
+
+    PointHistory record(PointHistory pointHistory);
 }

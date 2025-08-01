@@ -12,7 +12,7 @@ public record UserResult(Long id, String loginId, String email, LocalDate birthD
                 userInfo.email(),
                 userInfo.birthDate(),
                 userInfo.gender(),
-                pointInfo.value()
+                pointInfo.amount()
         );
     }
 }

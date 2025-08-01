@@ -10,22 +10,28 @@ classDiagram
         - Email
         - Gender
     }
-    class Owner {
-        - User
-    }
     class Point {
-        - Owner
-        - amount
-        + use(amount) : void
+        - User
+        - Amount
+        + use(amount) : PointHistory
+        + charge(amount) : PointHistory
         + canAfford(amount) : boolean
     }
     class PointHistory {
         - Point
         - amount
-        - PointType
+        - Type
         - createdAt
+        + chargeOf(pointId, amount) : PointHistory
+        + useOf(pointId, amount) : PointHistory
     }
-    class PointType {
+    class Amount {
+        - value
+        + charge(amount) : void
+        + use(amount) : void
+        + isGreaterThanOrEqual(amount) : boolean
+    }
+    class Type {
         CHARGED, USED
     }
 
@@ -128,10 +134,9 @@ classDiagram
     }
 
     %% 관계 정의
-    Owner -- User
-    Point -- Owner
+    Point -- User
     PointHistory "N" -- Point
-    PointHistory -- PointType
+    PointHistory -- Type
 
     Product -- Brand
     Product -- "N" ProductCategory

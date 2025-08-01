@@ -18,4 +18,7 @@ public class UserCommand {
             return User.Gender.from(gender);
         }
     }
+
+    public record Find(Long userId) {
+    }
 }

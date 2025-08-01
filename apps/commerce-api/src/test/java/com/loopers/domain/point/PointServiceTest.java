@@ -3,6 +3,10 @@ package com.loopers.domain.point;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -11,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,10 +35,10 @@ class PointServiceTest {
         @Test
         void throwsConflictException_whenPointAlreadyExists() {
             long userId = 1L;
-            BDDMockito.given(pointRepository.existsByUserId(userId))
+            given(pointRepository.existsByUserId(userId))
                     .willReturn(true);
 
-            CoreException thrown = assertThrows(CoreException.class, () -> pointService.initialize(userId));
+            CoreException thrown = assertThrows(CoreException.class, () -> pointService.initialize(new PointCommand.Initialize(userId)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -50,10 +53,10 @@ class PointServiceTest {
         @Test
         void returnNull_whenPointDoesNotExist() {
             long nonExistUserId = 1L;
-            BDDMockito.given(pointRepository.findByUserId(nonExistUserId))
+            given(pointRepository.findByUserId(nonExistUserId))
                     .willReturn(Optional.empty());
 
-            PointInfo pointInfo = pointService.findPoint(nonExistUserId);
+            PointInfo pointInfo = pointService.findPoint(new PointCommand.Find(nonExistUserId));
 
             assertThat(pointInfo).isNull();
         }
@@ -67,12 +70,105 @@ class PointServiceTest {
         void throwsNotFoundException_whenPointDoesNotExist() {
 
             long nonExistUserId = 1L;
-            BDDMockito.given(pointRepository.findByUserId(nonExistUserId))
+            given(pointRepository.findByUserId(nonExistUserId))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> pointService.charge(new PointCommand.Charge(nonExistUserId, 1000L)))
                     .isInstanceOf(CoreException.class)
                     .hasMessage("존재하지 않는 사용자입니다.");
+        }
+
+        @DisplayName("충전된 포인트를 반환한다.")
+        @Test
+        void returnPoint_afterCharged() {
+            long userId = 1L;
+            Point point = Point.from(userId);
+            long initPoint = 500L;
+            point.charge(initPoint);
+            given(pointRepository.findByUserId(userId))
+                    .willReturn(Optional.of(point));
+            long chargePoint = 1000L;
+
+            PointInfo pointInfo = pointService.charge(new PointCommand.Charge(userId, chargePoint));
+
+            assertThat(pointInfo.amount()).isEqualTo(initPoint + chargePoint);
+        }
+
+        @DisplayName("포인트 사용 내역을 저장한다.")
+        @Test
+        void recordChargeHistory() {
+            long userId = 1L;
+            long chargePoint = 1000L;
+            Point point = Point.from(userId);
+
+            given(pointRepository.findByUserId(userId))
+                    .willReturn(Optional.of(point));
+
+            pointService.charge(new PointCommand.Charge(userId, chargePoint));
+
+            verify(pointRepository, times(1))
+                    .record(argThat(history ->
+                            history.getPointId().equals(point.getId())
+                                    && history.getAmount().equals(chargePoint)
+                                    && history.getType().equals(PointHistory.Type.CHARGED))
+                    );
+        }
+    }
+
+    @Nested
+    @DisplayName("포인트를 사용할 때,")
+    class Use {
+        @DisplayName("존재하지 않는 사용자의 포인트를 사용할 경우, NOT_FOUND 예외를 반환한다.")
+        @Test
+        void throwsNotFoundException_whenPointDoesNotExist() {
+            long nonExistUserId = 1L;
+            given(pointRepository.findByUserId(nonExistUserId))
+                    .willReturn(Optional.empty());
+
+            CoreException thrown = assertThrows(CoreException.class, () -> pointService.use(new PointCommand.Use(nonExistUserId, 1000L)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
+        }
+
+        @DisplayName("사용 후 남은 포인트를 반환한다.")
+        @Test
+        void returnPoint_afterUsed() {
+            long userId = 1L;
+            long initialPoint = 1000L;
+            long usePoint = 500L;
+            Point point = Point.from(userId);
+            point.charge(initialPoint);
+
+            given(pointRepository.findByUserId(userId))
+                    .willReturn(Optional.of(point));
+
+            PointInfo pointInfo = pointService.use(new PointCommand.Use(userId, usePoint));
+
+            assertThat(pointInfo.amount()).isEqualTo(initialPoint - usePoint);
+        }
+
+        @DisplayName("포인트 사용 내역을 저장한다.")
+        @Test
+        void recordUseHistory() {
+            long userId = 1L;
+            long initialPoint = 1000L;
+            long usePoint = 300L;
+            Point point = Point.from(userId);
+            point.charge(initialPoint);
+
+            given(pointRepository.findByUserId(userId))
+                    .willReturn(Optional.of(point));
+
+            pointService.use(new PointCommand.Use(userId, usePoint));
+
+            verify(pointRepository, times(1))
+                    .record(argThat(history ->
+                            history.getPointId().equals(point.getId())
+                                    && history.getAmount().equals(usePoint)
+                                    && history.getType().equals(PointHistory.Type.USED))
+                    );
         }
     }
 }
