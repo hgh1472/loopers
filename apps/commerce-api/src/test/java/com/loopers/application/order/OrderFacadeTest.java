@@ -47,21 +47,39 @@ class OrderFacadeTest {
     @DisplayName("주문 시,")
     class Orders {
 
-        @DisplayName("상품이 없는 경우, BAD_REQUEST 예외를 발생시킨다.")
+        @DisplayName("사용자가 없는 경우, NOT_FOUND 예외를 발생시킨다.")
         @Test
-        void throwBadRequestException_whenNoProducts() {
+        void throwNotFoundException_whenUserNotFound() {
             given(userService.findUser(new UserCommand.Find(1L)))
-                    .willReturn(new UserInfo(1L, "login", "hgh1472@loopers.im", LocalDate.of(1999, 6, 23), "MALE"));
-            given(productService.getProducts(new ProductCommand.GetProducts(Set.of(1L))))
-                    .willReturn(List.of(new ProductInfo(1L, 1L, "상품 1", new BigDecimal("1000.00"), "HOLD")));
+                    .willReturn(null);
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(1L, 1L));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery("주문자", "010-1234-5678", "서울시 강남구 역삼동 123-45", "서울시 강남구 역삼동 123-45", "요청사항");
-            CoreException thrown = assertThrows(CoreException.class,
-                    () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery)));
+
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "상품이 판매 중이 아닙니다."));
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        }
+
+        @DisplayName("주문에 필요한 상품 정보가 없는 경우, NOT_FOUND 예외를 발생시킨다.")
+        @Test
+        void throwNotFoundException_whenProductInfoNotFound() {
+            UserInfo userInfo = new UserInfo(1L, "testUser", "hgh1472@naver.com", LocalDate.now(), "MALE");
+            given(userService.findUser(new UserCommand.Find(1L)))
+                    .willReturn(userInfo);
+            Set<Long> productIds = Set.of(1L, 2L);
+            given(productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds)))
+                    .willReturn(List.of(new ProductInfo(1L, 2L, "상품 1", new BigDecimal("1000.00"), "ON_SALE")));
+
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(1L, 1L), new OrderCriteria.Line(2L, 1L));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery("주문자", "010-1234-5678", "서울시 강남구 역삼동 123-45", "서울시 강남구 역삼동 123-45", "요청사항");
+
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "주문에 필요한 상품 정보를 찾을 수 없습니다."));
         }
     }
 

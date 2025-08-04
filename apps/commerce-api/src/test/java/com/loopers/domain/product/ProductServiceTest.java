@@ -50,46 +50,32 @@ class ProductServiceTest {
     }
 
     @Nested
-    @DisplayName("ID 목록으로 상품 조회 시,")
-    class GetProducts {
+    @DisplayName("ID 목록으로 구매 가능 상품 조회 시,")
+    class GetPurchasableProducts {
         @DisplayName("ID 목록이 비어있다면, BAD_REQUEST 예외를 발생시킨다.")
         @NullAndEmptySource
         @ParameterizedTest(name = "productIds = {0}")
         void throwBadRequestException_whenProductIdsIsEmpty(Set<Long> productIds) {
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(new ProductCommand.GetProducts(productIds)));
+            CoreException thrown = assertThrows(CoreException.class, () -> productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
                     .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "상품 ID 목록이 비어 있습니다."));
         }
 
-        @DisplayName("상품 조회 결과가 없을 시, NOT_FOUND 예외를 발생시킨다.")
+        @DisplayName("ID 목록 중 구매 가능한 상품만 반환한다.")
         @Test
-        void throwNotFoundException_whenProductIdsContainNonExistentId() {
+        void returnPurchasableProducts_whenProductIdsContainPurchasableProducts() {
             Set<Long> productIds = Set.of(1L, 2L);
+            Product product1 = Product.create(new ProductCommand.Create(1L, "Product 1", new BigDecimal("100.00"), "ON_SALE"));
+            Product product2 = Product.create(new ProductCommand.Create(2L, "Product 2", new BigDecimal("200.00"), "OUT_OF_STOCK"));
             given(productRepository.findByIds(productIds))
-                    .willReturn(List.of());
+                    .willReturn(List.of(product1, product2));
 
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(new ProductCommand.GetProducts(productIds)));
+            List<ProductInfo> result = productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds));
 
-            assertThat(thrown)
-                    .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품이 포함되어 있습니다."));
-        }
-
-        @DisplayName("조회 항목 중 없는 상품이 있을 경우, NOT_FOUND 예외를 발생시킨다.")
-        @Test
-        void throwNotFoundException_whenSomeProductsDoNotExist() {
-            Set<Long> productIds = Set.of(1L, 2L);
-            Product product = Product.create(new ProductCommand.Create(1L, "Product 1", new BigDecimal("10000"), "ON_SALE"));
-            given(productRepository.findByIds(productIds))
-                    .willReturn(List.of(product));
-
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getProducts(new ProductCommand.GetProducts(productIds)));
-
-            assertThat(thrown)
-                    .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품이 포함되어 있습니다."));
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).name()).isEqualTo("Product 1");
         }
     }
 

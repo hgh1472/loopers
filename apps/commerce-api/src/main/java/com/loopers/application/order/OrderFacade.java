@@ -41,13 +41,12 @@ public class OrderFacade {
 
         Set<Long> productIds = criteria.lines().stream().map(OrderCriteria.Line::productId).collect(Collectors.toSet());
 
-        Map<Long, ProductInfo> productInfos = productService.getProducts(new ProductCommand.GetProducts(productIds)).stream()
+        Map<Long, ProductInfo> productInfos = productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds))
+                .stream()
                 .collect(Collectors.toMap(ProductInfo::id, product -> product));
-        productInfos.values().forEach(info -> {
-            if (!info.status().equals("ON_SALE")) {
-                throw new CoreException(ErrorType.BAD_REQUEST, "상품이 판매 중이 아닙니다.");
-            }
-        });
+        if (productInfos.size() != productIds.size()) {
+            throw new CoreException(ErrorType.NOT_FOUND, "주문에 필요한 상품 정보를 찾을 수 없습니다.");
+        }
 
         List<OrderCommand.Line> lines = criteria.lines().stream()
                 .map(line ->

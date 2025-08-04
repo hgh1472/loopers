@@ -56,6 +56,10 @@ public class Product extends BaseEntity {
         return new Product(brandId, name, price, status);
     }
 
+    public boolean isPurchasable() {
+        return this.status == ProductStatus.ON_SALE;
+    }
+
     public enum ProductStatus {
         ON_SALE("판매중"), OUT_OF_STOCK("품절"), HOLD("판매 중지"), DELETED("삭제된 제품");
 
