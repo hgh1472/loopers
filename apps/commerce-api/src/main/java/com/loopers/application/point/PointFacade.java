@@ -1,5 +1,6 @@
 package com.loopers.application.point;
 
+import com.loopers.domain.point.PointCommand;
 import com.loopers.domain.point.PointInfo;
 import com.loopers.domain.point.PointService;
 import com.loopers.support.error.CoreException;
@@ -13,10 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class PointFacade {
     private final PointService pointService;
 
-    public PointResult getPoint(Long userId) {
-        PointInfo pointInfo = pointService.findPoint(userId);
+    public PointResult getPoint(PointCriteria.Get criteria) {
+        PointInfo pointInfo = pointService.findPoint(new PointCommand.Find(criteria.userId()));
         if (pointInfo == null) {
-            throw new CoreException(ErrorType.NOT_FOUND, String.format("%s 사용자의 포인트 정보를 찾을 수 없습니다.", userId));
+            throw new CoreException(ErrorType.NOT_FOUND, "사용자의 포인트 정보를 찾을 수 없습니다.");
         }
         return PointResult.from(pointInfo);
     }
