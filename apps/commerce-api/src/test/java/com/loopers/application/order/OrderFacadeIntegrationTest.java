@@ -1,5 +1,6 @@
 package com.loopers.application.order;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -26,6 +27,9 @@ import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -212,6 +216,54 @@ class OrderFacadeIntegrationTest {
                                     tuple(product2.getId(), 2L, product2.getPrice().getValue().multiply(BigDecimal.valueOf(2)))),
                     () -> assertThat(order.get().getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("7000.00"))
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("동시에 주문할 때,")
+    class OrderConcurrency {
+        @DisplayName("재고와 포인트 차감은 정확히 이루어져야 한다.")
+        @Test
+        void deductStock_concurrent() throws InterruptedException {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            point.charge(300000L);
+            pointRepository.save(point);
+            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
+            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+            int threadCount = 10;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        orderFacade.order(new OrderCriteria.Order(user.getId(),
+                                List.of(new OrderCriteria.Line(product1.getId(), 10L), new OrderCriteria.Line(product2.getId(), 10L)), delivery));
+                    } catch (Exception e) {
+                        System.out.println("Order failed: " + e.getMessage());
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+
+            Stock stock1 = stockRepository.findByProductId(product1.getId()).orElseThrow();
+            assertThat(stock1.getQuantity().getValue()).isEqualTo(0);
+            Stock stock2 = stockRepository.findByProductId(product2.getId()).orElseThrow();
+            assertThat(stock2.getQuantity().getValue()).isEqualTo(0);
+            Point usedPoint = pointRepository.findByUserId(user.getId()).orElseThrow();
+            assertThat(usedPoint.getAmount().getValue()).isEqualTo(0L);
         }
     }
 
