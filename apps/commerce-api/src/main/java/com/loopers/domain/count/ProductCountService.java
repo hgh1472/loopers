@@ -23,7 +23,7 @@ public class ProductCountService {
 
     @Transactional
     public ProductCountInfo incrementLike(ProductCountCommand.Increment command) {
-        ProductCount productCount = productCountRepository.findBy(command.productId())
+        ProductCount productCount = productCountRepository.findByWithLock(command.productId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
         productCount.incrementLike();
         return ProductCountInfo.from(productCount);
@@ -31,7 +31,7 @@ public class ProductCountService {
 
     @Transactional
     public ProductCountInfo decrementLike(ProductCountCommand.Decrement command) {
-        ProductCount productCount = productCountRepository.findBy(command.productId())
+        ProductCount productCount = productCountRepository.findByWithLock(command.productId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
         productCount.decrementLike();
         return ProductCountInfo.from(productCount);

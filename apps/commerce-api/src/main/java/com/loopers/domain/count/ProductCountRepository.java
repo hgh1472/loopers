@@ -10,5 +10,7 @@ public interface ProductCountRepository {
 
     Optional<ProductCount> findBy(Long productId);
 
+    Optional<ProductCount> findByWithLock(Long productId);
+
     List<ProductCount> findByProductIds(Set<Long> productIds);
 }
