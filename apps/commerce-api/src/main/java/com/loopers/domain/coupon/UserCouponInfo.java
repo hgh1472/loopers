@@ -1,5 +1,6 @@
 package com.loopers.domain.coupon;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record UserCouponInfo(
@@ -10,6 +11,13 @@ public record UserCouponInfo(
         LocalDateTime usedAt,
         LocalDateTime expiredAt
 ) {
+    public record Use(
+            Long id,
+            BigDecimal originalAmount,
+            BigDecimal paymentAmount
+    ) {
+    }
+
     public static UserCouponInfo from(UserCoupon userCoupon) {
         return new UserCouponInfo(
                 userCoupon.getId(),

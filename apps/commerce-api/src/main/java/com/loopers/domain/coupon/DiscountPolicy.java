@@ -7,7 +7,6 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -16,7 +15,7 @@ import lombok.Getter;
 @Embeddable
 public class DiscountPolicy {
 
-    @Column(name = "discount_value", nullable = false, precision = 10, scale = 2)
+    @Column(name = "value", nullable = false, precision = 10, scale = 2)
     private BigDecimal value;
 
     @Enumerated(EnumType.STRING)
@@ -39,29 +38,12 @@ public class DiscountPolicy {
             throw new CoreException(ErrorType.BAD_REQUEST, "고정 할인 금액 은 0보다 커야 합니다.");
         }
 
-        this.value = value.setScale(2, RoundingMode.FLOOR);
+        this.value = value;
         this.type = type;
     }
 
-    public BigDecimal discount(BigDecimal amount) {
-        return type.discount(amount, value);
-    }
-
     public enum Type {
-        RATE {
-            @Override
-            BigDecimal discount(BigDecimal amount, BigDecimal value) {
-                BigDecimal discountAmount = amount.multiply(value).setScale(2, RoundingMode.FLOOR);
-                return amount.subtract(discountAmount).max(BigDecimal.ZERO);
-            }
-        },
-        FIXED {
-            @Override
-            BigDecimal discount(BigDecimal amount, BigDecimal value) {
-                return amount.subtract(value).setScale(2, RoundingMode.FLOOR).max(BigDecimal.ZERO);
-            }
-        };
-
-        abstract BigDecimal discount(BigDecimal amount, BigDecimal value);
+        RATE,
+        FIXED
     }
 }

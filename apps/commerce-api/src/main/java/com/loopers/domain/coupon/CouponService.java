@@ -3,6 +3,7 @@ package com.loopers.domain.coupon;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.transaction.Transactional;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CouponService {
+    private final DiscountPolicyAdapter discountPolicyAdapter;
     private final CouponRepository couponRepository;
 
     @Transactional
@@ -27,10 +29,12 @@ public class CouponService {
     }
 
     @Transactional
-    public UserCouponInfo use(CouponCommand.Use command) {
+    public UserCouponInfo.Use use(CouponCommand.Use command) {
         UserCoupon userCoupon = couponRepository.findUserCoupon(command.couponId(), command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
+        DiscountStrategy discountStrategy = discountPolicyAdapter.from(userCoupon.getDiscountPolicy());
+        BigDecimal paymentAmount = discountStrategy.discount(command.originalAmount());
         userCoupon.use(LocalDateTime.now());
-        return UserCouponInfo.from(userCoupon);
+        return new UserCouponInfo.Use(userCoupon.getId(), command.originalAmount(), paymentAmount);
     }
 }

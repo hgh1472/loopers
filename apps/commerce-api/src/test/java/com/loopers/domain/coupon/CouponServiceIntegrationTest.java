@@ -38,7 +38,7 @@ class CouponServiceIntegrationTest {
         void useCoupon_concurrency() throws InterruptedException {
             DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), Type.FIXED);
             UserCoupon userCoupon = couponRepository.save(UserCoupon.of(1L, 1L, discountPolicy, LocalDateTime.now().plusHours(24)));
-            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L);
+            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L, new BigDecimal("5000.00"));
             int threadCount = 10;
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
             CountDownLatch latch = new CountDownLatch(threadCount);
@@ -65,15 +65,13 @@ class CouponServiceIntegrationTest {
         void returnUserCouponInfo() {
             DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), Type.FIXED);
             UserCoupon userCoupon = couponRepository.save(UserCoupon.of(1L, 1L, discountPolicy, LocalDateTime.now().plusHours(24)));
-            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L);
+            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L, new BigDecimal("5000.00"));
 
-            UserCouponInfo userCouponInfo = couponService.use(cmd);
+            UserCouponInfo.Use use = couponService.use(cmd);
 
-            assertThat(userCouponInfo.id()).isEqualTo(userCoupon.getId());
-            assertThat(userCouponInfo.couponId()).isEqualTo(userCoupon.getCouponId());
-            assertThat(userCouponInfo.userId()).isEqualTo(userCoupon.getUserId());
-            assertThat(userCouponInfo.discountPolicy()).isEqualTo(discountPolicy);
-            assertThat(userCouponInfo.expiredAt()).isEqualTo(userCoupon.getExpiredAt());
+            assertThat(use.id()).isEqualTo(userCoupon.getId());
+            assertThat(use.originalAmount()).isEqualTo(cmd.originalAmount());
+            assertThat(use.paymentAmount()).isEqualTo(new BigDecimal("4000"));
         }
     }
 
@@ -153,7 +151,7 @@ class CouponServiceIntegrationTest {
         @Test
         void returnCouponInfo() {
             String name = "루퍼스 쿠폰";
-            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000"), DiscountPolicy.Type.FIXED);
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), DiscountPolicy.Type.FIXED);
             BigDecimal minimumOrderAmount = new BigDecimal("100.00");
             Integer expireHours = 24;
             Long initialRemainingQuantity = 10L;
@@ -164,10 +162,10 @@ class CouponServiceIntegrationTest {
             CouponInfo couponInfo = couponService.issue(new CouponCommand.Issue(coupon.getId(), userId));
 
             assertThat(couponInfo.id()).isEqualTo(coupon.getId());
-            assertThat(couponInfo.name()).isEqualTo(name);
-            assertThat(couponInfo.discountPolicy()).isEqualTo(discountPolicy);
-            assertThat(couponInfo.minimumOrderAmount()).isEqualTo(minimumOrderAmount);
-            assertThat(couponInfo.expireHours()).isEqualTo(expireHours);
+            assertThat(couponInfo.name()).isEqualTo(coupon.getName());
+            assertThat(couponInfo.discountPolicy()).isEqualTo(coupon.getDiscountPolicy());
+            assertThat(couponInfo.minimumOrderAmount()).isEqualTo(coupon.getMinimumOrderAmount());
+            assertThat(couponInfo.expireHours()).isEqualTo(coupon.getExpireHours());
             assertThat(couponInfo.remainingQuantity()).isEqualTo(9);
             assertThat(couponInfo.issuedQuantity()).isEqualTo(1);
         }

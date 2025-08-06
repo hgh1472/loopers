@@ -33,7 +33,7 @@ class CouponServiceTest {
         @DisplayName("쿠폰을 소유하고 있지 않은 경우, NOT_FOUND 예외가 발생한다.")
         @Test
         void throwNotFoundException_whenCouponNotOwned() {
-            CouponCommand.Use command = new CouponCommand.Use(1L, 1L);
+            CouponCommand.Use command = new CouponCommand.Use(1L, 1L, new BigDecimal("10000"));
             given(couponRepository.findUserCoupon(command.couponId(), command.userId()))
                     .willReturn(Optional.empty());
 

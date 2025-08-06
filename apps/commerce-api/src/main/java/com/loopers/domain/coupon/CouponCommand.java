@@ -15,6 +15,6 @@ public class CouponCommand {
     public record Issue(Long couponId, Long userId) {
     }
 
-    public record Use(Long couponId, Long userId) {
+    public record Use(Long couponId, Long userId, BigDecimal originalAmount) {
     }
 }

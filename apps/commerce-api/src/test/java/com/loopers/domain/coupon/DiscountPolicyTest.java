@@ -71,34 +71,4 @@ class DiscountPolicyTest {
                     .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "고정 할인 금액 은 0보다 커야 합니다."));
         }
     }
-
-    @Nested
-    @DisplayName("할인 적용 시,")
-    class Discount {
-        @DisplayName("정률 쿠폰은 금액에 할인율을 곱한 값을 반환한다.")
-        @Test
-        void returnDiscountedAmount_whenTypeIsRate() {
-            BigDecimal amount = new BigDecimal("1000");
-            BigDecimal discountValue = new BigDecimal("0.1");
-            DiscountPolicy.Type type = DiscountPolicy.Type.RATE;
-            DiscountPolicy discountPolicy = new DiscountPolicy(discountValue, type);
-
-            BigDecimal discountedAmount = discountPolicy.discount(amount);
-
-            assertThat(discountedAmount).isEqualTo(new BigDecimal("900.00"));
-        }
-
-        @DisplayName("정액 쿠폰은 금액에서 할인 금액을 뺀 값을 반환한다.")
-        @Test
-        void returnDiscountedAmount_whenTypeIsFixed() {
-            BigDecimal amount = new BigDecimal("1000");
-            BigDecimal discountValue = new BigDecimal("200");
-            DiscountPolicy.Type type = DiscountPolicy.Type.FIXED;
-            DiscountPolicy discountPolicy = new DiscountPolicy(discountValue, type);
-
-            BigDecimal discountedAmount = discountPolicy.discount(amount);
-
-            assertThat(discountedAmount).isEqualTo(new BigDecimal("800.00"));
-        }
-    }
 }
