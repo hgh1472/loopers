@@ -9,10 +9,10 @@ public class CouponCommand {
             BigDecimal minimumOrderAmount,
             Integer expireHours,
             Long remainingQuantity
-            ) {
+    ) {
     }
 
-    public record Get(Long couponId) {
+    public record Issue(Long couponId, Long userId) {
     }
 
     public record Use(Long couponId, Long userId) {

@@ -59,21 +59,117 @@ class CouponServiceIntegrationTest {
             UserCoupon afterUse = couponRepository.findUserCoupon(1L, 1L).orElseThrow();
             assertThat(afterUse.getVersion()).isEqualTo(1);
         }
+
+        @DisplayName("사용한 쿠폰 정보를 반환한다.")
+        @Test
+        void returnUserCouponInfo() {
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), Type.FIXED);
+            UserCoupon userCoupon = couponRepository.save(UserCoupon.of(1L, 1L, discountPolicy, LocalDateTime.now().plusHours(24)));
+            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L);
+
+            UserCouponInfo userCouponInfo = couponService.use(cmd);
+
+            assertThat(userCouponInfo.id()).isEqualTo(userCoupon.getId());
+            assertThat(userCouponInfo.couponId()).isEqualTo(userCoupon.getCouponId());
+            assertThat(userCouponInfo.userId()).isEqualTo(userCoupon.getUserId());
+            assertThat(userCouponInfo.discountPolicy()).isEqualTo(discountPolicy);
+            assertThat(userCouponInfo.expiredAt()).isEqualTo(userCoupon.getExpiredAt());
+        }
     }
 
-    @DisplayName("사용한 쿠폰 정보를 반환한다.")
-    @Test
-    void returnUserCouponInfo() {
-        DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), Type.FIXED);
-        UserCoupon userCoupon = couponRepository.save(UserCoupon.of(1L, 1L, discountPolicy, LocalDateTime.now().plusHours(24)));
-        CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L);
+    @Nested
+    @DisplayName("쿠폰 발급 시,")
+    class Issue {
+        @DisplayName("동시에 발급 요청을 하는 경우, 쿠폰 수량은 정확히 계산된다.")
+        @Test
+        void calculateQuantity_Concurrency() throws InterruptedException {
+            String name = "루퍼스 쿠폰";
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000"), DiscountPolicy.Type.FIXED);
+            BigDecimal minimumOrderAmount = BigDecimal.ZERO;
+            Integer expireHours = 24;
+            Long initialRemainingQuantity = 10L;
+            CouponCommand.Create cmd = new CouponCommand.Create(name, discountPolicy, minimumOrderAmount, expireHours, initialRemainingQuantity);
+            Coupon coupon = couponRepository.save(Coupon.of(cmd));
 
-        UserCouponInfo userCouponInfo = couponService.use(cmd);
+            int threadCount = 10;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
 
-        assertThat(userCouponInfo.id()).isEqualTo(userCoupon.getId());
-        assertThat(userCouponInfo.couponId()).isEqualTo(userCoupon.getCouponId());
-        assertThat(userCouponInfo.userId()).isEqualTo(userCoupon.getUserId());
-        assertThat(userCouponInfo.discountPolicy()).isEqualTo(discountPolicy);
-        assertThat(userCouponInfo.expiredAt()).isEqualTo(userCoupon.getExpiredAt());
+            for (int i = 0; i < threadCount; i++) {
+                Long userId = (long) i;
+                executorService.submit(() -> {
+                    try {
+                        couponService.issue(new CouponCommand.Issue(coupon.getId(), userId));
+                    } catch (Exception e) {
+                        System.out.println("Error issuing coupon for " + e.getMessage());
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+
+            Coupon after = couponRepository.findById(coupon.getId()).orElseThrow();
+            assertThat(after.getRemainingQuantity()).isEqualTo(0);
+            assertThat(after.getIssuedQuantity()).isEqualTo(threadCount);
+        }
+
+        @DisplayName("한 유저가 동시에 발급을 요청하는 경우, 하나의 요청만 성공한다.")
+        @Test
+        void issueCoupon_concurrency() throws InterruptedException {
+            String name = "루퍼스 쿠폰";
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000"), DiscountPolicy.Type.FIXED);
+            BigDecimal minimumOrderAmount = BigDecimal.ZERO;
+            Integer expireHours = 24;
+            Long initialRemainingQuantity = 10L;
+            CouponCommand.Create cmd = new CouponCommand.Create(name, discountPolicy, minimumOrderAmount, expireHours, initialRemainingQuantity);
+            Coupon coupon = couponRepository.save(Coupon.of(cmd));
+
+            int threadCount = 10;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+
+            Long userId = 1L;
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        couponService.issue(new CouponCommand.Issue(coupon.getId(), userId));
+                    } catch (Exception e) {
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+
+            Coupon after = couponRepository.findById(coupon.getId()).orElseThrow();
+            assertThat(after.getIssuedQuantity()).isEqualTo(1);
+            assertThat(after.getRemainingQuantity()).isEqualTo(9);
+            UserCoupon userCoupon = couponRepository.findUserCoupon(coupon.getId(), userId).orElseThrow();
+            assertThat(userCoupon.getCouponId()).isEqualTo(coupon.getId());
+        }
+
+        @DisplayName("발급된 쿠폰 정보를 반환한다.")
+        @Test
+        void returnCouponInfo() {
+            String name = "루퍼스 쿠폰";
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000"), DiscountPolicy.Type.FIXED);
+            BigDecimal minimumOrderAmount = new BigDecimal("100.00");
+            Integer expireHours = 24;
+            Long initialRemainingQuantity = 10L;
+            CouponCommand.Create cmd = new CouponCommand.Create(name, discountPolicy, minimumOrderAmount, expireHours, initialRemainingQuantity);
+            Coupon coupon = couponRepository.save(Coupon.of(cmd));
+            Long userId = 1L;
+
+            CouponInfo couponInfo = couponService.issue(new CouponCommand.Issue(coupon.getId(), userId));
+
+            assertThat(couponInfo.id()).isEqualTo(coupon.getId());
+            assertThat(couponInfo.name()).isEqualTo(name);
+            assertThat(couponInfo.discountPolicy()).isEqualTo(discountPolicy);
+            assertThat(couponInfo.minimumOrderAmount()).isEqualTo(minimumOrderAmount);
+            assertThat(couponInfo.expireHours()).isEqualTo(expireHours);
+            assertThat(couponInfo.remainingQuantity()).isEqualTo(9);
+            assertThat(couponInfo.issuedQuantity()).isEqualTo(1);
+        }
     }
 }
