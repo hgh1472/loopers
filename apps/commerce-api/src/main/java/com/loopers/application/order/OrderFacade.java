@@ -1,27 +1,15 @@
 package com.loopers.application.order;
 
-import com.loopers.domain.coupon.CouponCommand;
-import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.point.PointCommand;
-import com.loopers.domain.point.PointService;
-import com.loopers.domain.product.ProductCommand;
-import com.loopers.domain.product.ProductInfo;
-import com.loopers.domain.product.ProductService;
-import com.loopers.domain.stock.StockService;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderFacade {
 
     private final UserService userService;
-    private final ProductService productService;
-    private final CouponService couponService;
     private final OrderService orderService;
-    private final StockService stockService;
-    private final PointService pointService;
+    private final OrderProcessor orderProcessor;
+    private final PaymentProcessor paymentProcessor;
 
     @Transactional
     public OrderResult order(OrderCriteria.Order criteria) {
@@ -44,35 +30,9 @@ public class OrderFacade {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
 
-        Set<Long> productIds = criteria.lines().stream().map(OrderCriteria.Line::productId).collect(Collectors.toSet());
-
-        Map<Long, ProductInfo> productInfos = productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds))
-                .stream()
-                .collect(Collectors.toMap(ProductInfo::id, product -> product));
-        if (productInfos.size() != productIds.size()) {
-            throw new CoreException(ErrorType.NOT_FOUND, "주문에 필요한 상품 정보를 찾을 수 없습니다.");
-        }
-
-        List<OrderCommand.Line> lines = criteria.lines().stream()
-                .map(line ->
-                        new OrderCommand.Line(line.productId(), line.quantity(),
-                                productInfos.get(line.productId()).price().multiply(BigDecimal.valueOf(line.quantity()))))
-                .toList();
-
-        BigDecimal originalAmount = lines.stream()
-                .map(OrderCommand.Line::amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(0, RoundingMode.FLOOR);
-
-        BigDecimal paymentAmount = (criteria.couponId() != null) ?
-                couponService.use(new CouponCommand.Use(criteria.couponId(), criteria.userId(), originalAmount)).paymentAmount()
-                : originalAmount;
-
-        OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, originalAmount, paymentAmount));
-
-        pointService.use(new PointCommand.Use(criteria.userId(), orderInfo.payment().paymentAmount().longValue()));
-
-        stockService.deductAll(criteria.toCommandDeduct());
+        OrderInfo orderInfo = orderProcessor.placeOrder(criteria);
+        PointCommand.Use pointCommand = new PointCommand.Use(criteria.userId(), orderInfo.payment().paymentAmount().longValue());
+        paymentProcessor.pay(pointCommand, criteria.toCommandDeduct());
 
         return OrderResult.from(orderInfo);
     }
