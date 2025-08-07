@@ -49,14 +49,14 @@ class OrderTest {
         void order_withOrderLines() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("3000"), new BigDecimal("3000"));
 
             Order order = Order.of(cmd);
 
             assertThat(order.getOrderLines()).hasSize(1);
             assertThat(order.getOrderLines().get(0).getProductId()).isEqualTo(1L);
             assertThat(order.getOrderLines().get(0).getQuantity()).isEqualTo(2L);
-            assertThat(order.getOrderLines().get(0).getAmount()).isEqualTo(new BigDecimal("6000"));
+            assertThat(order.getOrderLines().get(0).getAmount()).isEqualTo(new BigDecimal("3000"));
         }
     }
 

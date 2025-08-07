@@ -55,11 +55,12 @@ public class OrderFacade {
 
         List<OrderCommand.Line> lines = criteria.lines().stream()
                 .map(line ->
-                        new OrderCommand.Line(line.productId(), line.quantity(), productInfos.get(line.productId()).price()))
+                        new OrderCommand.Line(line.productId(), line.quantity(),
+                                productInfos.get(line.productId()).price().multiply(BigDecimal.valueOf(line.quantity()))))
                 .toList();
 
         BigDecimal originalAmount = lines.stream()
-                .map(line -> line.unitPrice().multiply(BigDecimal.valueOf(line.quantity())))
+                .map(OrderCommand.Line::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(0, RoundingMode.FLOOR);
 
