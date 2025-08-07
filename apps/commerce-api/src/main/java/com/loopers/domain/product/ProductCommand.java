@@ -15,7 +15,7 @@ public class ProductCommand {
     public record Find(Long productId) {
     }
 
-    public record GetProducts(Set<Long> productIds) {
+    public record Purchasable(Set<Long> productIds) {
     }
 
     public record Page(

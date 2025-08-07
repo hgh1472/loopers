@@ -38,7 +38,7 @@ public class OrderLine extends BaseEntity {
     public OrderLine(OrderCommand.Line line) {
         this.productId = line.productId();
         this.quantity = line.quantity();
-        this.amount = line.unitPrice().multiply(BigDecimal.valueOf(line.quantity()));
+        this.amount = line.amount();
     }
 
     public static OrderLine from(OrderCommand.Line line) {
@@ -54,7 +54,7 @@ public class OrderLine extends BaseEntity {
             throw new CoreException(ErrorType.BAD_REQUEST, "수량은 1 이상이어야 합니다.");
         }
 
-        if (line.unitPrice() == null || line.unitPrice().compareTo(BigDecimal.ZERO) < 0) {
+        if (line.amount() == null || line.amount().compareTo(BigDecimal.ZERO) < 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "가격은 0 이상이어야 합니다.");
         }
 
@@ -71,7 +71,7 @@ public class OrderLine extends BaseEntity {
                         (l1, l2) ->
                                 new OrderCommand.Line(l1.productId(),
                                         l1.quantity() + l2.quantity(),
-                                        l1.unitPrice()))
+                                        l1.amount().add(l2.amount())))
                 ).values().stream()
                 .toList();
 

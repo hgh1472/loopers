@@ -7,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.PageResponse;
+import com.loopers.domain.product.ProductCommand.Purchasable;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
@@ -56,7 +57,7 @@ class ProductServiceTest {
         @NullAndEmptySource
         @ParameterizedTest(name = "productIds = {0}")
         void throwBadRequestException_whenProductIdsIsEmpty(Set<Long> productIds) {
-            CoreException thrown = assertThrows(CoreException.class, () -> productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds)));
+            CoreException thrown = assertThrows(CoreException.class, () -> productService.getPurchasableProducts(new Purchasable(productIds)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -72,7 +73,7 @@ class ProductServiceTest {
             given(productRepository.findByIds(productIds))
                     .willReturn(List.of(product1, product2));
 
-            List<ProductInfo> result = productService.getPurchasableProducts(new ProductCommand.GetProducts(productIds));
+            List<ProductInfo> result = productService.getPurchasableProducts(new Purchasable(productIds));
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).name()).isEqualTo("Product 1");
