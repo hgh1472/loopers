@@ -2,16 +2,19 @@ package com.loopers.application.order;
 
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.stock.StockCommand;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class OrderCriteria {
     public record Order(
             Long userId,
             List<Line> lines,
-            Delivery delivery
+            Delivery delivery,
+            Long couponId
     ) {
-        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines) {
-            return new OrderCommand.Order(userId, lines, toCommandDelivery());
+        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines,
+                                                     BigDecimal originalAmount, BigDecimal paymentAmount) {
+            return new OrderCommand.Order(userId, lines, toCommandDelivery(), originalAmount, paymentAmount);
         }
 
         public OrderCommand.Delivery toCommandDelivery() {

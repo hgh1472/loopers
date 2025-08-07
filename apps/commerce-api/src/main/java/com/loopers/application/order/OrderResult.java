@@ -56,10 +56,12 @@ public record OrderResult(
     }
 
     public record Payment(
+            BigDecimal originalAmount,
             BigDecimal paymentAmount
     ) {
         public static Payment from(OrderInfo.Payment payment) {
             return new Payment(
+                    payment.originalAmount(),
                     payment.paymentAmount()
             );
         }

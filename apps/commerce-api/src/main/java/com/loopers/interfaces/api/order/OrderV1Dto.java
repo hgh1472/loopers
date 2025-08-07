@@ -8,8 +8,8 @@ import java.util.List;
 public class OrderV1Dto {
     public record OrderRequest(
             List<Line> lines,
-            Delivery delivery
-
+            Delivery delivery,
+            Long couponId
     ) {
     }
 
@@ -45,7 +45,7 @@ public class OrderV1Dto {
             List<Line> lines,
             Delivery delivery,
             Payment payment
-            ) {
+    ) {
         public static OrderResponse from(OrderResult orderResult) {
             List<Line> lines = orderResult.lines().stream()
                     .map(line -> new Line(line.productId(), line.quantity()))
@@ -57,12 +57,13 @@ public class OrderV1Dto {
                     orderResult.delivery().detailAddress(),
                     orderResult.delivery().requirements()
             );
-            Payment payment = new Payment(orderResult.payment().paymentAmount());
+            Payment payment = new Payment(orderResult.payment().originalAmount(), orderResult.payment().paymentAmount());
             return new OrderResponse(orderResult.id(), lines, delivery, payment);
         }
     }
 
     public record Payment(
+            BigDecimal originalAmount,
             BigDecimal paymentAmount
     ) {
 
