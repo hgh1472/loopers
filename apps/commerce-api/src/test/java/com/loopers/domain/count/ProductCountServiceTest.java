@@ -45,7 +45,7 @@ public class ProductCountServiceTest {
         @Test
         void throwNotFoundException_whenProductDoesNotExist() {
             Long productId = 1L;
-            given(productCountRepository.findBy(productId))
+            given(productCountRepository.findByWithLock(productId))
                     .willReturn(Optional.empty());
 
             CoreException thrown = assertThrows(CoreException.class, () -> productCountService.incrementLike(new ProductCountCommand.Increment(productId)));
@@ -61,7 +61,7 @@ public class ProductCountServiceTest {
             Long productId = 1L;
             ProductCount productCount = ProductCount.from(productId);
             Long before = productCount.getLikeCount();
-            given(productCountRepository.findBy(productId))
+            given(productCountRepository.findByWithLock(productId))
                     .willReturn(Optional.of(productCount));
 
             ProductCountInfo result = productCountService.incrementLike(new ProductCountCommand.Increment(productId));
@@ -78,7 +78,7 @@ public class ProductCountServiceTest {
         @Test
         void throwNotFoundException_whenProductDoesNotExist() {
             Long productId = 1L;
-            given(productCountRepository.findBy(productId))
+            given(productCountRepository.findByWithLock(productId))
                     .willReturn(Optional.empty());
 
             CoreException thrown = assertThrows(CoreException.class, () -> productCountService.decrementLike(new ProductCountCommand.Decrement(productId)));
@@ -95,7 +95,7 @@ public class ProductCountServiceTest {
             ProductCount productCount = ProductCount.from(productId);
             productCount.incrementLike();
             Long before = productCount.getLikeCount();
-            given(productCountRepository.findBy(productId))
+            given(productCountRepository.findByWithLock(productId))
                     .willReturn(Optional.of(productCount));
 
             ProductCountInfo result = productCountService.decrementLike(new ProductCountCommand.Decrement(productId));

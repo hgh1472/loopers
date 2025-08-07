@@ -29,7 +29,7 @@ public class OrderV1ApiController implements OrderV1ApiSpec {
                 .map(OrderV1Dto.Line::toCriteriaLine)
                 .toList();
         OrderResult orderResult = orderFacade.order(
-                new OrderCriteria.Order(userId, lines, orderRequest.delivery().toCriteriaDelivery()));
+                new OrderCriteria.Order(userId, lines, orderRequest.delivery().toCriteriaDelivery(), orderRequest.couponId()));
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(orderResult));
     }
 

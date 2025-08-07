@@ -55,7 +55,7 @@ class OrderFacadeTest {
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(1L, 1L));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery("주문자", "010-1234-5678", "서울시 강남구 역삼동 123-45", "서울시 강남구 역삼동 123-45", "요청사항");
 
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery)));
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery, null)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -75,7 +75,7 @@ class OrderFacadeTest {
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(1L, 1L), new OrderCriteria.Line(2L, 1L));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery("주문자", "010-1234-5678", "서울시 강남구 역삼동 123-45", "서울시 강남구 역삼동 123-45", "요청사항");
 
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery)));
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(1L, lines, delivery, null)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()

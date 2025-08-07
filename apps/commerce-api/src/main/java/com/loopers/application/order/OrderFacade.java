@@ -1,5 +1,7 @@
 package com.loopers.application.order;
 
+import com.loopers.domain.coupon.CouponCommand;
+import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
@@ -14,6 +16,8 @@ import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +32,7 @@ public class OrderFacade {
 
     private final UserService userService;
     private final ProductService productService;
+    private final CouponService couponService;
     private final OrderService orderService;
     private final StockService stockService;
     private final PointService pointService;
@@ -53,7 +58,16 @@ public class OrderFacade {
                         new OrderCommand.Line(line.productId(), line.quantity(), productInfos.get(line.productId()).price()))
                 .toList();
 
-        OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines));
+        BigDecimal originalAmount = lines.stream()
+                .map(line -> line.unitPrice().multiply(BigDecimal.valueOf(line.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(0, RoundingMode.FLOOR);
+
+        BigDecimal paymentAmount = (criteria.couponId() != null) ?
+                couponService.use(new CouponCommand.Use(criteria.couponId(), criteria.userId(), originalAmount)).paymentAmount()
+                : originalAmount;
+
+        OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, originalAmount, paymentAmount));
 
         pointService.use(new PointCommand.Use(criteria.userId(), orderInfo.payment().paymentAmount().longValue()));
 
