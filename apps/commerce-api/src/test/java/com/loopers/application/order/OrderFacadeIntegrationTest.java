@@ -329,6 +329,46 @@ class OrderFacadeIntegrationTest {
             Point usedPoint = pointRepository.findByUserId(user.getId()).orElseThrow();
             assertThat(usedPoint.getAmount().getValue()).isEqualTo(0L);
         }
+
+        @DisplayName("쿠폰은 단 한 번만 사용되어야 한다.")
+        @Test
+        void useCoupon_concurrent() throws InterruptedException {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            point.charge(300000L);
+            pointRepository.save(point);
+            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
+            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
+            stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
+            UserCoupon coupon = couponRepository.save(UserCoupon.of(user.getId(), 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10)));
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 10L), new OrderCriteria.Line(product2.getId(), 10L));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+            int threadCount = 10;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, coupon.getCouponId()));
+                    } catch (Exception e) {
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+
+            List<Order> orders = orderRepository.findAllByUserId(user.getId());
+            assertThat(orders).hasSize(1);
+        }
     }
 
     @Nested
