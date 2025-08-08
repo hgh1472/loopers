@@ -48,7 +48,7 @@ class StockServiceTest {
         void throwNotFoundException_whenStockDoesNotExist() {
             Long productId = 1L;
             Long quantity = 10L;
-            given(stockRepository.findByProductId(productId))
+            given(stockRepository.findByProductIdWithLock(productId))
                     .willReturn(Optional.empty());
 
             CoreException thrown = assertThrows(CoreException.class, () -> stockService.deduct(new StockCommand.Deduct(productId, quantity)));

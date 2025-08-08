@@ -70,7 +70,7 @@ class PointServiceTest {
         void throwsNotFoundException_whenPointDoesNotExist() {
 
             long nonExistUserId = 1L;
-            given(pointRepository.findByUserId(nonExistUserId))
+            given(pointRepository.findByUserIdWithLock(nonExistUserId))
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() -> pointService.charge(new PointCommand.Charge(nonExistUserId, 1000L)))
@@ -85,7 +85,7 @@ class PointServiceTest {
             Point point = Point.from(userId);
             long initPoint = 500L;
             point.charge(initPoint);
-            given(pointRepository.findByUserId(userId))
+            given(pointRepository.findByUserIdWithLock(userId))
                     .willReturn(Optional.of(point));
             long chargePoint = 1000L;
 
@@ -101,7 +101,7 @@ class PointServiceTest {
             long chargePoint = 1000L;
             Point point = Point.from(userId);
 
-            given(pointRepository.findByUserId(userId))
+            given(pointRepository.findByUserIdWithLock(userId))
                     .willReturn(Optional.of(point));
 
             pointService.charge(new PointCommand.Charge(userId, chargePoint));
@@ -122,7 +122,7 @@ class PointServiceTest {
         @Test
         void throwsNotFoundException_whenPointDoesNotExist() {
             long nonExistUserId = 1L;
-            given(pointRepository.findByUserId(nonExistUserId))
+            given(pointRepository.findByUserIdWithLock(nonExistUserId))
                     .willReturn(Optional.empty());
 
             CoreException thrown = assertThrows(CoreException.class, () -> pointService.use(new PointCommand.Use(nonExistUserId, 1000L)));
@@ -141,7 +141,7 @@ class PointServiceTest {
             Point point = Point.from(userId);
             point.charge(initialPoint);
 
-            given(pointRepository.findByUserId(userId))
+            given(pointRepository.findByUserIdWithLock(userId))
                     .willReturn(Optional.of(point));
 
             PointInfo pointInfo = pointService.use(new PointCommand.Use(userId, usePoint));
@@ -158,7 +158,7 @@ class PointServiceTest {
             Point point = Point.from(userId);
             point.charge(initialPoint);
 
-            given(pointRepository.findByUserId(userId))
+            given(pointRepository.findByUserIdWithLock(userId))
                     .willReturn(Optional.of(point));
 
             pointService.use(new PointCommand.Use(userId, usePoint));

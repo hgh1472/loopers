@@ -57,10 +57,12 @@ public record OrderInfo(
     }
 
     public record Payment(
+            BigDecimal originalAmount,
             BigDecimal paymentAmount
     ) {
         public static Payment from(OrderPayment orderPayment) {
             return new Payment(
+                    orderPayment.getOriginalAmount(),
                     orderPayment.getPaymentAmount()
             );
         }

@@ -7,7 +7,6 @@ import com.loopers.infrastructure.order.OrderJpaRepository;
 import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,7 +49,7 @@ class OrderServiceIntegrationTest {
                     "101호",
                     "배송 요청사항"
             );
-            OrderCommand.Order command = new OrderCommand.Order(1L, lines, delivery);
+            OrderCommand.Order command = new OrderCommand.Order(1L, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000));
 
             OrderInfo orderInfo = orderService.order(command);
 

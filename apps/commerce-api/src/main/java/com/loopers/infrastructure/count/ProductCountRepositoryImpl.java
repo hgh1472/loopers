@@ -25,6 +25,11 @@ public class ProductCountRepositoryImpl implements ProductCountRepository {
     }
 
     @Override
+    public Optional<ProductCount> findByWithLock(Long productId) {
+        return productCountJpaRepository.findByProductIdWithLock(productId);
+    }
+
+    @Override
     public List<ProductCount> findByProductIds(Set<Long> productIds) {
         return productCountJpaRepository.findAllById(productIds);
     }

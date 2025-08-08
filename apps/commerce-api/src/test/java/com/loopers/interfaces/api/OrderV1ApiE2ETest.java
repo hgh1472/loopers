@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
-import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
@@ -77,7 +76,7 @@ public class OrderV1ApiE2ETest {
             httpHeaders.set("X-USER-ID", "9999999"); // 존재하지 않는 사용자 ID
             List<OrderV1Dto.Line> lines = List.of(new OrderV1Dto.Line(1L, 2L));
             OrderV1Dto.Delivery delivery = new OrderV1Dto.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery);
+            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null);
             ParameterizedTypeReference<ApiResponse<Void>> responseType = new ParameterizedTypeReference<>() {
             };
 
@@ -105,7 +104,7 @@ public class OrderV1ApiE2ETest {
             httpHeaders.set("X-USER-ID", String.valueOf(user.getId()));
             List<OrderV1Dto.Line> lines = List.of(new OrderV1Dto.Line(product1.getId(), 2L), new OrderV1Dto.Line(product2.getId(), 3L));
             OrderV1Dto.Delivery delivery = new OrderV1Dto.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery);
+            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null);
             ParameterizedTypeReference<ApiResponse<OrderV1Dto.OrderResponse>> responseType = new ParameterizedTypeReference<>() {
             };
 
@@ -120,7 +119,7 @@ public class OrderV1ApiE2ETest {
                     () -> assertThat(response.getBody().data()).isNotNull(),
                     () -> assertThat(response.getBody().data().orderId()).isEqualTo(order.get().getId()),
                     () -> assertThat(response.getBody().data().lines()).isEqualTo(lines),
-                    () -> assertThat(response.getBody().data().payment().paymentAmount()).isEqualTo(order.get().getOrderPayment().getPaymentAmount()),
+                    () -> assertThat(response.getBody().data().payment().paymentAmount().longValue()).isEqualTo(order.get().getOrderPayment().getPaymentAmount().longValue()),
                     () -> assertThat(response.getBody().data().delivery()).isEqualTo(delivery)
             );
         }
@@ -130,10 +129,10 @@ public class OrderV1ApiE2ETest {
     @Test
     void returnOrderResponse() {
         User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-        OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-        Order order = Order.of(user.getId(), delivery);
-        order.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000"))));
-        order.addLine(OrderLine.from(new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))));
+        OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
+        List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
+        OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+        Order order = Order.of(cmd);
         Order saved = orderRepository.save(order);
 
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -150,8 +149,8 @@ public class OrderV1ApiE2ETest {
                 () -> assertThat(response.getBody()).isNotNull(),
                 () -> assertThat(response.getBody().data()).isNotNull(),
                 () -> assertThat(response.getBody().data().orderId()).isEqualTo(saved.getId()),
-                () -> assertThat(response.getBody().data().lines()).hasSize(2),
-                () -> assertThat(response.getBody().data().lines()).contains(new OrderV1Dto.Line(1L, 2L), new OrderV1Dto.Line(2L, 3L)),
+                () -> assertThat(response.getBody().data().lines()).hasSize(1),
+                () -> assertThat(response.getBody().data().lines()).contains(new OrderV1Dto.Line(1L, 2L)),
                 () -> assertThat(response.getBody().data().payment().paymentAmount().longValue()).isEqualTo(saved.getOrderPayment().getPaymentAmount().longValue()),
                 () -> assertThat(response.getBody().data().delivery()).isEqualTo(new OrderV1Dto.Delivery(
                         delivery.receiverName(),
@@ -167,15 +166,20 @@ public class OrderV1ApiE2ETest {
     @Test
     void returnOrderList() {
         User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-        OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-        Order order1 = Order.of(user.getId(), delivery);
-        order1.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000"))));
-        order1.addLine(OrderLine.from(new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))));
+        OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
+        List<OrderCommand.Line> lines1 = List.of(
+                new OrderCommand.Line(1L, 2L, new BigDecimal("1000")),
+                new OrderCommand.Line(2L, 3L, new BigDecimal("2000")));
+        OrderCommand.Order cmd1 = new OrderCommand.Order(1L, lines1, delivery, new BigDecimal("8000"), new BigDecimal("8000"));
+        Order order1 = Order.of(cmd1);
         Order saved1 = orderRepository.save(order1);
 
-        Order order2 = Order.of(user.getId(), delivery);
-        order2.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000"))));
-        order2.addLine(OrderLine.from(new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))));
+        List<OrderCommand.Line> lines2 = List.of(
+                new OrderCommand.Line(1L, 2L, new BigDecimal("1000")),
+                new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))
+        );
+        OrderCommand.Order cmd2 = new OrderCommand.Order(1L, lines2, delivery, new BigDecimal("8000"), new BigDecimal("8000"));
+        Order order2 = Order.of(cmd2);
         Order saved2 = orderRepository.save(order2);
 
         HttpHeaders httpHeaders = new HttpHeaders();

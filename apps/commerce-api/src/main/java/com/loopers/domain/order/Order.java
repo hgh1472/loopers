@@ -11,7 +11,6 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -55,14 +54,18 @@ public class Order extends BaseEntity {
         this.orderPayment = orderPayment;
     }
 
-    public static Order of(Long userId, OrderCommand.Delivery delivery) {
-        if (userId == null) {
+    public static Order of(OrderCommand.Order command) {
+        if (command.userId() == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용자 ID가 존재하지 않습니다.");
         }
+        OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.paymentAmount());
 
-        OrderPayment orderPayment = new OrderPayment(BigDecimal.ZERO);
+        Order order = new Order(command.userId(), OrderStatus.PAID, OrderDelivery.from(command.delivery()), orderPayment);
 
-        return new Order(userId, OrderStatus.PAID, OrderDelivery.from(delivery), orderPayment);
+        List<OrderLine> orderLines = OrderLine.of(command.lines());
+        orderLines.forEach(order::addLine);
+
+        return order;
     }
 
     public void addLine(OrderLine orderLine) {
@@ -71,7 +74,6 @@ public class Order extends BaseEntity {
         }
         orderLine.assign(this);
         this.orderLines.add(orderLine);
-        this.orderPayment = this.orderPayment.add(orderLine.getAmount());
     }
 
     public enum OrderStatus {

@@ -15,9 +15,7 @@ public class OrderService {
 
     @Transactional
     public OrderInfo order(OrderCommand.Order command) {
-        Order order = Order.of(command.userId(), command.delivery());
-        List<OrderLine> orderLines = OrderLine.of(command.lines());
-        orderLines.forEach(order::addLine);
+        Order order = Order.of(command);
         return OrderInfo.from(orderRepository.save(order));
     }
 
