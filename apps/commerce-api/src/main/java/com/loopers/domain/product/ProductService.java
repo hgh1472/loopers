@@ -1,6 +1,7 @@
 package com.loopers.domain.product;
 
 import com.loopers.domain.PageResponse;
+import com.loopers.domain.product.ProductCommand.Purchasable;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
@@ -23,7 +24,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getPurchasableProducts(ProductCommand.GetProducts command) {
+    public List<ProductInfo> getPurchasableProducts(Purchasable command) {
         if (command.productIds() == null || command.productIds().isEmpty()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "상품 ID 목록이 비어 있습니다.");
         }

@@ -60,7 +60,7 @@ class OrderLineTest {
 
             assertThat(orderLine.getProductId()).isEqualTo(line.productId());
             assertThat(orderLine.getQuantity()).isEqualTo(line.quantity());
-            assertThat(orderLine.getAmount()).isEqualTo(line.unitPrice());
+            assertThat(orderLine.getAmount()).isEqualTo(line.amount());
         }
 
         @DisplayName("가격이 음수라면, BAD_REQUEST 예외를 반환한다.")
@@ -81,7 +81,7 @@ class OrderLineTest {
 
             assertThat(orderLine.getProductId()).isEqualTo(line.productId());
             assertThat(orderLine.getQuantity()).isEqualTo(line.quantity());
-            assertThat(orderLine.getAmount()).isEqualTo(line.unitPrice());
+            assertThat(orderLine.getAmount()).isEqualTo(line.amount());
         }
     }
 
@@ -104,8 +104,8 @@ class OrderLineTest {
         @Test
         void createOrderLine_withMergedLines() {
             List<OrderCommand.Line> lines = List.of(
-                    new Line(1L, 2L, new BigDecimal("1000")),
-                    new Line(1L, 3L, new BigDecimal("1000")),
+                    new Line(1L, 2L, new BigDecimal("2000")),
+                    new Line(1L, 3L, new BigDecimal("3000")),
                     new Line(2L, 1L, new BigDecimal("2000"))
             );
 

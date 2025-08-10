@@ -29,7 +29,7 @@ public class PointService {
 
     @Transactional
     public PointInfo charge(PointCommand.Charge command) {
-        Point point = pointRepository.findByUserId(command.userId())
+        Point point = pointRepository.findByUserIdWithLock(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         PointHistory chargeHistory = point.charge(command.amount());
         pointRepository.record(chargeHistory);
@@ -38,7 +38,7 @@ public class PointService {
 
     @Transactional
     public PointInfo use(PointCommand.Use command) {
-        Point point = pointRepository.findByUserId(command.userId())
+        Point point = pointRepository.findByUserIdWithLock(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         PointHistory useHistory = point.use(command.amount());
         pointRepository.record(useHistory);

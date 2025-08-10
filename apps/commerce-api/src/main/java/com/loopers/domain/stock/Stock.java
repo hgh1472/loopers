@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 @Table(name = "stock")
 public class Stock extends BaseEntity {
 
-    @Column(name = "ref_product_id", nullable = false)
+    @Column(name = "ref_product_id", nullable = false, unique = true)
     private Long productId;
 
     @Embedded

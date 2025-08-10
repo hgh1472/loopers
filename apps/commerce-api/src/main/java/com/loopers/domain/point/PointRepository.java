@@ -8,6 +8,8 @@ public interface PointRepository {
 
     Optional<Point> findByUserId(Long userId);
 
+    Optional<Point> findByUserIdWithLock(Long userId);
+
     boolean existsByUserId(Long userId);
 
     PointHistory record(PointHistory pointHistory);

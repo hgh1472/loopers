@@ -7,13 +7,15 @@ public class OrderCommand {
     public record Order(
             Long userId,
             List<Line> lines,
-            Delivery delivery
+            Delivery delivery,
+            BigDecimal originalAmount,
+            BigDecimal paymentAmount
     ) {
     }
     public record Line(
             Long productId,
             Long quantity,
-            BigDecimal unitPrice
+            BigDecimal amount
     ) {
     }
 

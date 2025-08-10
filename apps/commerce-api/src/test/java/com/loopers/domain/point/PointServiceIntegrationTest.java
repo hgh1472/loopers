@@ -7,6 +7,9 @@ import com.loopers.domain.point.PointCommand.Charge;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,6 +66,70 @@ public class PointServiceIntegrationTest {
             assertThat(thrown)
                     .usingRecursiveComparison()
                     .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
+        }
+
+        @DisplayName("포인트 충전이 동시에 요청될 경우, 포인트는 정상적으로 충전된다.")
+        @Test
+        void chargePoint_concurrent() throws InterruptedException {
+            pointRepository.save(Point.from(1L));
+            int threadCount = 10;
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        pointService.charge(new PointCommand.Charge(1L, 1000L));
+                    } catch (Exception e) {
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            latch.await();
+
+            Point point = pointRepository.findByUserId(1L).orElseThrow();
+            assertThat(point.getAmount().getValue()).isEqualTo(10000L);
+        }
+    }
+
+    @Nested
+    class Use {
+        @DisplayName("존재하지 않는 유저 ID로 사용을 시도한 경우, NOT_FOUND 예외를 발생시킨다.")
+        @Test
+        void usePoint() {
+            CoreException thrown = assertThrows(CoreException.class, () -> pointService.use(new PointCommand.Use(1L, 1000L)));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
+        }
+
+        @DisplayName("포인트 사용이 동시에 요청될 경우, 포인트는 정상적으로 사용된다.")
+        @Test
+        void usePoint_concurrent() throws InterruptedException {
+            pointRepository.save(Point.from(1L));
+            pointService.charge(new PointCommand.Charge(1L, 10000L));
+            int threadCount = 10;
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        pointService.use(new PointCommand.Use(1L, 1000L));
+                    } catch (Exception e) {
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            latch.await();
+
+            Point point = pointRepository.findByUserId(1L).orElseThrow();
+            assertThat(point.getAmount().getValue()).isEqualTo(0L);
         }
     }
 }
