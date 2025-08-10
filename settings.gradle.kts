@@ -3,6 +3,7 @@ rootProject.name = "loopers-commerce"
 include(
     ":apps:commerce-api",
     ":modules:jpa",
+    ":modules:redis",
     ":supports:jackson",
     ":supports:logging",
     ":supports:monitoring",
@@ -27,4 +28,10 @@ pluginManagement {
             }
         }
     }
+    plugins {
+        kotlin("jvm") version "2.2.0"
+    }
+}
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
