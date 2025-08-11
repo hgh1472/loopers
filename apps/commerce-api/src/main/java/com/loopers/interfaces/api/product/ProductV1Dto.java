@@ -1,19 +1,9 @@
 package com.loopers.interfaces.api.product;
 
 import com.loopers.application.product.ProductResult;
-import com.loopers.domain.PageResponse;
-import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
 
 public class ProductV1Dto {
-
-    public record ProductSearchRequest(
-            Long brandId,
-            @Min(value = 1, message = "잘못된 페이지 요청입니다.") Integer page,
-            Integer size,
-            String sort
-    ) {
-    }
 
     public record ProductResponse(
             Long id,

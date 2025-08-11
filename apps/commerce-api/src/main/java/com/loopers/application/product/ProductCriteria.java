@@ -8,7 +8,7 @@ public class ProductCriteria {
 
     public record Search(Long brandId, Long userId, int page, int size, String sort) {
         public ProductCommand.Page toPageCommand() {
-            return new ProductCommand.Page(brandId, page, size, sort);
+            return new ProductCommand.Page(brandId, page - 1, size, sort);
         }
     }
 }
