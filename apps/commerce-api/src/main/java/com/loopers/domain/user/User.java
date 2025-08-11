@@ -20,10 +20,10 @@ public class User extends BaseEntity {
     private LoginId loginId;
 
     @Embedded
-    @AttributeOverride(name = "email", column = @Column(name = "email", nullable = false, unique = true))
+    @AttributeOverride(name = "address", column = @Column(name = "email", nullable = false, unique = true))
     private Email email;
 
-    @AttributeOverride(name = "birthDate", column = @Column(name = "birth_date", nullable = false))
+    @AttributeOverride(name = "date", column = @Column(name = "birth_date", nullable = false))
     private BirthDate birthDate;
 
     @Enumerated(EnumType.STRING)
