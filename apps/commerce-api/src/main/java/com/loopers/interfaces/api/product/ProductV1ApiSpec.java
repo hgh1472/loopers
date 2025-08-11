@@ -21,6 +21,6 @@ public interface ProductV1ApiSpec {
             description = "상품 목록을 조회합니다."
     )
     ApiResponse<PageResponse<ProductV1Dto.ProductCard>> searchProducts(
-            ProductV1Dto.ProductSearchRequest request, Long userId
+            Long brandId, int page, int size, String sort, Long userId
     );
 }

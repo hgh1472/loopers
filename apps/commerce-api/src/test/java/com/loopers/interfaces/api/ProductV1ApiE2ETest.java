@@ -37,6 +37,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ProductV1ApiE2ETest {
@@ -174,14 +175,19 @@ public class ProductV1ApiE2ETest {
                 productCountRepository.save(ProductCount.from(product.getId()));
             }
 
-            String requestUrl = "/api/v1/products";
-            ProductV1Dto.ProductSearchRequest request = new ProductV1Dto.ProductSearchRequest(brand.getId(), 1, 10, "LATEST");
+            String requestUrl = UriComponentsBuilder.fromPath("/api/v1/products")
+                    .queryParam("brandId", brand.getId())
+                    .queryParam("page", 2)
+                    .queryParam("size", 10)
+                    .queryParam("sort", "LATEST")
+                    .toUriString();
+
             ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dto.ProductCard>>> responseType = new ParameterizedTypeReference<>() {
             };
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add("X-USER-ID", user.getId().toString());
             ResponseEntity<ApiResponse<PageResponse<ProductV1Dto.ProductCard>>> response =
-                    testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(request, httpHeaders), responseType);
+                    testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(httpHeaders), responseType);
 
             assertAll(
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),

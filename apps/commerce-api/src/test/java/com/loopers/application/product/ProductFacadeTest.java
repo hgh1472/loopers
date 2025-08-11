@@ -151,7 +151,7 @@ class ProductFacadeTest {
                 }
             }
 
-            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 1, 7, "LATEST"));
+            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 2, 7, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
@@ -179,7 +179,7 @@ class ProductFacadeTest {
                 }
             }
 
-            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 1, 7, "LATEST"));
+            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 2, 7, "LATEST"));
 
             assertAll(
                     () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
