@@ -14,21 +14,17 @@ export const options = {
             preAllocatedVUs: 10,
             maxVUs: numUsers,
             stages: [
-                // Start 100 iterations per `timeUnit` for the first 20 seconds.
-                // 초기 부하: 첫 20초 동안 진행되며, 매 20초 동안 요청이 20개 만들어지므로 1 TPS
-                {target: 20, duration: '20s'},
+                // 초기 부하: 첫 20초 동안 진행되며, 매 20초 동안 요청이 60개 만들어짐 → 3 rps
+                {target: 60, duration: '20s'},
 
-                // Linearly ramp-up to starting 8000 iterations per `timeUnit` over the following 1 minute.
-                // 점진적 증가: 1분 동안 받는 요청을 300 회로 증가시킴, 매 20초 동안 요청이 100개 만들어지므로 5 TPS
-                {target: 100, duration: '1m'},
+                // 점진적 증가: 1분 동안 20초당 요청 수를 60 → 200으로 늘림 → 10 rps
+                {target: 200, duration: '1m'},
 
-                // Continue starting 8000 iterations per `timeUnit` for the following 1 minute.
-                // 최대 부하 유지: 1분 동안 받는 요청이 300회로 지속됨, 매 20초 동안 요청이 400개 만들어지므로 5 TPS
-                {target: 100, duration: '1m'},
+                // 최대 부하 유지: 1분 동안 20초당 요청 200개 유지 → 10 rps
+                {target: 200, duration: '1m'},
 
-                // Linearly ramp-down to starting 60 iterations per timeUnit over the last 20 seconds.
-                // 점진적 감소: 마지막 20초 동안 진행되며, 매 20초 동안 요청이 20개 만들어지므로 1 TPS
-                {target: 20, duration: '20s'},
+                // 점진적 감소: 마지막 20초 동안 20초당 요청 수를 200 → 60으로 줄임 → 3 rps
+                {target: 60, duration: '20s'},
             ]
         },
     },
