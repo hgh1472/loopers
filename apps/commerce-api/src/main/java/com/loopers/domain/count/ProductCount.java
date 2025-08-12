@@ -13,7 +13,7 @@ import lombok.Getter;
 @Table(name = "product_count")
 public class ProductCount extends BaseEntity {
 
-    @Column(name = "ref_product_id", nullable = false)
+    @Column(name = "ref_product_id", nullable = false, unique = true)
     private Long productId;
 
     @Column(name = "like_count", nullable = false)
