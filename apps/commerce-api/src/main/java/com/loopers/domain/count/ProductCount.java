@@ -12,8 +12,7 @@ import lombok.Getter;
 @Entity
 @Getter
 @Table(name = "product_count", indexes = {
-        @Index(name = "idx_pc_like_ref", columnList = "like_count DESC, ref_product_id"),
-        @Index(name = "idx_pc_brand_id", columnList = "ref_brand_id")
+        @Index(name = "idx_pc_like_ref", columnList = "like_count DESC, ref_product_id")
 })
 public class ProductCount extends BaseEntity {
 
