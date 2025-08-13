@@ -159,10 +159,8 @@ class ProductLikeServiceTest {
         @Test
         void returnMapOfProductIdsAndLikedStatus() {
             ProductLikeCommand.AreLiked command = new ProductLikeCommand.AreLiked(Set.of(1L, 2L), 1L);
-            given(productLikeRepository.findProductLikesOf(1L, Set.of(1L, 2L)))
-                    .willReturn(List.of(
-                            ProductLike.create(new ProductLikeCommand.Create(1L, 1L))
-                    ));
+            given(productLikeRepository.findLikedProductIdsOf(1L, Set.of(1L, 2L)))
+                    .willReturn(Set.of(1L));
 
             List<LikeInfo.ProductState> stateInfos = productLikeService.areLiked(command);
 

@@ -10,6 +10,7 @@ import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.count.ProductCount;
 import com.loopers.domain.count.ProductCountRepository;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,10 +32,13 @@ public class ProductIntegrationTest {
     private BrandRepository brandRepository;
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+    @Autowired
+    private RedisCleanUp redisCleanUp;
 
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
     }
 
     @Nested
