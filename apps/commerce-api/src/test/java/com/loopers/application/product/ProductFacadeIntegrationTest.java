@@ -8,6 +8,7 @@ import com.loopers.domain.PageResponse;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandRepository;
+import com.loopers.domain.cache.ProductCacheRepository;
 import com.loopers.domain.count.ProductCount;
 import com.loopers.domain.count.ProductCountRepository;
 import com.loopers.domain.like.ProductLike;
@@ -25,6 +26,7 @@ import com.loopers.domain.user.UserRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ProductFacadeTest {
+class ProductFacadeIntegrationTest {
 
     @Autowired
     private ProductFacade productFacade;
@@ -51,11 +53,16 @@ class ProductFacadeTest {
     @Autowired
     private ProductCountRepository productCountRepository;
     @Autowired
+    private ProductCacheRepository productCacheRepository;
+    @Autowired
     private DatabaseCleanUp databaseCleanUp;
+    @Autowired
+    private RedisCleanUp redisCleanUp;
 
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
     }
 
     @Nested
