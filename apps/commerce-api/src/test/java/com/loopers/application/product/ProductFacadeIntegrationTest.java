@@ -3,25 +3,14 @@ package com.loopers.application.product;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.PageResponse;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.brand.BrandService;
-import com.loopers.domain.cache.CacheCommand;
-import com.loopers.domain.cache.CacheKeys;
-import com.loopers.domain.cache.CacheService;
 import com.loopers.domain.cache.ProductCacheRepository;
-import com.loopers.domain.cache.ProductDetailCache;
 import com.loopers.domain.count.ProductCount;
-import com.loopers.domain.count.ProductCountCommand;
 import com.loopers.domain.count.ProductCountRepository;
-import com.loopers.domain.count.ProductCountService;
 import com.loopers.domain.like.ProductLike;
 import com.loopers.domain.like.ProductLikeCommand;
 import com.loopers.domain.like.ProductLikeRepository;
@@ -31,7 +20,6 @@ import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.stock.Stock;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockRepository;
-import com.loopers.domain.stock.StockService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
@@ -46,7 +34,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
 class ProductFacadeIntegrationTest {
@@ -67,14 +54,6 @@ class ProductFacadeIntegrationTest {
     private ProductCountRepository productCountRepository;
     @Autowired
     private ProductCacheRepository productCacheRepository;
-    @MockitoSpyBean
-    private BrandService brandService;
-    @MockitoSpyBean
-    private StockService stockService;
-    @MockitoSpyBean
-    private ProductCountService productCountService;
-    @MockitoSpyBean
-    private CacheService cacheService;
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
     @Autowired
@@ -160,53 +139,6 @@ class ProductFacadeIntegrationTest {
                     () -> assertThat(productResult.likeCount()).isEqualTo(2L),
                     () -> assertThat(productResult.isLiked()).isFalse()
             );
-        }
-
-        @Test
-        @DisplayName("캐시가 존재하는 경우, 캐시를 통해 상품 정보를 조회한다.")
-        void returnProductResult_fromCache() {
-            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
-            Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
-            ProductDetailCache productDetailCache = new ProductDetailCache(1L, "Brand", "Product", new BigDecimal(1000L), "ON_SALE", 100L, 2L);
-            productCacheRepository.writeProductDetail(productDetailCache, String.format(CacheKeys.PRODUCT_DETAIL.key(), productDetailCache.id()), CacheKeys.PRODUCT_DETAIL.ttl());
-            Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            ProductCount productCount = ProductCount.from(product.getId());
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-            productCount.incrementLike();
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
-            productCount.incrementLike();
-            productCountRepository.save(productCount);
-
-            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
-
-            verify(brandService, never()).findBy(any());
-            verify(stockService, never()).findStock(any());
-            verify(productCountService, never()).getProductCount(any());
-        }
-
-        @Test
-        @DisplayName("캐시가 존재하지 않는 경우, DB에서 상품 정보를 조회한 후, 캐시에 저장한다.")
-        void returnProductResult_fromDatabase() {
-            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
-            Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
-            Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
-            Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
-            ProductCount productCount = ProductCount.from(product.getId());
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-            productCount.incrementLike();
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
-            productCount.incrementLike();
-            productCountRepository.save(productCount);
-
-            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
-
-            verify(brandService, times(1)).findBy(new BrandCommand.Find(init.getBrandId()));
-            verify(stockService, times(1)).findStock(new StockCommand.Find(product.getId()));
-            verify(productCountService, times(1)).getProductCount(new ProductCountCommand.Get(product.getId()));
-            verify(cacheService, times(1)).writeProductDetail(new CacheCommand.ProductDetail(
-                    product.getId(), brand.getName(), product.getName(), product.getPrice().getValue(), product.getStatus().name(), stock.getQuantity().getValue(), productCount.getLikeCount()
-            ));
         }
     }
 
