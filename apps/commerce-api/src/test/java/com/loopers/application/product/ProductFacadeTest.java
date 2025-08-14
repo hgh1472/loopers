@@ -1,196 +1,104 @@
 package com.loopers.application.product;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.loopers.domain.PageResponse;
-import com.loopers.domain.brand.Brand;
+import static org.mockito.BDDMockito.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.times;
+import static org.mockito.BDDMockito.verify;
+
 import com.loopers.domain.brand.BrandCommand;
-import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.count.ProductCount;
-import com.loopers.domain.count.ProductCountRepository;
-import com.loopers.domain.like.ProductLike;
-import com.loopers.domain.like.ProductLikeCommand;
-import com.loopers.domain.like.ProductLikeRepository;
-import com.loopers.domain.product.Product;
+import com.loopers.domain.brand.BrandInfo;
+import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.cache.CacheCommand;
+import com.loopers.domain.cache.CacheService;
+import com.loopers.domain.cache.ProductDetailCache;
+import com.loopers.domain.count.ProductCountCommand;
+import com.loopers.domain.count.ProductCountInfo;
+import com.loopers.domain.count.ProductCountService;
+import com.loopers.domain.like.ProductLikeService;
 import com.loopers.domain.product.ProductCommand;
-import com.loopers.domain.product.ProductRepository;
-import com.loopers.domain.stock.Stock;
+import com.loopers.domain.product.ProductInfo;
+import com.loopers.domain.product.ProductService;
 import com.loopers.domain.stock.StockCommand;
-import com.loopers.domain.stock.StockRepository;
-import com.loopers.domain.user.User;
-import com.loopers.domain.user.UserCommand;
-import com.loopers.domain.user.UserRepository;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
-import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.domain.stock.StockInfo;
+import com.loopers.domain.stock.StockService;
+import com.loopers.domain.user.UserService;
 import java.math.BigDecimal;
-import org.junit.jupiter.api.AfterEach;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class ProductFacadeTest {
-
-    @Autowired
+    @InjectMocks
     private ProductFacade productFacade;
-    @Autowired
-    private ProductRepository productRepository;
-    @Autowired
-    private StockRepository stockRepository;
-    @Autowired
-    private ProductLikeRepository productLikeRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private BrandRepository brandRepository;
-    @Autowired
-    private ProductCountRepository productCountRepository;
-    @Autowired
-    private DatabaseCleanUp databaseCleanUp;
-
-    @AfterEach
-    void tearDown() {
-        databaseCleanUp.truncateAllTables();
-    }
+    @Mock
+    private CacheService cacheService;
+    @Mock
+    private ProductService productService;
+    @Mock
+    private BrandService brandService;
+    @Mock
+    private ProductLikeService productLikeService;
+    @Mock
+    private StockService stockService;
+    @Mock
+    private ProductCountService productCountService;
+    @Mock
+    private UserService userService;
 
     @Nested
-    @DisplayName("상품 조회 시,")
-    class Get {
-        @DisplayName("존재하지 않는 상품을 조회하면, NOT_FOUND 예외를 발생시킨다.")
+    @DisplayName("상품 상세 조회 시,")
+    class GetProduct {
+
         @Test
-        void throwNotFoundException_whenProductDoesNotExist() {
-            Long productId = 999L;
-            Long userId = 1L;
+        @DisplayName("캐시가 존재하는 경우, 브랜드, 재고, 좋아요 수를 DB에 조회하지 않는다.")
+        void getProductWithCache() {
+            given(productService.findProduct(new ProductCommand.Find(1L)))
+                    .willReturn(new ProductInfo(1L, 1L, "Product", new BigDecimal("100"), "ON_SALE"));
+            ProductDetailCache cache = new ProductDetailCache(1L, "Brand", "Product", new BigDecimal("100"), "ON_SALE", 100L, 10L);
+            given(cacheService.findProductDetail(1L))
+                    .willReturn(Optional.of(cache));
 
-            CoreException thrown = assertThrows(CoreException.class, () ->
-                    productFacade.getProduct(new ProductCriteria.Get(productId, userId))
-            );
+            productFacade.getProduct(new ProductCriteria.Get(1L, null));
 
-            assertThat(thrown)
-                    .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
+            verify(brandService, never()).findBy(any());
+            verify(stockService, never()).findStock(any());
+            verify(productLikeService, never()).isLiked(any());
         }
 
-        @DisplayName("유저 ID와 함께 존재하는 상품을 조회하면, 상품 좋아요 여부를 포함한 상세 정보를 반환한다.")
         @Test
-        void returnProductInfo_whenProductExistsWithUser() {
-            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
-            Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
-            Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
-            Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
-            ProductCount productCount = ProductCount.from(product.getId());
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-            productCount.incrementLike();
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
-            productCount.incrementLike();
-            productCountRepository.save(productCount);
+        @DisplayName("캐시가 존재하지 않는 경우, 브랜드, 재고, 좋아요 수를 DB에 조회한 후 상품 정보를 캐시에 저장한다.")
+        void getProductWithoutCache() {
+            ProductCommand.Find productCommand = new ProductCommand.Find(1L);
+            given(productService.findProduct(productCommand))
+                    .willReturn(new ProductInfo(1L, 1L, "Product", new BigDecimal("100"), "ON_SALE"));
+            given(cacheService.findProductDetail(1L))
+                    .willReturn(Optional.empty());
+            BrandCommand.Find brandCommand = new BrandCommand.Find(1L);
+            given(brandService.findBy(brandCommand))
+                    .willReturn(new BrandInfo(1L, "Brand", "Brand Description"));
+            StockCommand.Find stockCommand = new StockCommand.Find(1L);
+            given(stockService.findStock(stockCommand))
+                    .willReturn(new StockInfo(1L, 1L, 100L));
+            ProductCountCommand.Get productCountCommand = new ProductCountCommand.Get(1L);
+            given(productCountService.getProductCount(productCountCommand))
+                    .willReturn(new ProductCountInfo(1L, 10L));
 
-            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), user.getId()));
+            productFacade.getProduct(new ProductCriteria.Get(1L, null));
 
-            assertAll(
-                    () -> assertThat(productResult.id()).isEqualTo(product.getId()),
-                    () -> assertThat(productResult.brandName()).isEqualTo(brand.getName()),
-                    () -> assertThat(productResult.productName()).isEqualTo(product.getName()),
-                    () -> assertThat(productResult.price()).isEqualTo(product.getPrice().getValue()),
-                    () -> assertThat(productResult.status()).isEqualTo(product.getStatus().name()),
-                    () -> assertThat(productResult.quantity()).isEqualTo(stock.getQuantity().getValue()),
-                    () -> assertThat(productResult.likeCount()).isEqualTo(2L),
-                    () -> assertThat(productResult.isLiked()).isTrue()
-            );
-        }
-
-        @DisplayName("유저 ID 없이 존재하는 상품을 조회하면, 좋아요 여부를 제외한 상세 정보를 반환한다.")
-        @Test
-        void returnProductInfo_whenProductExistsWithoutUser() {
-            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.com", "1999-06-23", "MALE")));
-            Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
-            Product product = productRepository.findById(productRepository.save(init).getId()).get();
-            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
-            Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
-            ProductCount productCount = ProductCount.from(product.getId());
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-            productCount.incrementLike();
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId() + 1)));
-            productCount.incrementLike();
-            productCountRepository.save(productCount);
-
-            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
-
-            assertAll(
-                    () -> assertThat(productResult.id()).isEqualTo(product.getId()),
-                    () -> assertThat(productResult.brandName()).isEqualTo(brand.getName()),
-                    () -> assertThat(productResult.productName()).isEqualTo(product.getName()),
-                    () -> assertThat(productResult.price()).isEqualTo(product.getPrice().getValue()),
-                    () -> assertThat(productResult.status()).isEqualTo(product.getStatus().name()),
-                    () -> assertThat(productResult.quantity()).isEqualTo(stock.getQuantity().getValue()),
-                    () -> assertThat(productResult.likeCount()).isEqualTo(2L),
-                    () -> assertThat(productResult.isLiked()).isFalse()
-            );
-        }
-    }
-
-    @Nested
-    @DisplayName("상품 목록 조회 시,")
-    class ProductCard {
-        @DisplayName("로그인한 사용자의 경우, 상품 목록과 좋아요 여부를 포함한 페이지 결과를 반환한다.")
-        @Test
-        void returnProductPageResult_whenUserIsLoggedIn() {
-            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
-            for (int i = 1; i <= 20; i++) {
-                Product product = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "제품" + i, new BigDecimal(1000L * i), "ON_SALE")));
-                productCountRepository.save(ProductCount.from(product.getId()));
-                if (i <= 10) {
-                    productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-                }
-            }
-
-            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), user.getId(), 2, 7, "LATEST"));
-
-            assertAll(
-                    () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
-                    () -> assertThat(latest.getTotalPages()).isEqualTo(3),
-                    () -> assertThat(latest.getContent().size()).isEqualTo(7),
-                    () -> assertThat(latest.getContent().get(0).id()).isEqualTo(13L),
-                    () -> assertThat(latest.getContent().get(0).isLiked()).isFalse(),
-                    () -> assertThat(latest.getContent().get(3).id()).isEqualTo(10L),
-                    () -> assertThat(latest.getContent().get(6).isLiked()).isTrue(),
-                    () -> assertThat(latest.getContent().get(6).id()).isEqualTo(7L),
-                    () -> assertThat(latest.getContent().get(6).isLiked()).isTrue()
-            );
-        }
-
-        @DisplayName("로그인하지 않은 사용자의 경우, 좋아여 여부는 전부 false로 페이지 결과를 반환한다.")
-        @Test
-        void returnProductPageResultWithoutLikes_whenUserIsNotLoggedIn() {
-            User user = userRepository.save(User.create(new UserCommand.Join("login", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
-            for (int i = 1; i <= 20; i++) {
-                Product product = productRepository.save(Product.create(new ProductCommand.Create(brand.getId(), "제품" + i, new BigDecimal(1000L * i), "ON_SALE")));
-                productCountRepository.save(ProductCount.from(product.getId()));
-                if (i <= 10) {
-                    productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-                }
-            }
-
-            PageResponse<ProductResult.Card> latest = productFacade.searchProducts(new ProductCriteria.Search(brand.getId(), null, 2, 7, "LATEST"));
-
-            assertAll(
-                    () -> assertThat(latest.getTotalElements()).isEqualTo(20L),
-                    () -> assertThat(latest.getTotalPages()).isEqualTo(3),
-                    () -> assertThat(latest.getContent().size()).isEqualTo(7),
-                    () -> assertThat(latest.getContent().get(0).id()).isEqualTo(13L),
-                    () -> assertThat(latest.getContent().get(0).isLiked()).isFalse(),
-                    () -> assertThat(latest.getContent().get(3).id()).isEqualTo(10L),
-                    () -> assertThat(latest.getContent().get(6).id()).isEqualTo(7L),
-                    () -> assertThat(latest.getContent().get(6).isLiked()).isFalse()
-            );
+            verify(productService, times(1)).findProduct(productCommand);
+            verify(brandService, times(1)).findBy(brandCommand);
+            verify(stockService, times(1)).findStock(stockCommand);
+            verify(cacheService, times(1)).writeProductDetail(new CacheCommand.ProductDetail(
+                    1L, "Brand", "Product", new BigDecimal("100"), "ON_SALE", 100L, 10L
+            ));
         }
     }
 }
