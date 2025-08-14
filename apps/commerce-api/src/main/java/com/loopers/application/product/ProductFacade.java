@@ -4,6 +4,9 @@ import com.loopers.domain.PageResponse;
 import com.loopers.domain.brand.BrandCommand;
 import com.loopers.domain.brand.BrandInfo;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.cache.CacheCommand;
+import com.loopers.domain.cache.CacheService;
+import com.loopers.domain.cache.ProductDetailCache;
 import com.loopers.domain.count.ProductCountCommand;
 import com.loopers.domain.count.ProductCountInfo;
 import com.loopers.domain.count.ProductCountService;
@@ -22,6 +25,7 @@ import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProductFacade {
 
+    private final CacheService cacheService;
     private final ProductService productService;
     private final BrandService brandService;
     private final ProductLikeService productLikeService;
@@ -45,17 +50,27 @@ public class ProductFacade {
         if (productInfo == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다.");
         }
+
+        Optional<ProductDetailCache> cache = cacheService.findProductDetail(criteria.productId());
+
+        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
+        boolean isLiked = false;
+        if (userInfo != null) {
+            isLiked = productLikeService.isLiked(new ProductLikeCommand.IsLiked(productInfo.id(), userInfo.id()))
+                    .liked();
+        }
+
+        if (cache.isPresent()) {
+            return ProductResult.from(ProductResult.ProductDetail.from(cache.get()),
+                    ProductResult.ProductUserDetail.from(isLiked));
+        }
+
         BrandInfo brandInfo = brandService.findBy(new BrandCommand.Find(productInfo.brandId()));
         StockInfo stockInfo = stockService.findStock(new StockCommand.Find(productInfo.id()));
         ProductCountInfo countInfo = productCountService.getProductCount(new ProductCountCommand.Get(productInfo.id()));
 
-        UserInfo userInfo = userService.findUser(new UserCommand.Find(criteria.userId()));
-        if (userInfo != null) {
-            LikeInfo.IsLiked isLiked = productLikeService.isLiked(
-                    new ProductLikeCommand.IsLiked(productInfo.id(), userInfo.id()));
-            return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), isLiked.liked());
-        }
-        return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), false);
+        cacheService.writeProductDetail(CacheCommand.ProductDetail.of(productInfo, brandInfo, stockInfo, countInfo));
+        return ProductResult.from(productInfo, brandInfo, stockInfo, countInfo.likeCount(), isLiked);
     }
 
     @Transactional(readOnly = true)
