@@ -14,7 +14,7 @@ public class ProductScheduler {
 
     @Scheduled(cron = "0 0/5 * * * ?")
     public void refreshCountCache() {
-        Long count = productRepository.countBrandProducts(null);
+        Long count = productRepository.countAllProducts();
         productCacheWriter.writeAllProductCount(count);
     }
 }
