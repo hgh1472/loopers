@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,13 +34,23 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public Page<ProductSearchView> search(ProductParams.Search params) {
+    public Slice<ProductSearchView> search(ProductParams.Search params) {
         PageRequest pageRequest = PageRequest.of(params.page(), params.size());
         return switch (params.sort()) {
             case LATEST -> productJpaRepository.searchLatestProducts(params.brandId(), pageRequest);
             case PRICE_ASC -> productJpaRepository.searchPriceAscProducts(params.brandId(), pageRequest);
             case LIKE_DESC -> productJpaRepository.searchLikeDescProducts(params.brandId(), pageRequest);
         };
+    }
+
+    @Override
+    public Long countAllProducts() {
+        return productJpaRepository.count();
+    }
+
+    @Override
+    public Long countBrandProducts(Long brandId) {
+        return productJpaRepository.countByBrandId(brandId);
     }
 
     @Override

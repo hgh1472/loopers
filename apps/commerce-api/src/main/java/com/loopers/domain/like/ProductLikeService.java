@@ -39,11 +39,7 @@ public class ProductLikeService {
 
     @Transactional(readOnly = true)
     public List<LikeInfo.ProductState> areLiked(ProductLikeCommand.AreLiked command) {
-        List<ProductLike> productLikes = productLikeRepository.findProductLikesOf(command.userId(), command.productIds());
-
-        Set<Long> likedProductIds = productLikes.stream()
-                .map(ProductLike::getProductId)
-                .collect(Collectors.toSet());
+        Set<Long> likedProductIds = productLikeRepository.findLikedProductIdsOf(command.userId(), command.productIds());
 
         return command.productIds().stream()
                 .map(productId -> new LikeInfo.ProductState(

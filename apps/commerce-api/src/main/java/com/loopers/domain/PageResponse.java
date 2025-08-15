@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 
 @Getter
 public class PageResponse<T> {
@@ -35,6 +36,11 @@ public class PageResponse<T> {
 
     public static <T> PageResponse<T> from(Page<T> page) {
         return new PageResponse<>(page);
+    }
+
+    public static <T> PageResponse<T> of(Slice<T> page, Long totalElements) {
+        return new PageResponse<>(page.getContent(), page.getNumber(), page.getSize(), totalElements,
+                (int) Math.ceil((double) totalElements / page.getSize()));
     }
 
     public <R> PageResponse<R> map(Function<? super T, ? extends R> mapper) {

@@ -6,7 +6,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductCountProcessor productCountProcessor;
 
     @Transactional(readOnly = true)
     public ProductInfo findProduct(ProductCommand.Find command) {
@@ -42,8 +43,13 @@ public class ProductService {
         int page = command.page() != null ? command.page() : 0;
         int size = (command.size() == null || command.size() > 30) ? 10 : command.size();
         ProductParams.Sort sort = ProductParams.Sort.from(command.sort());
-        Page<ProductSearchView> views = productRepository.search(new ProductParams.Search(command.brandId(), page, size, sort));
-        return PageResponse.from(views.map(ProductInfo.Search::from));
+
+        Slice<ProductInfo.Search> views = productRepository.search(new ProductParams.Search(command.brandId(), page, size, sort))
+                .map(ProductInfo.Search::from);
+
+        Long count = productCountProcessor.getProductCount(command.brandId());
+
+        return PageResponse.of(views, count);
     }
 
     @Transactional(readOnly = true)

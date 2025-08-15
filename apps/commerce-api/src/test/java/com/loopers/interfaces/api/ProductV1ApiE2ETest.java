@@ -23,6 +23,7 @@ import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.product.ProductV1Dto;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,7 @@ public class ProductV1ApiE2ETest {
 
     private final TestRestTemplate testRestTemplate;
     private final DatabaseCleanUp databaseCleanUp;
+    private final RedisCleanUp redisCleanUp;
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
     private final StockRepository stockRepository;
@@ -52,12 +54,13 @@ public class ProductV1ApiE2ETest {
     private final ProductCountRepository productCountRepository;
 
     @Autowired
-    public ProductV1ApiE2ETest(TestRestTemplate testRestTemplate, DatabaseCleanUp databaseCleanUp,
+    public ProductV1ApiE2ETest(TestRestTemplate testRestTemplate, DatabaseCleanUp databaseCleanUp, RedisCleanUp redisCleanUp,
                                ProductRepository productRepository, BrandRepository brandRepository,
                                StockRepository stockRepository, ProductLikeRepository productLikeRepository,
                                UserRepository userRepository, ProductCountRepository productCountRepository) {
         this.testRestTemplate = testRestTemplate;
         this.databaseCleanUp = databaseCleanUp;
+        this.redisCleanUp = redisCleanUp;
         this.productRepository = productRepository;
         this.brandRepository = brandRepository;
         this.stockRepository = stockRepository;
@@ -69,6 +72,7 @@ public class ProductV1ApiE2ETest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
     }
 
     @Nested

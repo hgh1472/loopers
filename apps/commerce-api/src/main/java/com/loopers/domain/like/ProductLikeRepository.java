@@ -13,5 +13,7 @@ public interface ProductLikeRepository {
 
     List<ProductLike> findProductLikesOf(Long userId, Set<Long> productIds);
 
+    Set<Long> findLikedProductIdsOf(Long userId, Set<Long> productIds);
+
     List<ProductLike> findAllByUserId(Long userId);
 }

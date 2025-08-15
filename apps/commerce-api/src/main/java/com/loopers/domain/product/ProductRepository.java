@@ -3,7 +3,7 @@ package com.loopers.domain.product;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 
 public interface ProductRepository {
 
@@ -13,7 +13,11 @@ public interface ProductRepository {
 
     List<Product> findByIds(Set<Long> ids);
 
-    Page<ProductSearchView> search(ProductParams.Search params);
+    Slice<ProductSearchView> search(ProductParams.Search params);
+
+    Long countAllProducts();
+
+    Long countBrandProducts(Long brandId);
 
     List<ProductSearchView> searchProducts(Set<Long> productIds);
 }

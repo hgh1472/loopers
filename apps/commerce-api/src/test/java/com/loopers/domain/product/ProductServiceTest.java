@@ -30,9 +30,10 @@ class ProductServiceTest {
 
     @InjectMocks
     private ProductService productService;
-
     @Mock
     private ProductRepository productRepository;
+    @Mock
+    private ProductCountProcessor productCountProcessor;
 
     @Nested
     @DisplayName("상품 조회 시,")
@@ -90,6 +91,8 @@ class ProductServiceTest {
             ProductCommand.Page command = new ProductCommand.Page(1L, null, 10, "LATEST");
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
+            given(productCountProcessor.getProductCount(1L))
+                    .willReturn(10L);
 
             PageResponse<ProductInfo.Search> result = productService.search(command);
 
@@ -103,6 +106,8 @@ class ProductServiceTest {
             ProductCommand.Page command = new ProductCommand.Page(1L, 0, 50, "LATEST");
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
+            given(productCountProcessor.getProductCount(1L))
+                    .willReturn(10L);
 
             PageResponse<ProductInfo.Search> result = productService.search(command);
 
@@ -116,6 +121,9 @@ class ProductServiceTest {
             ProductCommand.Page command = new ProductCommand.Page(1L, 0, null, "LATEST");
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
+            given(productCountProcessor.getProductCount(1L))
+                    .willReturn(10L);
+
 
             PageResponse<ProductInfo.Search> result = productService.search(command);
 
@@ -129,6 +137,9 @@ class ProductServiceTest {
             ProductCommand.Page command = new ProductCommand.Page(1L, 0, 10, "INVALID_SORT");
             given(productRepository.search(new ProductParams.Search(1L, 0, 10, ProductParams.Sort.LATEST)))
                     .willReturn(Page.empty());
+            given(productCountProcessor.getProductCount(1L))
+                    .willReturn(10L);
+
 
             PageResponse<ProductInfo.Search> result = productService.search(command);
 

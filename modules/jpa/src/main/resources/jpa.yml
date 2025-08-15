@@ -38,6 +38,11 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: create
+    defer-datasource-initialization: true # 초기화 후 더미 데이터 삽입을 위한 설정
+
+  sql:
+    init:
+      mode: always
 
 datasource:
   mysql-jpa:
