@@ -28,4 +28,9 @@ public class ProductCountProcessor {
 
         return cachedCount.get();
     }
+
+    public void updateCache() {
+        Long count = productRepository.countAllProducts();
+        productCache.writeAllProductCount(count);
+    }
 }
