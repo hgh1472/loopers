@@ -11,11 +11,14 @@ public class OrderCriteria {
             Long userId,
             List<Line> lines,
             Delivery delivery,
-            Long couponId
+            Long couponId,
+            Long point,
+            String cardType,
+            String cardNo
     ) {
-        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines,
-                                                     BigDecimal originalAmount, BigDecimal paymentAmount) {
-            return new OrderCommand.Order(userId, lines, toCommandDelivery(), originalAmount, paymentAmount);
+        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines, BigDecimal originalAmount,
+                                                     BigDecimal discountAmount, Long pointAmount) {
+            return new OrderCommand.Order(userId, lines, toCommandDelivery(), originalAmount, discountAmount, pointAmount);
         }
 
         public List<OrderCommand.Line> toCommandLines(Map<Long, BigDecimal> productPriceMap) {

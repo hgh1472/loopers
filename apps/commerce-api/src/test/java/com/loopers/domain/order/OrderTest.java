@@ -22,7 +22,7 @@ class OrderTest {
         void throwBadRequestException_whenUserIdIsNull() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(null, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(null, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
 
             CoreException thrown = assertThrows(CoreException.class, () -> Order.of(cmd));
 
@@ -36,11 +36,11 @@ class OrderTest {
         void order_withOrderPayment() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("4000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("4000"), 1000L);
 
             Order order = Order.of(cmd);
 
-            assertThat(order.getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("4000"));
+            assertThat(order.getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("1000"));
             assertThat(order.getOrderPayment().getOriginalAmount()).isEqualTo(new BigDecimal("6000"));
         }
 
@@ -49,7 +49,7 @@ class OrderTest {
         void order_withOrderLines() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("3000"), new BigDecimal("3000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("3000"), new BigDecimal("3000"), 0L);
 
             Order order = Order.of(cmd);
 
@@ -65,7 +65,7 @@ class OrderTest {
     void throwBadRequestException_whenOrderLineIsNull() {
         OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
         List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-        OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+        OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
 
         Order order = Order.of(cmd);
 

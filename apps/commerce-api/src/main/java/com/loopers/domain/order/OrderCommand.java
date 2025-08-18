@@ -9,8 +9,9 @@ public class OrderCommand {
             List<Line> lines,
             Delivery delivery,
             BigDecimal originalAmount,
-            BigDecimal paymentAmount
-    ) {
+            BigDecimal discountAmount,
+            Long pointAmount
+            ) {
     }
     public record Line(
             Long productId,

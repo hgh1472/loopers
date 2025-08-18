@@ -9,7 +9,10 @@ public class OrderV1Dto {
     public record OrderRequest(
             List<Line> lines,
             Delivery delivery,
-            Long couponId
+            Long couponId,
+            Long point,
+            String cardType,
+            String cardNo
     ) {
     }
 

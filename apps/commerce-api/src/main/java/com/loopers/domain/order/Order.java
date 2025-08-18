@@ -58,9 +58,9 @@ public class Order extends BaseEntity {
         if (command.userId() == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용자 ID가 존재하지 않습니다.");
         }
-        OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.paymentAmount());
+        OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.discountAmount(), command.pointAmount());
 
-        Order order = new Order(command.userId(), OrderStatus.PAID, OrderDelivery.from(command.delivery()), orderPayment);
+        Order order = new Order(command.userId(), OrderStatus.PENDING, OrderDelivery.from(command.delivery()), orderPayment);
 
         List<OrderLine> orderLines = OrderLine.of(command.lines());
         orderLines.forEach(order::addLine);
@@ -77,6 +77,6 @@ public class Order extends BaseEntity {
     }
 
     public enum OrderStatus {
-        PAID, DELIVERING, COMPLETED, CANCELED
+        PENDING, PAID, DELIVERING, COMPLETED, CANCELED
     }
 }
