@@ -49,7 +49,7 @@ class OrderServiceIntegrationTest {
                     "101호",
                     "배송 요청사항"
             );
-            OrderCommand.Order command = new OrderCommand.Order(1L, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
+            OrderCommand.Order command = new OrderCommand.Order(1L, null, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
 
             OrderInfo orderInfo = orderService.order(command);
 
@@ -75,7 +75,7 @@ class OrderServiceIntegrationTest {
                     "101호",
                     "배송 요청사항"
             );
-            OrderCommand.Order command = new OrderCommand.Order(1L, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
+            OrderCommand.Order command = new OrderCommand.Order(1L, null, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
 
             OrderInfo orderInfo = orderService.order(command);
 

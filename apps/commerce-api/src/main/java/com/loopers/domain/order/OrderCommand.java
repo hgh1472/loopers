@@ -6,6 +6,7 @@ import java.util.List;
 public class OrderCommand {
     public record Order(
             Long userId,
+            Long couponId,
             List<Line> lines,
             Delivery delivery,
             BigDecimal originalAmount,
@@ -33,5 +34,8 @@ public class OrderCommand {
     }
 
     public record GetOrders(Long userId) {
+    }
+
+    public record Paid(Long orderId) {
     }
 }

@@ -1,5 +1,6 @@
 package com.loopers.application.order;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -177,11 +178,13 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
+
             OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, 1L, 1000L, "SAMSUNG", "0000-0000-0000-0000"));
 
             Optional<Order> order = orderRepository.findById(orderResult.id());
             assertAll(
                     () -> assertThat(order).isPresent(),
+                    () -> assertThat(order.get().getCouponId()).isEqualTo(1L),
                     () -> assertThat(order.get().getOrderLines()).extracting("productId", "quantity", "amount")
                             .contains(tuple(product1.getId(), 3L, product1.getPrice().getValue().multiply(BigDecimal.valueOf(3))),
                                     tuple(product2.getId(), 2L, product2.getPrice().getValue().multiply(BigDecimal.valueOf(2)))),
@@ -208,10 +211,12 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
+
             OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId, 0L, "SAMSUNG", "0000-0000-0000-0000"));
 
             Order order = orderRepository.findById(orderResult.id()).orElseThrow();
             assertAll(
+                    () -> assertThat(order.getCouponId()).isEqualTo(couponId),
                     () -> assertThat(order.getOrderLines()).extracting("productId", "quantity", "amount")
                             .contains(tuple(product1.getId(), 3L, product1.getPrice().getValue().multiply(BigDecimal.valueOf(3))),
                                     tuple(product2.getId(), 2L, product2.getPrice().getValue().multiply(BigDecimal.valueOf(2)))),
@@ -291,7 +296,7 @@ class OrderFacadeIntegrationTest {
                     "1층 101호",
                     "요구사항");
             List<OrderCommand.Line> orderLines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00")));
-            OrderCommand.Order cmd = new OrderCommand.Order(user1.getId(), orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
+            OrderCommand.Order cmd = new OrderCommand.Order(user1.getId(), null, orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
             Order order = Order.of(cmd);
 
             order.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00"))));

@@ -49,10 +49,9 @@ public class OrderFacade {
         }
         List<OrderCommand.Line> lines = criteria.toCommandLines(productPriceMap);
 
-        AmountResult result = amountProcessor.applyDiscount(criteria.couponId(), criteria.userId(), lines, criteria.point());
+        AmountResult amountResult = amountProcessor.applyDiscount(criteria.couponId(), criteria.userId(), lines, criteria.point());
 
-        OrderInfo orderInfo = orderService.order(
-                criteria.toOrderCommandWith(lines, result.originalAmount(), result.discountAmount(), result.pointAmount()));
+        OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, criteria.couponId(), amountResult));
 
         paymentService.pay(new PaymentCommand.Pay(
                 orderInfo.payment().paymentAmount(), orderInfo.id(), criteria.cardType(), criteria.cardNo()));

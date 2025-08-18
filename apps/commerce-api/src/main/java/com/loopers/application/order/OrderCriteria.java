@@ -16,9 +16,9 @@ public class OrderCriteria {
             String cardType,
             String cardNo
     ) {
-        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines, BigDecimal originalAmount,
-                                                     BigDecimal discountAmount, Long pointAmount) {
-            return new OrderCommand.Order(userId, lines, toCommandDelivery(), originalAmount, discountAmount, pointAmount);
+        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines, Long couponId, AmountResult amountResult) {
+            return new OrderCommand.Order(userId, couponId, lines, toCommandDelivery(), amountResult.originalAmount(),
+                    amountResult.discountAmount(), amountResult.pointAmount());
         }
 
         public List<OrderCommand.Line> toCommandLines(Map<Long, BigDecimal> productPriceMap) {

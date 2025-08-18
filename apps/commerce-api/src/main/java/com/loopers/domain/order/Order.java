@@ -43,12 +43,15 @@ public class Order extends BaseEntity {
     })
     private OrderPayment orderPayment;
 
+    @Column(name = "ref_coupon_id")
+    private Long couponId;
+
     protected Order() {
     }
 
-    private Order(Long userId, OrderStatus status, OrderDelivery orderDelivery,
-                  OrderPayment orderPayment) {
+    private Order(Long userId, Long couponId, OrderStatus status, OrderDelivery orderDelivery, OrderPayment orderPayment) {
         this.userId = userId;
+        this.couponId = couponId;
         this.status = status;
         this.orderDelivery = orderDelivery;
         this.orderPayment = orderPayment;
@@ -60,7 +63,8 @@ public class Order extends BaseEntity {
         }
         OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.discountAmount(), command.pointAmount());
 
-        Order order = new Order(command.userId(), OrderStatus.PENDING, OrderDelivery.from(command.delivery()), orderPayment);
+        Order order = new Order(command.userId(), command.couponId(), OrderStatus.PENDING, OrderDelivery.from(command.delivery()),
+                orderPayment);
 
         List<OrderLine> orderLines = OrderLine.of(command.lines());
         orderLines.forEach(order::addLine);
