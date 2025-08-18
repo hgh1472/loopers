@@ -9,10 +9,17 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "product")
+@Table(name = "product", indexes = {
+        @Index(name = "idx_brand_id", columnList = "ref_brand_id"),
+        @Index(name = "idx_product_search_created_at", columnList = "created_at DESC"),
+        @Index(name = "idx_product_search_price", columnList = "price DESC"),
+        @Index(name = "idx_brand_created_at", columnList = "ref_brand_id, created_at DESC"),
+        @Index(name = "idx_brand_price", columnList = "ref_brand_id, price DESC")
+})
 public class Product extends BaseEntity {
 
     @Column(name = "ref_brand_id", nullable = false)
