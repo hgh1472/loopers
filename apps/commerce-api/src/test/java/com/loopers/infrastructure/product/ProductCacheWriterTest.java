@@ -2,7 +2,9 @@ package com.loopers.infrastructure.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.loopers.utils.RedisCleanUp;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,13 @@ class ProductCacheWriterTest {
     private ProductCacheWriter productCacheWriter;
     @Autowired
     private RedisTemplate<String, String> defaultRedisTemplate;
+    @Autowired
+    private RedisCleanUp redisCleanUp;
+
+    @AfterEach
+    void tearDown() {
+        redisCleanUp.truncateAll();
+    }
 
     @Test
     @DisplayName("상품 전체 개수에 대한 캐시를 쓴다.")
