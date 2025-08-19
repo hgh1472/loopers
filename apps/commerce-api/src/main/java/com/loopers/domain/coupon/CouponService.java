@@ -37,4 +37,12 @@ public class CouponService {
         userCoupon.use(LocalDateTime.now());
         return new UserCouponInfo.Use(userCoupon.getId(), command.originalAmount(), paymentAmount);
     }
+
+    @Transactional
+    public UserCouponInfo restore(CouponCommand.Restore command) {
+        UserCoupon userCoupon = couponRepository.findUserCoupon(command.couponId(), command.userId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
+        userCoupon.restore();
+        return UserCouponInfo.from(userCoupon);
+    }
 }

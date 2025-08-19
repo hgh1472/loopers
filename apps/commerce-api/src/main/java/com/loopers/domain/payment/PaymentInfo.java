@@ -7,7 +7,7 @@ public record PaymentInfo(
         Long orderId,
         BigDecimal amount,
         String cardNo,
-        Payment.CardType cardType,
+        Card.Type cardType,
         Payment.Status status,
         String reason
 ) {
@@ -16,8 +16,8 @@ public record PaymentInfo(
                 payment.getTransactionKey(),
                 payment.getOrderId(),
                 payment.getAmount(),
-                payment.getCardNo().value(),
-                payment.getCardType(),
+                payment.getCard().getCardNo().value(),
+                payment.getCard().getType(),
                 payment.getStatus(),
                 payment.getReason()
         );

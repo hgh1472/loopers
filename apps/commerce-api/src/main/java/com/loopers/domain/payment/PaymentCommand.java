@@ -11,4 +11,14 @@ public class PaymentCommand {
             String cardNo
     ) {
     }
+
+    public record Refund(
+            String transactionKey
+    ) {
+    }
+
+    public record Success(
+            String transactionKey
+    ) {
+    }
 }

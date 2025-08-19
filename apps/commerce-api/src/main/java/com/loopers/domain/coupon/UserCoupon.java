@@ -74,6 +74,13 @@ public class UserCoupon extends BaseEntity {
         this.usedAt = usedAt;
     }
 
+    public void restore() {
+        if (!isUsed()) {
+            throw new CoreException(ErrorType.CONFLICT, "사용하지 않은 쿠폰은 복원할 수 없습니다.");
+        }
+        this.usedAt = null;
+    }
+
     public boolean isUsed() {
         return this.usedAt != null;
     }

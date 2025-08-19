@@ -20,17 +20,14 @@ public class Payment extends BaseEntity {
     @Column(name = "transaction_key")
     private String transactionKey;
 
-    @Column(name = "ref_order_id", nullable = false, unique = true)
+    @Column(name = "ref_order_id", nullable = false)
     private Long orderId;
 
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @Column(name = "card_type", nullable = false)
-    private CardType cardType;
-
     @Embedded
-    private CardNo cardNo;
+    private Card card;
 
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -41,13 +38,12 @@ public class Payment extends BaseEntity {
     protected Payment() {
     }
 
-    protected Payment(String transactionKey, Long orderId, BigDecimal amount, CardType cardType, CardNo cardNo, Status status,
+    protected Payment(String transactionKey, Long orderId, BigDecimal amount, Card card, Status status,
                       String reason) {
         this.transactionKey = transactionKey;
         this.orderId = orderId;
         this.amount = amount;
-        this.cardType = cardType;
-        this.cardNo = cardNo;
+        this.card = card;
         this.status = status;
         this.reason = reason;
     }
@@ -70,31 +66,29 @@ public class Payment extends BaseEntity {
                 null,
                 command.orderId(),
                 command.amount(),
-                CardType.from(command.cardType()),
-                new CardNo(command.cardNo()),
+                Card.of(command.cardNo(), command.cardType()),
                 Status.PENDING,
                 null
         );
     }
 
-    public enum CardType {
-        SAMSUNG,
-        KB,
-        HYUNDAI;
-
-        public static CardType from(String type) {
-            try {
-                return CardType.valueOf(type.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new CoreException(ErrorType.BAD_REQUEST, "지원하지 않는 카드사입니다.");
-            }
+    public Refund refund() {
+        if (this.status == Status.FAILED) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제되지 않은 요청은 환불할 수 없습니다.");
         }
+        return Refund.from(this);
+    }
+
+    public void success() {
+        if (this.status != Status.PENDING) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제는 대기 상태에서만 성공할 수 있습니다.");
+        }
+        this.status = Status.COMPLETED;
     }
 
     public enum Status {
         PENDING,
         COMPLETED,
-        FAILED,
-        NEED_REFUND
+        FAILED
     }
 }

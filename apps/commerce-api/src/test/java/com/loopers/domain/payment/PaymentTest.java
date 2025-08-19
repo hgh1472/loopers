@@ -65,4 +65,21 @@ class PaymentTest {
             assertThat(payment.getStatus()).isEqualTo(Payment.Status.PENDING);
         }
     }
+
+    @Nested
+    @DisplayName("결제 환불 시,")
+    class Refund {
+        @Test
+        @DisplayName("결제 상태가 FAILED인 경우, BAD_REQUEST 예외가 발생한다.")
+        void throwBadRequestException_whenPaymentStatusIsNotCompleted() {
+            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+            Payment payment = new Payment(null, 1L, new BigDecimal("1000"), card, Payment.Status.FAILED, null);
+
+            CoreException thrown = assertThrows(CoreException.class, payment::refund);
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "결제되지 않은 요청은 환불할 수 없습니다."));
+        }
+    }
 }
