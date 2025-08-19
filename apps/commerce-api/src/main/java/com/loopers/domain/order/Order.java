@@ -43,12 +43,15 @@ public class Order extends BaseEntity {
     })
     private OrderPayment orderPayment;
 
+    @Column(name = "ref_coupon_id")
+    private Long couponId;
+
     protected Order() {
     }
 
-    private Order(Long userId, OrderStatus status, OrderDelivery orderDelivery,
-                  OrderPayment orderPayment) {
+    private Order(Long userId, Long couponId, OrderStatus status, OrderDelivery orderDelivery, OrderPayment orderPayment) {
         this.userId = userId;
+        this.couponId = couponId;
         this.status = status;
         this.orderDelivery = orderDelivery;
         this.orderPayment = orderPayment;
@@ -58,9 +61,10 @@ public class Order extends BaseEntity {
         if (command.userId() == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용자 ID가 존재하지 않습니다.");
         }
-        OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.paymentAmount());
+        OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.discountAmount(), command.pointAmount());
 
-        Order order = new Order(command.userId(), OrderStatus.PAID, OrderDelivery.from(command.delivery()), orderPayment);
+        Order order = new Order(command.userId(), command.couponId(), OrderStatus.PENDING, OrderDelivery.from(command.delivery()),
+                orderPayment);
 
         List<OrderLine> orderLines = OrderLine.of(command.lines());
         orderLines.forEach(order::addLine);
@@ -76,7 +80,25 @@ public class Order extends BaseEntity {
         this.orderLines.add(orderLine);
     }
 
+    public void fail(OrderCommand.Fail.Reason reason) {
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 취소할 수 없는 상태입니다.");
+        }
+        switch (reason) {
+            case OUT_OF_STOCK -> this.status = OrderStatus.OUT_OF_STOCK;
+            case POINT_EXHAUSTED -> this.status = OrderStatus.POINT_EXHAUSTED;
+            case PAYMENT_FAILED -> this.status = OrderStatus.PAYMENT_FAILED;
+        }
+    }
+
+    public void paid() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 결제할 수 없는 상태입니다.");
+        }
+        this.status = OrderStatus.PAID;
+    }
+
     public enum OrderStatus {
-        PAID, DELIVERING, COMPLETED, CANCELED
+        PENDING, OUT_OF_STOCK, POINT_EXHAUSTED, PAYMENT_FAILED, PAID, DELIVERING, COMPLETED, CANCELED
     }
 }

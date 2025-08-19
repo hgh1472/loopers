@@ -6,6 +6,7 @@ import java.util.List;
 public record OrderInfo(
         Long id,
         Long userId,
+        Long couponId,
         String orderStatus,
         List<Line> lines,
         Delivery delivery,
@@ -15,6 +16,7 @@ public record OrderInfo(
         return new OrderInfo(
                 order.getId(),
                 order.getUserId(),
+                order.getCouponId(),
                 order.getStatus().name(),
                 order.getOrderLines().stream()
                         .map(Line::from)
@@ -58,11 +60,15 @@ public record OrderInfo(
 
     public record Payment(
             BigDecimal originalAmount,
+            BigDecimal discountAmount,
+            Long pointAmount,
             BigDecimal paymentAmount
     ) {
         public static Payment from(OrderPayment orderPayment) {
             return new Payment(
                     orderPayment.getOriginalAmount(),
+                    orderPayment.getDiscountAmount(),
+                    orderPayment.getPointAmount(),
                     orderPayment.getPaymentAmount()
             );
         }

@@ -10,6 +10,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class OrderTest {
 
@@ -22,7 +24,7 @@ class OrderTest {
         void throwBadRequestException_whenUserIdIsNull() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(null, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(null, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
 
             CoreException thrown = assertThrows(CoreException.class, () -> Order.of(cmd));
 
@@ -36,11 +38,11 @@ class OrderTest {
         void order_withOrderPayment() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("4000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("4000"), 1000L);
 
             Order order = Order.of(cmd);
 
-            assertThat(order.getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("4000"));
+            assertThat(order.getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("1000"));
             assertThat(order.getOrderPayment().getOriginalAmount()).isEqualTo(new BigDecimal("6000"));
         }
 
@@ -49,7 +51,7 @@ class OrderTest {
         void order_withOrderLines() {
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
             List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-            OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("3000"), new BigDecimal("3000"));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("3000"), new BigDecimal("3000"), 0L);
 
             Order order = Order.of(cmd);
 
@@ -65,7 +67,7 @@ class OrderTest {
     void throwBadRequestException_whenOrderLineIsNull() {
         OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
         List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-        OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+        OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
 
         Order order = Order.of(cmd);
 
@@ -74,5 +76,49 @@ class OrderTest {
         assertThat(thrown)
                 .usingRecursiveComparison()
                 .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "주문 항목이 존재하지 않습니다."));
+    }
+
+    @Nested
+    @DisplayName("주문 실패 시,")
+    class Fail {
+
+        @Test
+        @DisplayName("주문 상태가 PENDING이 아닐 경우, CONFLICT 예외를 발생시킨다.")
+        void throwConflictException_whenOrderStatusIsNotPending() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
+            List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
+
+            Order order = Order.of(cmd);
+            order.fail(OrderCommand.Fail.Reason.PAYMENT_FAILED);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> order.fail(OrderCommand.Fail.Reason.OUT_OF_STOCK));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "주문 상태가 취소할 수 없는 상태입니다."));
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 결제 완료 시,")
+    class Paid {
+
+        @Test
+        @DisplayName("주문 상태가 PENDING이 아닐 경우, CONFLICT 예외를 발생시킨다.")
+        void throwConflictException_whenOrderStatusIsNotPending() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
+            List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
+
+            Order order = Order.of(cmd);
+            order.paid();
+
+            CoreException thrown = assertThrows(CoreException.class, () -> order.paid());
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "주문 상태가 결제할 수 없는 상태입니다."));
+        }
     }
 }

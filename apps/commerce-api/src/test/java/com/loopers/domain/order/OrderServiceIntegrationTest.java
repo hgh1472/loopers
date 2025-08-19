@@ -49,7 +49,7 @@ class OrderServiceIntegrationTest {
                     "101호",
                     "배송 요청사항"
             );
-            OrderCommand.Order command = new OrderCommand.Order(1L, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000));
+            OrderCommand.Order command = new OrderCommand.Order(1L, null, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
 
             OrderInfo orderInfo = orderService.order(command);
 
@@ -59,6 +59,27 @@ class OrderServiceIntegrationTest {
                     () -> assertThat(order.getUserId()).isEqualTo(command.userId()),
                     () -> assertThat(orderLines).hasSize(2)
             );
+        }
+
+        @DisplayName("주문이 상태는 PENDING 상태로 저장된다.")
+        @Test
+        void saveOrderWithPendingStatus() {
+            List<OrderCommand.Line> lines = List.of(
+                    new OrderCommand.Line(1L, 2L, BigDecimal.valueOf(1000L)),
+                    new OrderCommand.Line(2L, 3L, BigDecimal.valueOf(2000L))
+            );
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "홍길동",
+                    "010-1234-5678",
+                    "서울시 강남구 역삼동 123-456",
+                    "101호",
+                    "배송 요청사항"
+            );
+            OrderCommand.Order command = new OrderCommand.Order(1L, null, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
+
+            OrderInfo orderInfo = orderService.order(command);
+
+            assertThat(orderInfo.orderStatus()).isEqualTo("PENDING");
         }
     }
 }

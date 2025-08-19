@@ -3,13 +3,21 @@ package com.loopers.application.order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
-import com.loopers.domain.point.PointCommand;
+import com.loopers.domain.payment.PaymentCommand;
+import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.product.ProductCommand;
+import com.loopers.domain.product.ProductInfo;
+import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderFacade {
 
+    private final AmountProcessor amountProcessor;
     private final UserService userService;
+    private final ProductService productService;
     private final OrderService orderService;
-    private final OrderProcessor orderProcessor;
-    private final PaymentProcessor paymentProcessor;
+    private final PaymentService paymentService;
 
     @Transactional
     public OrderResult order(OrderCriteria.Order criteria) {
@@ -30,10 +39,22 @@ public class OrderFacade {
             throw new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
 
-        OrderInfo orderInfo = orderProcessor.placeOrder(criteria);
-        PointCommand.Use pointCommand = new PointCommand.Use(criteria.userId(), orderInfo.payment().paymentAmount().longValue());
-        paymentProcessor.pay(pointCommand, criteria.toCommandDeduct());
+        Set<Long> productIds = criteria.lines().stream().map(OrderCriteria.Line::productId).collect(Collectors.toSet());
 
+        Map<Long, BigDecimal> productPriceMap = productService.getPurchasableProducts(new ProductCommand.Purchasable(productIds))
+                .stream()
+                .collect(Collectors.toMap(ProductInfo::id, ProductInfo::price));
+        if (productPriceMap.size() != productIds.size()) {
+            throw new CoreException(ErrorType.NOT_FOUND, "주문에 필요한 상품 정보를 찾을 수 없습니다.");
+        }
+        List<OrderCommand.Line> lines = criteria.toCommandLines(productPriceMap);
+
+        AmountResult amountResult = amountProcessor.applyDiscount(criteria.couponId(), criteria.userId(), lines, criteria.point());
+
+        OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, criteria.couponId(), amountResult));
+
+        paymentService.pay(new PaymentCommand.Pay(
+                orderInfo.payment().paymentAmount(), orderInfo.id(), criteria.cardType(), criteria.cardNo()));
         return OrderResult.from(orderInfo);
     }
 
