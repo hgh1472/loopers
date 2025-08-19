@@ -21,4 +21,10 @@ public class PaymentCommand {
             String transactionKey
     ) {
     }
+
+    public record Fail(
+            String transactionKey,
+            String reason
+    ) {
+    }
 }

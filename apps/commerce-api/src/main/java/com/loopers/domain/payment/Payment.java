@@ -86,6 +86,14 @@ public class Payment extends BaseEntity {
         this.status = Status.COMPLETED;
     }
 
+    public void fail(String reason) {
+        if (this.status != Status.PENDING) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제는 대기 상태에서만 실패할 수 있습니다.");
+        }
+        this.status = Status.FAILED;
+        this.reason = reason;
+    }
+
     public enum Status {
         PENDING,
         COMPLETED,

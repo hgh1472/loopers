@@ -82,4 +82,17 @@ class PaymentTest {
                     .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "결제되지 않은 요청은 환불할 수 없습니다."));
         }
     }
+
+    @Test
+    @DisplayName("결제 실패 시, PENDING 상태가 아닌 경우, BAD_REQUEST 예외가 발생한다.")
+    void throwBadRequestException_whenPaymentStatusIsNotPending() {
+        Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+        Payment payment = new Payment(null, 1L, new BigDecimal("1000"), card, Payment.Status.COMPLETED, null);
+
+        CoreException thrown = assertThrows(CoreException.class, () -> payment.fail("결제 실패 사유"));
+
+        assertThat(thrown)
+                .usingRecursiveComparison()
+                .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "결제는 대기 상태에서만 실패할 수 있습니다."));
+    }
 }

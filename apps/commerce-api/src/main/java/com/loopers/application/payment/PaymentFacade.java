@@ -43,4 +43,14 @@ public class PaymentFacade {
             orderService.fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.from(e.getCustomMessage())));
         }
     }
+
+    @Transactional
+    public void fail(PaymentCriteria.Fail criteria) {
+        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
+        if (orderInfo.couponId() != null) {
+            couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
+        }
+        paymentService.fail(new PaymentCommand.Fail(criteria.transactionKey(), criteria.reason()));
+        orderService.fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.PAYMENT_FAILED));
+    }
 }

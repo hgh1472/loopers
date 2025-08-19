@@ -7,4 +7,11 @@ public class PaymentCriteria {
             Long orderId
     ) {
     }
+
+    public record Fail(
+            String transactionKey,
+            Long orderId,
+            String reason
+    ) {
+    }
 }

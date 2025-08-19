@@ -33,4 +33,12 @@ public class PaymentService {
         payment.success();
         return PaymentInfo.of(payment);
     }
+
+    @Transactional
+    public PaymentInfo fail(PaymentCommand.Fail command) {
+        Payment payment = paymentRepository.findByTransactionKey(command.transactionKey())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "해당하는 결제 정보가 없습니다."));
+        payment.fail(command.reason());
+        return PaymentInfo.of(payment);
+    }
 }

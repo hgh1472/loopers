@@ -1,5 +1,6 @@
 package com.loopers.application.payment;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.loopers.domain.coupon.CouponRepository;
@@ -226,6 +227,51 @@ class PaymentFacadeIntegrationTest {
 
             Payment updatedPayment = paymentRepository.findById(savedPayment.getId()).orElseThrow();
             assertThat(updatedPayment.getStatus()).isEqualTo(Payment.Status.COMPLETED);
+        }
+    }
+
+    @Nested
+    @DisplayName("결제 실패 처리 시,")
+    class Fail {
+
+        @Test
+        @DisplayName("쿠폰을 사용했다면 쿠폰은 복구된다.")
+        void restoreCoupon_whenPaymentFails() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = orderRepository.save(Order.of(new OrderCommand.Order(1L, 1L,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L)));
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(new BigDecimal("100"), DiscountPolicy.Type.FIXED), LocalDateTime.now().plusHours(1));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("800"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            Payment savedPayment = paymentRepository.save(payment);
+
+            paymentFacade.fail(new PaymentCriteria.Fail(savedPayment.getTransactionKey(), order.getId(), "Payment failed"));
+
+            UserCoupon after = couponRepository.findUserCoupon(1L, 1L).orElseThrow();
+            assertThat(after.isUsed()).isFalse();
+        }
+
+        @Test
+        @DisplayName("주문과 결제 정보는 실패로 기록된다.")
+        void orderAndPaymentStatusFail_whenPaymentFails() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = orderRepository.save(Order.of(new OrderCommand.Order(1L, null,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L)));
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("800"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            Payment savedPayment = paymentRepository.save(payment);
+            PaymentCriteria.Fail criteria = new PaymentCriteria.Fail(savedPayment.getTransactionKey(), order.getId(), "Payment failed");
+            paymentFacade.fail(criteria);
+
+            Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
+            Payment updatedPayment = paymentRepository.findById(savedPayment.getId()).orElseThrow();
+            assertThat(updatedOrder.getStatus()).isEqualTo(Order.OrderStatus.PAYMENT_FAILED);
+            assertThat(updatedPayment.getStatus()).isEqualTo(Payment.Status.FAILED);
+            assertThat(updatedPayment.getReason()).isEqualTo(criteria.reason());
         }
     }
 }
