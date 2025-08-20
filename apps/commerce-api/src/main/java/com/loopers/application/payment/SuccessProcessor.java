@@ -27,7 +27,9 @@ public class SuccessProcessor {
     public void process(List<StockCommand.Deduct> stockCommands, PointCommand.Use pointCommand,
                         PaymentCommand.Success paymentCommand, OrderCommand.Paid orderCommand) {
         stockService.deductAll(stockCommands);
-        pointService.use(pointCommand);
+        if (pointCommand.amount() > 0) {
+            pointService.use(pointCommand);
+        }
         paymentService.success(paymentCommand);
         orderService.paid(orderCommand);
     }

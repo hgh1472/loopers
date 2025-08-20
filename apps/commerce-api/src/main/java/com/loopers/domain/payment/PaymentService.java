@@ -11,10 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final PaymentGateway paymentGateway;
 
     @Transactional
     public PaymentInfo pay(PaymentCommand.Pay command) {
         Payment payment = Payment.of(command);
+        GatewayResponse.Request response = paymentGateway.request(payment);
+        if (response.isSuccess()) {
+            payment.successRequest(response.transactionKey());
+        }
+        else {
+            payment.failRequest();
+        }
         return PaymentInfo.of(paymentRepository.save(payment));
     }
 

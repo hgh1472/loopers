@@ -1,10 +1,10 @@
 package com.loopers.application.order;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.*;
 
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.coupon.DiscountPolicy;
@@ -14,6 +14,8 @@ import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.payment.GatewayResponse;
+import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
@@ -34,11 +36,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 class OrderFacadeIntegrationTest {
@@ -57,6 +62,14 @@ class OrderFacadeIntegrationTest {
     private PointRepository pointRepository;
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+    @MockitoBean
+    private PaymentGateway paymentGateway;
+
+    @BeforeEach
+    void setUp() {
+        given(paymentGateway.request(any()))
+                .willReturn(new GatewayResponse.Request(true, "TX-KEY"));
+    }
 
     @AfterEach
     void tearDown() {

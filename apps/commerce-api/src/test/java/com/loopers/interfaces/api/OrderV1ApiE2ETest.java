@@ -2,10 +2,13 @@ package com.loopers.interfaces.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.BDDMockito.*;
 
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.payment.GatewayResponse;
+import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -34,6 +38,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderV1ApiE2ETest {
@@ -44,6 +49,8 @@ public class OrderV1ApiE2ETest {
     private final StockRepository stockRepository;
     private final PointRepository pointRepository;
     private final OrderRepository orderRepository;
+    @MockitoBean
+    private PaymentGateway paymentGateway;
 
     @Autowired
     public OrderV1ApiE2ETest(TestRestTemplate testRestTemplate, DatabaseCleanUp databaseCleanUp,
@@ -91,6 +98,7 @@ public class OrderV1ApiE2ETest {
         @DisplayName("주문을 성공적으로 생성할 경우, 주문 정보를 반환한다.")
         @Test
         void returnOrderResponse() {
+            given(paymentGateway.request(any())).willReturn(new GatewayResponse.Request(true, "TX-KEY"));
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             Point point = Point.from(user.getId());
             point.charge(10000L);
