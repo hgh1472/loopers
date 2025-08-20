@@ -1,11 +1,12 @@
 package com.loopers.domain.payment;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record RefundInfo(
         String transactionKey,
         Long paymentId,
-        Long orderId,
+        UUID orderId,
         BigDecimal amount,
         Card.Type cardType,
         String cardNo

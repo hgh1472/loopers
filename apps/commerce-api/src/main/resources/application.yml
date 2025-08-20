@@ -29,11 +29,23 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+client:
+  loopers:
+    base-url: ${LOOPERS_URL}
+    user-id: ${LOOPERS_USER_ID}
+    callback-url: ${CALLBACK_URL}
+
 ---
 spring:
   config:
     activate:
       on-profile: local, test
+
+client:
+  loopers:
+    base-url: localhost:8082
+    user-id: 135135
+    callback-url: http://localhost:8080/api/v1/payments/callback
 
 ---
 spring:

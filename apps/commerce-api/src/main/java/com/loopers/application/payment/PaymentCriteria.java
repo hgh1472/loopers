@@ -1,16 +1,18 @@
 package com.loopers.application.payment;
 
+import java.util.UUID;
+
 public class PaymentCriteria {
 
     public record Success(
             String transactionKey,
-            Long orderId
+            UUID orderId
     ) {
     }
 
     public record Fail(
             String transactionKey,
-            Long orderId,
+            UUID orderId,
             String reason
     ) {
     }

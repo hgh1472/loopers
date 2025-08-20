@@ -10,6 +10,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.Getter;
 
 @Entity
@@ -21,7 +22,7 @@ public class Payment extends BaseEntity {
     private String transactionKey;
 
     @Column(name = "ref_order_id", nullable = false)
-    private Long orderId;
+    private UUID orderId;
 
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
@@ -38,7 +39,7 @@ public class Payment extends BaseEntity {
     protected Payment() {
     }
 
-    protected Payment(String transactionKey, Long orderId, BigDecimal amount, Card card, Status status,
+    protected Payment(String transactionKey, UUID orderId, BigDecimal amount, Card card, Status status,
                       String reason) {
         this.transactionKey = transactionKey;
         this.orderId = orderId;
@@ -67,7 +68,7 @@ public class Payment extends BaseEntity {
                 command.orderId(),
                 command.amount(),
                 Card.of(command.cardNo(), command.cardType()),
-                Status.PENDING,
+                Status.CREATED,
                 null
         );
     }
@@ -94,7 +95,24 @@ public class Payment extends BaseEntity {
         this.reason = reason;
     }
 
+    public void successRequest(String transactionKey) {
+        if (this.status != Status.CREATED) {
+            throw new CoreException(ErrorType.CONFLICT, "결제 요청 성공 처리는 생성 상태에서만 성공할 수 있습니다.");
+        }
+        this.status = Status.PENDING;
+        this.transactionKey = transactionKey;
+    }
+
+    public void failRequest() {
+        if (this.status != Status.CREATED) {
+            throw new CoreException(ErrorType.CONFLICT, "결제 요청 실패 처리는 생성 상태에서만 실패할 수 있습니다.");
+        }
+        this.status = Status.FAILED;
+        this.reason = "결제 요청이 실패했습니다.";
+    }
+
     public enum Status {
+        CREATED,
         PENDING,
         COMPLETED,
         FAILED

@@ -1,10 +1,11 @@
 package com.loopers.domain.payment;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record PaymentInfo(
         String transactionKey,
-        Long orderId,
+        UUID orderId,
         BigDecimal amount,
         String cardNo,
         Card.Type cardType,
@@ -21,5 +22,21 @@ public record PaymentInfo(
                 payment.getStatus(),
                 payment.getReason()
         );
+    }
+
+    public record Transaction(
+            String transactionKey,
+            Payment.Status status,
+            UUID orderId,
+            String reason
+    ) {
+        public static Transaction of(GatewayResponse.Transaction transaction) {
+            return new Transaction(
+                    transaction.transactionKey(),
+                    transaction.status(),
+                    transaction.orderId(),
+                    transaction.reason()
+            );
+        }
     }
 }

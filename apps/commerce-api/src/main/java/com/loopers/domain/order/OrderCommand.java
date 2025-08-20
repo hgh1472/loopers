@@ -2,6 +2,7 @@ package com.loopers.domain.order;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public class OrderCommand {
     public record Order(
@@ -31,16 +32,16 @@ public class OrderCommand {
     ) {
     }
 
-    public record Get(Long orderId) {
+    public record Get(UUID orderId) {
     }
 
     public record GetOrders(Long userId) {
     }
 
-    public record Paid(Long orderId) {
+    public record Paid(UUID orderId) {
     }
 
-    public record Fail(Long orderId, Reason reason) {
+    public record Fail(UUID orderId, Reason reason) {
 
         public enum Reason {
             OUT_OF_STOCK("재고 부족"),

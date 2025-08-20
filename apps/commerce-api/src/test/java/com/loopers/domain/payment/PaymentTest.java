@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThrows;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 금액이 null인 경우, BAD_REQUEST 예외가 발생한다.")
         void throwBadRequestException_whenAmountIsNull() {
-            PaymentCommand.Pay cmd = new PaymentCommand.Pay(null, 1L, "SAMSUNG", "1234-1234-1234-1234");
+            UUID orderId = UUID.randomUUID();
+            PaymentCommand.Pay cmd = new PaymentCommand.Pay(null, orderId, "SAMSUNG", "1234-1234-1234-1234");
 
             CoreException thrown = assertThrows(CoreException.class, () -> Payment.of(cmd));
 
@@ -34,7 +36,8 @@ class PaymentTest {
         @ValueSource(strings = {"0", "-1"})
         @DisplayName("결제 금액이 0 이하인 경우, BAD_REQUEST 예외가 발생한다.")
         void throwBadRequestException_whenAmountIsZeroOrNegative(String amount) {
-            PaymentCommand.Pay cmd = new PaymentCommand.Pay(new BigDecimal(amount), 1L, "SAMSUNG", "1234-1234-1234-1234");
+            UUID orderId = UUID.randomUUID();
+            PaymentCommand.Pay cmd = new PaymentCommand.Pay(new BigDecimal(amount), orderId, "SAMSUNG", "1234-1234-1234-1234");
 
             CoreException thrown = assertThrows(CoreException.class, () -> Payment.of(cmd));
 
@@ -56,13 +59,14 @@ class PaymentTest {
         }
 
         @Test
-        @DisplayName("결제 상태는 PENDING으로 생성된다.")
+        @DisplayName("결제 상태는 CREATED으로 생성된다.")
         void statusIsPending_whenPaymentIsCreated() {
-            PaymentCommand.Pay cmd = new PaymentCommand.Pay(new BigDecimal("1000"), 1L, "SAMSUNG", "1234-1234-1234-1234");
+            UUID orderId = UUID.randomUUID();
+            PaymentCommand.Pay cmd = new PaymentCommand.Pay(new BigDecimal("1000"), orderId, "SAMSUNG", "1234-1234-1234-1234");
 
             Payment payment = Payment.of(cmd);
 
-            assertThat(payment.getStatus()).isEqualTo(Payment.Status.PENDING);
+            assertThat(payment.getStatus()).isEqualTo(Payment.Status.CREATED);
         }
     }
 
@@ -73,7 +77,8 @@ class PaymentTest {
         @DisplayName("결제 상태가 FAILED인 경우, BAD_REQUEST 예외가 발생한다.")
         void throwBadRequestException_whenPaymentStatusIsNotCompleted() {
             Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
-            Payment payment = new Payment(null, 1L, new BigDecimal("1000"), card, Payment.Status.FAILED, null);
+            UUID orderId = UUID.randomUUID();
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.FAILED, null);
 
             CoreException thrown = assertThrows(CoreException.class, payment::refund);
 
@@ -87,7 +92,8 @@ class PaymentTest {
     @DisplayName("결제 실패 시, PENDING 상태가 아닌 경우, BAD_REQUEST 예외가 발생한다.")
     void throwBadRequestException_whenPaymentStatusIsNotPending() {
         Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
-        Payment payment = new Payment(null, 1L, new BigDecimal("1000"), card, Payment.Status.COMPLETED, null);
+        UUID orderId = UUID.randomUUID();
+        Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.COMPLETED, null);
 
         CoreException thrown = assertThrows(CoreException.class, () -> payment.fail("결제 실패 사유"));
 
@@ -95,4 +101,81 @@ class PaymentTest {
                 .usingRecursiveComparison()
                 .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "결제는 대기 상태에서만 실패할 수 있습니다."));
     }
+
+    @Nested
+    @DisplayName("결제 요청 성공 시,")
+    class SuccessRequest {
+
+        @Test
+        @DisplayName("결제 상태가 PENDING이 아닌 경우, CONFLICT 예외가 발생한다.")
+        void throwConflictException_whenPaymentStatusIsNotCreated() {
+            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+            UUID orderId = UUID.randomUUID();
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.PENDING, null);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> payment.successRequest("transactionKey123"));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "결제 요청 성공 처리는 생성 상태에서만 성공할 수 있습니다."));
+        }
+
+        @Test
+        @DisplayName("결제 상태가 PENDING으로 바뀐다.")
+        void statusIsPending_whenPaymentRequestIsSuccessful() {
+            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+            UUID orderId = UUID.randomUUID();
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.CREATED, null);
+
+            payment.successRequest("transactionKey123");
+
+            assertThat(payment.getStatus()).isEqualTo(Payment.Status.PENDING);
+            assertThat(payment.getTransactionKey()).isEqualTo("transactionKey123");
+        }
+
+        @Test
+        @DisplayName("결제 요청 성공 시, transactionKey가 설정된다.")
+        void transactionKeyIsSet_whenPaymentRequestIsSuccessful() {
+            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+            UUID orderId = UUID.randomUUID();
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.CREATED, null);
+
+            payment.successRequest("transactionKey123");
+
+            assertThat(payment.getTransactionKey()).isEqualTo("transactionKey123");
+        }
+    }
+
+    @Nested
+    @DisplayName("결제 요청 실패 시,")
+    class FailRequest {
+
+        @Test
+        @DisplayName("결제 상태가 PENDING이 아닌 경우, BAD_REQUEST 예외가 발생한다.")
+        void throwBadRequestException_whenPaymentStatusIsNotPending() {
+            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+            UUID orderId = UUID.randomUUID();
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.COMPLETED, null);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> payment.fail("결제 실패 사유"));
+
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "결제는 대기 상태에서만 실패할 수 있습니다."));
+        }
+
+        @Test
+        @DisplayName("결제 상태가 FAILED로 바뀐다.")
+        void statusIsFailed_whenPaymentRequestFails() {
+            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
+            UUID orderId = UUID.randomUUID();
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.PENDING, null);
+
+            payment.fail("결제 실패 사유");
+
+            assertThat(payment.getStatus()).isEqualTo(Payment.Status.FAILED);
+            assertThat(payment.getReason()).isEqualTo("결제 실패 사유");
+        }
+    }
+
 }

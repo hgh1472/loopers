@@ -2,6 +2,7 @@ package com.loopers.domain.payment;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,11 +12,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final PaymentGateway paymentGateway;
 
     @Transactional
     public PaymentInfo pay(PaymentCommand.Pay command) {
         Payment payment = Payment.of(command);
+        GatewayResponse.Request response = paymentGateway.request(payment);
+        if (response.isSuccess()) {
+            payment.successRequest(response.transactionKey());
+        } else {
+            payment.failRequest();
+        }
         return PaymentInfo.of(paymentRepository.save(payment));
+    }
+
+    public List<PaymentInfo.Transaction> getUnsyncedPendingPayments() {
+        List<Payment> pendingPayments = paymentRepository.findPendingPayments();
+
+        return pendingPayments.stream()
+                .map(paymentGateway::getTransaction)
+                .filter(transaction -> !transaction.status().equals(Payment.Status.PENDING))
+                .map(PaymentInfo.Transaction::of)
+                .toList();
     }
 
     @Transactional
@@ -40,5 +58,8 @@ public class PaymentService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "해당하는 결제 정보가 없습니다."));
         payment.fail(command.reason());
         return PaymentInfo.of(payment);
+    }
+
+    public void check() {
     }
 }

@@ -193,12 +193,14 @@ class PaymentFacadeIntegrationTest {
             Order order = orderRepository.save(Order.of(new OrderCommand.Order(1L, null,
                     List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
                     delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L)));
+            orderRepository.save(order);
             Stock stock = Stock.create(new StockCommand.Create(1L, 10L));
             stockRepository.save(stock);
             Point point = Point.from(1L);
             point.charge(10000L);
             pointRepository.save(point);
             Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("800"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            payment.successRequest("TX-KEY");
             Payment savedPayment = paymentRepository.save(payment);
 
             paymentFacade.success(new PaymentCriteria.Success(payment.getTransactionKey(), order.getId()));
@@ -221,6 +223,7 @@ class PaymentFacadeIntegrationTest {
             point.charge(10000L);
             pointRepository.save(point);
             Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("800"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            payment.successRequest("TX-KEY");
             Payment savedPayment = paymentRepository.save(payment);
 
             paymentFacade.success(new PaymentCriteria.Success(payment.getTransactionKey(), order.getId()));
@@ -246,6 +249,7 @@ class PaymentFacadeIntegrationTest {
             userCoupon.use(LocalDateTime.now());
             couponRepository.save(userCoupon);
             Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("800"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            payment.successRequest("TX-KEY");
             Payment savedPayment = paymentRepository.save(payment);
 
             paymentFacade.fail(new PaymentCriteria.Fail(savedPayment.getTransactionKey(), order.getId(), "Payment failed"));
@@ -263,6 +267,7 @@ class PaymentFacadeIntegrationTest {
                     List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
                     delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L)));
             Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("800"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            payment.successRequest("TX-KEY");
             Payment savedPayment = paymentRepository.save(payment);
             PaymentCriteria.Fail criteria = new PaymentCriteria.Fail(savedPayment.getTransactionKey(), order.getId(), "Payment failed");
             paymentFacade.fail(criteria);
