@@ -4,6 +4,7 @@ import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -19,7 +20,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findById(Long id) {
+    public Optional<Order> findById(UUID id) {
         return orderJpaRepository.findByIdWithOrderLines(id);
     }
 

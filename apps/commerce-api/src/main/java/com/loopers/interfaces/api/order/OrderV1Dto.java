@@ -4,6 +4,7 @@ import com.loopers.application.order.OrderCriteria;
 import com.loopers.application.order.OrderResult;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public class OrderV1Dto {
     public record OrderRequest(
@@ -44,7 +45,7 @@ public class OrderV1Dto {
     }
 
     public record OrderResponse(
-            Long orderId,
+            UUID orderId,
             List<Line> lines,
             Delivery delivery,
             Payment payment

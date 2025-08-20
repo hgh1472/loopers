@@ -5,6 +5,7 @@ import com.loopers.application.order.OrderFacade;
 import com.loopers.application.order.OrderResult;
 import com.loopers.interfaces.api.ApiResponse;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +37,7 @@ public class OrderV1ApiController implements OrderV1ApiSpec {
 
     @Override
     @GetMapping("/{orderId}")
-    public ApiResponse<OrderV1Dto.OrderResponse> get(@RequestHeader("X-USER-ID") Long userId, @PathVariable Long orderId) {
+    public ApiResponse<OrderV1Dto.OrderResponse> get(@RequestHeader("X-USER-ID") Long userId, @PathVariable UUID orderId) {
         OrderResult result = orderFacade.get(new OrderCriteria.Get(userId, orderId));
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(result));
     }

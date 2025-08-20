@@ -1,12 +1,13 @@
 package com.loopers.domain.payment;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public class PaymentCommand {
 
     public record Pay(
             BigDecimal amount,
-            Long orderId,
+            UUID orderId,
             String cardType,
             String cardNo
     ) {

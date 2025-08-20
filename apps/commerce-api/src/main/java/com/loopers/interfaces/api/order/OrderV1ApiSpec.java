@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Order API", description = "Loopers Order API 입니다.")
 public interface OrderV1ApiSpec {
@@ -23,7 +24,7 @@ public interface OrderV1ApiSpec {
     )
     ApiResponse<OrderV1Dto.OrderResponse> get(
             @Schema(name = "사용자 ID", description = "주문을 조회하는 사용자 ID") Long userId,
-            @Schema(name = "주문 ID", description = "조회할 주문의 ID") Long orderId);
+            @Schema(name = "주문 ID", description = "조회할 주문의 ID") UUID orderId);
 
     @Operation(
             summary = "주문 목록 조회",

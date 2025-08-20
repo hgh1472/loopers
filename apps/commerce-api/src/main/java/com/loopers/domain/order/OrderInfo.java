@@ -2,9 +2,10 @@ package com.loopers.domain.order;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public record OrderInfo(
-        Long id,
+        UUID id,
         Long userId,
         Long couponId,
         String orderStatus,

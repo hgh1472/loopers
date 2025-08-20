@@ -5,6 +5,7 @@ import com.loopers.domain.stock.StockCommand;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class OrderCriteria {
     public record Order(
@@ -65,7 +66,7 @@ public class OrderCriteria {
 
     public record Get(
             Long userId,
-            Long orderId
+            UUID orderId
     ) {
     }
 

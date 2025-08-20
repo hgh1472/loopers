@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -277,7 +278,7 @@ class OrderFacadeIntegrationTest {
         @Test
         void throwNotFoundException_whenUserDoesNotExist() {
             CoreException thrown = assertThrows(CoreException.class,
-                    () -> orderFacade.get(new OrderCriteria.Get(-1L, 1L)));
+                    () -> orderFacade.get(new OrderCriteria.Get(-1L, UUID.randomUUID())));
 
             assertThat(thrown)
                     .usingRecursiveComparison()

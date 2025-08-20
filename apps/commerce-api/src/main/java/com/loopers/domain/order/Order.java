@@ -1,6 +1,5 @@
 package com.loopers.domain.order;
 
-import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.AttributeOverride;
@@ -9,16 +8,24 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.Getter;
 
 @Entity
 @Getter
 @Table(name = "orders")
-public class Order extends BaseEntity {
+public class Order {
+
+    @Id
+    private UUID id;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     List<OrderLine> orderLines = new ArrayList<>();
@@ -46,10 +53,32 @@ public class Order extends BaseEntity {
     @Column(name = "ref_coupon_id")
     private Long couponId;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private ZonedDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private ZonedDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private ZonedDateTime deletedAt;
+
     protected Order() {
     }
 
+    @PrePersist
+    private void prePersist() {
+        ZonedDateTime now = ZonedDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        this.updatedAt = ZonedDateTime.now();
+    }
+
     private Order(Long userId, Long couponId, OrderStatus status, OrderDelivery orderDelivery, OrderPayment orderPayment) {
+        this.id = UUID.randomUUID();
         this.userId = userId;
         this.couponId = couponId;
         this.status = status;

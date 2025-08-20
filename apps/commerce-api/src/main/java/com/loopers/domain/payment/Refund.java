@@ -8,6 +8,7 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.Getter;
 
 @Entity
@@ -22,7 +23,7 @@ public class Refund extends BaseEntity {
     private Long paymentId;
 
     @Column(name = "ref_order_id", nullable = false)
-    private Long orderId;
+    private UUID orderId;
 
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
@@ -33,7 +34,7 @@ public class Refund extends BaseEntity {
     protected Refund() {
     }
 
-    protected Refund(String transactionKey, Long paymentId, Long orderId, BigDecimal amount, Card card) {
+    protected Refund(String transactionKey, Long paymentId, UUID orderId, BigDecimal amount, Card card) {
         this.transactionKey = transactionKey;
         this.paymentId = paymentId;
         this.orderId = orderId;
