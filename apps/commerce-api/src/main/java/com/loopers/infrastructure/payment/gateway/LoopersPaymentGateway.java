@@ -28,4 +28,10 @@ public class LoopersPaymentGateway implements PaymentGateway {
             return GatewayResponse.Request.fail();
         }
     }
+
+    @Override
+    public GatewayResponse.Transaction getTransaction(Payment payment) {
+        ApiResponse<LoopersResponse.Transaction> response = loopersV1Client.getTransaction(payment.getTransactionKey(), userId);
+        return response.data().toGatewayResponse();
+    }
 }

@@ -2,6 +2,8 @@ package com.loopers.infrastructure.payment.gateway;
 
 import com.loopers.interfaces.api.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -14,4 +16,8 @@ public interface LoopersV1Client {
     @PostMapping(path = "/api/v1/payments", consumes = "application/json")
     ApiResponse<LoopersResponse.Request> request(@RequestBody LoopersRequest.Request request,
                                                  @RequestHeader(USER_ID_HEADER) String userId);
+
+    @GetMapping("/api/v1/payments/{transactionKey}")
+    ApiResponse<LoopersResponse.Transaction> getTransaction(@PathVariable String transactionKey,
+                                                            @RequestHeader(USER_ID_HEADER) String userId);
 }

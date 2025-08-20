@@ -23,4 +23,20 @@ public record PaymentInfo(
                 payment.getReason()
         );
     }
+
+    public record Transaction(
+            String transactionKey,
+            Payment.Status status,
+            UUID orderId,
+            String reason
+    ) {
+        public static Transaction of(GatewayResponse.Transaction transaction) {
+            return new Transaction(
+                    transaction.transactionKey(),
+                    transaction.status(),
+                    transaction.orderId(),
+                    transaction.reason()
+            );
+        }
+    }
 }

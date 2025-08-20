@@ -3,6 +3,7 @@ package com.loopers.infrastructure.payment;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentRepository;
 import com.loopers.domain.payment.Refund;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -37,5 +38,10 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     @Override
     public Optional<Refund> findRefundByPaymentId(Long paymentId) {
         return refundJpaRepository.findByPaymentId(paymentId);
+    }
+
+    @Override
+    public List<Payment> findPendingPayments() {
+        return paymentJpaRepository.findByStatus(Payment.Status.PENDING);
     }
 }
