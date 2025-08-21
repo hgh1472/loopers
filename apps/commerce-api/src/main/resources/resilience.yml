@@ -7,13 +7,14 @@ resilience4j:
         retry-exceptions:
           - feign.FeignException
           - feign.RetryableException
-          - com.loopers.support.error.CoreException
+          - java.lang.IllegalStateException
       getTransaction:
         max-attempts: 2
         wait-duration: 100ms
         retry-exceptions:
           - feign.FeignException
           - feign.RetryableException
+    retry-aspect-order: 2
 
   circuitbreaker:
     instances:
@@ -31,6 +32,7 @@ resilience4j:
         minimum-number-of-calls: 10
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 10
+    circuit-breaker-aspect-order: 1
 
 ---
 spring:
