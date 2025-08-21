@@ -17,6 +17,9 @@ dependencies {
     // querydsl
     implementation("com.querydsl:querydsl-jpa::jakarta")
 
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+
     // test-fixtures
     testImplementation(testFixtures(project(":modules:jpa")))
     testImplementation(testFixtures(project(":modules:redis")))
