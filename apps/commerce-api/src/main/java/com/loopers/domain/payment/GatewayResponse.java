@@ -20,8 +20,6 @@ public class GatewayResponse {
             Payment.Status status,
             String transactionKey,
             UUID orderId,
-            String cardType,
-            String cardNo,
             Long amount,
             String reason
     ) {

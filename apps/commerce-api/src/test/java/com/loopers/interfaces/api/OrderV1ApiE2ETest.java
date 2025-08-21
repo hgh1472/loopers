@@ -98,7 +98,7 @@ public class OrderV1ApiE2ETest {
         @DisplayName("주문을 성공적으로 생성할 경우, 주문 정보를 반환한다.")
         @Test
         void returnOrderResponse() {
-            given(paymentGateway.request(any())).willReturn(new GatewayResponse.Request(true, "TX-KEY"));
+            given(paymentGateway.request(any(), any())).willReturn(new GatewayResponse.Request(true, "TX-KEY"));
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             Point point = Point.from(user.getId());
             point.charge(10000L);

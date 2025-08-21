@@ -76,9 +76,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 상태가 FAILED인 경우, BAD_REQUEST 예외가 발생한다.")
         void throwBadRequestException_whenPaymentStatusIsNotCompleted() {
-            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
             UUID orderId = UUID.randomUUID();
-            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.FAILED, null);
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.FAILED, null);
 
             CoreException thrown = assertThrows(CoreException.class, payment::refund);
 
@@ -91,9 +90,8 @@ class PaymentTest {
     @Test
     @DisplayName("결제 실패 시, PENDING 상태가 아닌 경우, BAD_REQUEST 예외가 발생한다.")
     void throwBadRequestException_whenPaymentStatusIsNotPending() {
-        Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
         UUID orderId = UUID.randomUUID();
-        Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.COMPLETED, null);
+        Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.COMPLETED, null);
 
         CoreException thrown = assertThrows(CoreException.class, () -> payment.fail("결제 실패 사유"));
 
@@ -109,9 +107,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 상태가 PENDING이 아닌 경우, CONFLICT 예외가 발생한다.")
         void throwConflictException_whenPaymentStatusIsNotCreated() {
-            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
             UUID orderId = UUID.randomUUID();
-            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.PENDING, null);
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.PENDING, null);
 
             CoreException thrown = assertThrows(CoreException.class, () -> payment.successRequest("transactionKey123"));
 
@@ -123,9 +120,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 상태가 PENDING으로 바뀐다.")
         void statusIsPending_whenPaymentRequestIsSuccessful() {
-            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
             UUID orderId = UUID.randomUUID();
-            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.CREATED, null);
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.CREATED, null);
 
             payment.successRequest("transactionKey123");
 
@@ -136,9 +132,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 요청 성공 시, transactionKey가 설정된다.")
         void transactionKeyIsSet_whenPaymentRequestIsSuccessful() {
-            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
             UUID orderId = UUID.randomUUID();
-            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.CREATED, null);
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.CREATED, null);
 
             payment.successRequest("transactionKey123");
 
@@ -153,9 +148,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 상태가 PENDING이 아닌 경우, BAD_REQUEST 예외가 발생한다.")
         void throwBadRequestException_whenPaymentStatusIsNotPending() {
-            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
             UUID orderId = UUID.randomUUID();
-            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.COMPLETED, null);
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.COMPLETED, null);
 
             CoreException thrown = assertThrows(CoreException.class, () -> payment.fail("결제 실패 사유"));
 
@@ -167,9 +161,8 @@ class PaymentTest {
         @Test
         @DisplayName("결제 상태가 FAILED로 바뀐다.")
         void statusIsFailed_whenPaymentRequestFails() {
-            Card card = Card.of("1234-1234-1234-1234", "SAMSUNG");
             UUID orderId = UUID.randomUUID();
-            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), card, Payment.Status.PENDING, null);
+            Payment payment = new Payment(null, orderId, new BigDecimal("1000"), Payment.Status.PENDING, null);
 
             payment.fail("결제 실패 사유");
 

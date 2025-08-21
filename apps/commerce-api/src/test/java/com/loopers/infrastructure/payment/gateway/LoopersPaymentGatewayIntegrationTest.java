@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.times;
 import static org.mockito.BDDMockito.verify;
 
+import com.loopers.domain.payment.Card;
 import com.loopers.domain.payment.GatewayResponse;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentCommand;
@@ -45,7 +46,7 @@ class LoopersPaymentGatewayIntegrationTest {
                     .willThrow(FeignException.class);
             PaymentCommand.Pay command = new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111");
 
-            GatewayResponse.Request request = loopersPaymentGateway.request(Payment.of(command));
+            GatewayResponse.Request request = loopersPaymentGateway.request(Payment.of(command), Card.of(command.cardNo(), command.cardType()));
 
             verify(loopersRequestV1Client, times(2)).requestPayment(any(), anyString());
         }
@@ -57,10 +58,10 @@ class LoopersPaymentGatewayIntegrationTest {
                     .willThrow(FeignException.class);
             PaymentCommand.Pay command = new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111");
 
-            GatewayResponse.Request request = loopersPaymentGateway.request(Payment.of(command));
+            GatewayResponse.Request request = loopersPaymentGateway.request(Payment.of(command), Card.of(command.cardNo(), command.cardType()));
 
             verify(loopersRequestV1Client, times(2)).requestPayment(any(), anyString());
-            verify(loopersPaymentGateway, times(1)).requestFallback(any(), any());
+            verify(loopersPaymentGateway, times(1)).requestFallback(any(), any(), any());
         }
     }
 

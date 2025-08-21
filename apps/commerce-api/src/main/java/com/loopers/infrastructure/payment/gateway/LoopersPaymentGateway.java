@@ -1,5 +1,6 @@
 package com.loopers.infrastructure.payment.gateway;
 
+import com.loopers.domain.payment.Card;
 import com.loopers.domain.payment.GatewayResponse;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentGateway;
@@ -28,9 +29,9 @@ public class LoopersPaymentGateway implements PaymentGateway {
     @Override
     @Retry(name = "pgRequest")
     @CircuitBreaker(name = "pgRequest", fallbackMethod = "requestFallback")
-    public GatewayResponse.Request request(Payment payment) {
+    public GatewayResponse.Request request(Payment payment, Card card) {
         ApiResponse<LoopersResponse.Request> request =
-                loopersRequestV1Client.requestPayment(LoopersRequest.Request.of(payment, callbackUrl), userId);
+                loopersRequestV1Client.requestPayment(LoopersRequest.Request.of(payment, card, callbackUrl), userId);
         if (isBadRequest(request)) {
             throw new CoreException(ErrorType.BAD_REQUEST, request.meta().message());
         }
@@ -49,7 +50,7 @@ public class LoopersPaymentGateway implements PaymentGateway {
         return response.data().toGatewayResponse();
     }
 
-    public GatewayResponse.Request requestFallback(Payment payment, Throwable throwable) {
+    public GatewayResponse.Request requestFallback(Payment payment, Card card, Throwable throwable) {
         log.error("Loopers PG 결제 요청이 실패하였습니다. {}", throwable.getMessage());
         return GatewayResponse.Request.fail();
     }

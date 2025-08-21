@@ -7,18 +7,14 @@ public record RefundInfo(
         String transactionKey,
         Long paymentId,
         UUID orderId,
-        BigDecimal amount,
-        Card.Type cardType,
-        String cardNo
+        BigDecimal amount
 ) {
     public static RefundInfo of(Refund refund) {
         return new RefundInfo(
                 refund.getTransactionKey(),
                 refund.getPaymentId(),
                 refund.getOrderId(),
-                refund.getAmount(),
-                refund.getCard().getType(),
-                refund.getCard().getCardNo().value()
+                refund.getAmount()
         );
     }
 }

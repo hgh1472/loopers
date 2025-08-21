@@ -39,12 +39,12 @@ class PaymentServiceTest {
         @DisplayName("PG사에 결제를 요청한다.")
         void requestsPaymentToGateway() {
             PaymentCommand.Pay command = new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111");
-            given(paymentGateway.request(any())).willReturn(new GatewayResponse.Request(true, "transaction-key"));
+            given(paymentGateway.request(any(), any())).willReturn(new GatewayResponse.Request(true, "transaction-key"));
             given(paymentRepository.save(any(Payment.class))).willReturn(Payment.of(command));
 
             PaymentInfo paymentInfo = paymentService.pay(command);
 
-            verify(paymentGateway, times(1)).request(any());
+            verify(paymentGateway, times(1)).request(any(), any());
         }
     }
 
@@ -64,11 +64,11 @@ class PaymentServiceTest {
             given(paymentRepository.findPendingPayments())
                     .willReturn(List.of(pending, completed, failed));
             given(paymentGateway.getTransaction(pending))
-                    .willReturn(new GatewayResponse.Transaction(Payment.Status.PENDING, "TX-KEY1", pending.getOrderId(), "SAMSUNG", "1111-1111-1111-1111", 1000L, null));
+                    .willReturn(new GatewayResponse.Transaction(Payment.Status.PENDING, "TX-KEY1", pending.getOrderId(), 1000L, null));
             given(paymentGateway.getTransaction(completed))
-                    .willReturn(new GatewayResponse.Transaction(Payment.Status.COMPLETED, "TX-KEY1", completed.getOrderId(), "SAMSUNG", "1111-1111-1111-1111", 1000L, null));
+                    .willReturn(new GatewayResponse.Transaction(Payment.Status.COMPLETED, "TX-KEY1", completed.getOrderId(), 1000L, null));
             given(paymentGateway.getTransaction(failed))
-                    .willReturn(new GatewayResponse.Transaction(Payment.Status.FAILED, "TX-KEY1", failed.getOrderId(), "SAMSUNG", "1111-1111-1111-1111", 1000L, null));
+                    .willReturn(new GatewayResponse.Transaction(Payment.Status.FAILED, "TX-KEY1", failed.getOrderId(), 1000L, null));
 
             List<PaymentInfo.Transaction> unsyncedPendingPayments = paymentService.getUnsyncedPendingPayments();
 

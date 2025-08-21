@@ -32,7 +32,7 @@ class PaymentServiceIntegrationTest {
         @DisplayName("요청이 성공한다면, 트랜잭션 키가 발급된다.")
         void updateTransactionKey_whenRequestSuccess() {
             PaymentCommand.Pay command = new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111");
-            given(paymentGateway.request(any()))
+            given(paymentGateway.request(any(), any()))
                     .willReturn(new GatewayResponse.Request(true, "transactionKey123"));
 
             PaymentInfo paymentInfo = paymentService.pay(command);

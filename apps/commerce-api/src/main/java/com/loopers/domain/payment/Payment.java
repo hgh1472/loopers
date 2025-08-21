@@ -4,7 +4,6 @@ import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -27,9 +26,6 @@ public class Payment extends BaseEntity {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @Embedded
-    private Card card;
-
     @Enumerated(EnumType.STRING)
     private Status status;
 
@@ -39,12 +35,10 @@ public class Payment extends BaseEntity {
     protected Payment() {
     }
 
-    protected Payment(String transactionKey, UUID orderId, BigDecimal amount, Card card, Status status,
-                      String reason) {
+    protected Payment(String transactionKey, UUID orderId, BigDecimal amount, Status status, String reason) {
         this.transactionKey = transactionKey;
         this.orderId = orderId;
         this.amount = amount;
-        this.card = card;
         this.status = status;
         this.reason = reason;
     }
@@ -67,7 +61,6 @@ public class Payment extends BaseEntity {
                 null,
                 command.orderId(),
                 command.amount(),
-                Card.of(command.cardNo(), command.cardType()),
                 Status.CREATED,
                 null
         );

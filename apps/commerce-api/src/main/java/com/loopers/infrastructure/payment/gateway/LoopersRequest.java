@@ -11,11 +11,11 @@ public class LoopersRequest {
             Long amount,
             String callbackUrl
     ) {
-        public static Request of(Payment payment, String callbackUrl) {
+        public static Request of(Payment payment, Card card, String callbackUrl) {
             return new Request(
                     payment.getOrderId().toString(),
-                    payment.getCard().getType(),
-                    payment.getCard().getCardNo().value(),
+                    card.getType(),
+                    card.getCardNo().value(),
                     payment.getAmount().longValue(),
                     callbackUrl
             );

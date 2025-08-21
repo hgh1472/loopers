@@ -30,12 +30,12 @@ public class LoopersResponse {
         public GatewayResponse.Transaction toGatewayResponse() {
             return switch (status) {
                 case PENDING -> new GatewayResponse.Transaction(Payment.Status.PENDING, transactionKey, UUID.fromString(orderId),
-                        cardType, cardNo, amount, reason);
+                        amount, reason);
                 case SUCCESS ->
                         new GatewayResponse.Transaction(Payment.Status.COMPLETED, transactionKey, UUID.fromString(orderId),
-                                cardType, cardNo, amount, reason);
+                                amount, reason);
                 case FAILED -> new GatewayResponse.Transaction(Payment.Status.FAILED, transactionKey, UUID.fromString(orderId),
-                        cardType, cardNo, amount, reason);
+                        amount, reason);
             };
         }
     }

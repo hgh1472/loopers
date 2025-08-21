@@ -17,7 +17,7 @@ public class PaymentService {
     @Transactional
     public PaymentInfo pay(PaymentCommand.Pay command) {
         Payment payment = Payment.of(command);
-        GatewayResponse.Request response = paymentGateway.request(payment);
+        GatewayResponse.Request response = paymentGateway.request(payment, Card.of(command.cardNo(), command.cardType()));
         if (response.isSuccess()) {
             payment.successRequest(response.transactionKey());
         } else {
@@ -38,8 +38,6 @@ public class PaymentService {
                                 Payment.Status.PENDING,
                                 pendingPayment.getTransactionKey(),
                                 pendingPayment.getOrderId(),
-                                pendingPayment.getCard().getType().toString(),
-                                pendingPayment.getCard().getCardNo().value(),
                                 pendingPayment.getAmount().longValue(),
                                 pendingPayment.getReason()
                         );

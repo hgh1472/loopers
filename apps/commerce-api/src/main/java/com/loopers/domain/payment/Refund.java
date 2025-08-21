@@ -4,7 +4,6 @@ import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -28,18 +27,14 @@ public class Refund extends BaseEntity {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @Embedded
-    private Card card;
-
     protected Refund() {
     }
 
-    protected Refund(String transactionKey, Long paymentId, UUID orderId, BigDecimal amount, Card card) {
+    protected Refund(String transactionKey, Long paymentId, UUID orderId, BigDecimal amount) {
         this.transactionKey = transactionKey;
         this.paymentId = paymentId;
         this.orderId = orderId;
         this.amount = amount;
-        this.card = card;
     }
 
     public static Refund from(Payment payment) {
@@ -50,8 +45,7 @@ public class Refund extends BaseEntity {
                 payment.getTransactionKey(),
                 payment.getId(),
                 payment.getOrderId(),
-                payment.getAmount(),
-                payment.getCard()
+                payment.getAmount()
         );
     }
 }
