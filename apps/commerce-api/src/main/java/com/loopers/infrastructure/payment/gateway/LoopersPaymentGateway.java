@@ -21,14 +21,14 @@ public class LoopersPaymentGateway implements PaymentGateway {
     private String userId;
     @Value("${client.loopers.callback-url}")
     private String callbackUrl;
-    private final LoopersV1Client loopersV1Client;
+    private final LoopersRequestV1Client loopersRequestV1Client;
     private final LoopersGetV1Client loopersGetV1Client;
 
     @Override
     @Retry(name = "pgRequest", fallbackMethod = "requestFallback")
     public GatewayResponse.Request request(Payment payment) {
         ApiResponse<LoopersResponse.Request> request =
-                loopersV1Client.request(LoopersRequest.Request.of(payment, callbackUrl), userId);
+                loopersRequestV1Client.requestPayment(LoopersRequest.Request.of(payment, callbackUrl), userId);
         if (!request.meta().result().equals(ApiResponse.Metadata.Result.SUCCESS)) {
             throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 요청 실패");
         }
