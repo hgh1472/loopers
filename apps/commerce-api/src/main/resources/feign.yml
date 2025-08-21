@@ -5,6 +5,11 @@ feign:
         connectTimeout: 2000
         readTimeout: 800
 
+      loopers-get-client:
+        connectTimeout: 2000
+        readTimeout: 300
+
+
 ---
 spring:
   config:

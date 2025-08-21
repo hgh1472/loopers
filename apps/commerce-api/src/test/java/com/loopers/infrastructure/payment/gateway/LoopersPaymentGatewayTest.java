@@ -1,5 +1,8 @@
 package com.loopers.infrastructure.payment.gateway;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.any;
 import static org.mockito.BDDMockito.anyString;
 import static org.mockito.BDDMockito.given;
@@ -9,6 +12,8 @@ import static org.mockito.BDDMockito.verify;
 import com.loopers.domain.payment.GatewayResponse;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentCommand;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import feign.FeignException;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -26,6 +31,8 @@ class LoopersPaymentGatewayIntegrationTest {
     private LoopersPaymentGateway loopersPaymentGateway;
     @MockitoBean
     private LoopersV1Client loopersV1Client;
+    @MockitoBean
+    private LoopersGetV1Client loopersGetV1Client;
 
     @Nested
     @DisplayName("PG 결제 요청 시,")
@@ -54,6 +61,28 @@ class LoopersPaymentGatewayIntegrationTest {
 
             verify(loopersV1Client, times(2)).request(any(), anyString());
             verify(loopersPaymentGateway, times(1)).requestFallback(any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("PG 결제 정보 조회 시,")
+    class GetTransaction {
+
+        @Test
+        @DisplayName("결제 정보 조회에 예외가 발생하면, 1회만 재시도하고, INTERNAL_SERVER_ERROR 예외를 발생시킨다.")
+        void retry_whenGetTransactionFails() {
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111"));
+            payment.successRequest("TX-KEY");
+            given(loopersGetV1Client.getTransaction(eq(payment.getTransactionKey()), anyString()))
+                    .willThrow(FeignException.class);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> loopersPaymentGateway.getTransaction(payment));
+
+            verify(loopersGetV1Client, times(2)).getTransaction(anyString(), anyString());
+            verify(loopersPaymentGateway, times(1)).getTransactionFallback(any(), any());
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.INTERNAL_ERROR, "결제 정보 조회에 실패하였습니다."));
         }
     }
 }

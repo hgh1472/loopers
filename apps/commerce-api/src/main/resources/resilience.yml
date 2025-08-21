@@ -8,6 +8,12 @@ resilience4j:
           - feign.FeignException
           - feign.RetryableException
           - com.loopers.support.error.CoreException
+      getTransaction:
+        max-attempts: 2
+        wait-duration: 100ms
+        retry-exceptions:
+          - feign.FeignException
+          - feign.RetryableException
 
 ---
 spring:

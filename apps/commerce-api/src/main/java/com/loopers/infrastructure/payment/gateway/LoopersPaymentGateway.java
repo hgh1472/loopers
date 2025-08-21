@@ -8,9 +8,11 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LoopersPaymentGateway implements PaymentGateway {
@@ -20,6 +22,7 @@ public class LoopersPaymentGateway implements PaymentGateway {
     @Value("${client.loopers.callback-url}")
     private String callbackUrl;
     private final LoopersV1Client loopersV1Client;
+    private final LoopersGetV1Client loopersGetV1Client;
 
     @Override
     @Retry(name = "pgRequest", fallbackMethod = "requestFallback")
@@ -33,12 +36,20 @@ public class LoopersPaymentGateway implements PaymentGateway {
     }
 
     @Override
+    @Retry(name = "getTransaction", fallbackMethod = "getTransactionFallback")
     public GatewayResponse.Transaction getTransaction(Payment payment) {
-        ApiResponse<LoopersResponse.Transaction> response = loopersV1Client.getTransaction(payment.getTransactionKey(), userId);
+        ApiResponse<LoopersResponse.Transaction> response = loopersGetV1Client.getTransaction(payment.getTransactionKey(),
+                userId);
         return response.data().toGatewayResponse();
     }
 
     public GatewayResponse.Request requestFallback(Payment payment, Throwable throwable) {
+        log.error("Loopers PG 결제 요청이 실패하였습니다. {}", throwable.getMessage());
         return GatewayResponse.Request.fail();
+    }
+
+    public GatewayResponse.Transaction getTransactionFallback(Payment payment, Throwable throwable) {
+        log.error("Loopers PG {} 정보 조회에 실패하였습니다.: {}", payment.getTransactionKey(), throwable.getMessage());
+        throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 정보 조회에 실패하였습니다.");
     }
 }
