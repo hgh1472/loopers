@@ -6,6 +6,7 @@ import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class LoopersPaymentGateway implements PaymentGateway {
 
     @Override
     @Retry(name = "pgRequest", fallbackMethod = "requestFallback")
+    @CircuitBreaker(name = "pgRequest", fallbackMethod = "requestFallback")
     public GatewayResponse.Request request(Payment payment) {
         ApiResponse<LoopersResponse.Request> request =
                 loopersRequestV1Client.requestPayment(LoopersRequest.Request.of(payment, callbackUrl), userId);
@@ -37,6 +39,7 @@ public class LoopersPaymentGateway implements PaymentGateway {
 
     @Override
     @Retry(name = "getTransaction", fallbackMethod = "getTransactionFallback")
+    @CircuitBreaker(name = "getTransaction", fallbackMethod = "getTransactionFallback")
     public GatewayResponse.Transaction getTransaction(Payment payment) {
         ApiResponse<LoopersResponse.Transaction> response = loopersGetV1Client.getTransaction(payment.getTransactionKey(),
                 userId);
