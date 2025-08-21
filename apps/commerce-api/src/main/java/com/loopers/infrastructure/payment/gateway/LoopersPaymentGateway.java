@@ -26,19 +26,22 @@ public class LoopersPaymentGateway implements PaymentGateway {
     private final LoopersGetV1Client loopersGetV1Client;
 
     @Override
-    @Retry(name = "pgRequest", fallbackMethod = "requestFallback")
+    @Retry(name = "pgRequest")
     @CircuitBreaker(name = "pgRequest", fallbackMethod = "requestFallback")
     public GatewayResponse.Request request(Payment payment) {
         ApiResponse<LoopersResponse.Request> request =
                 loopersRequestV1Client.requestPayment(LoopersRequest.Request.of(payment, callbackUrl), userId);
-        if (!request.meta().result().equals(ApiResponse.Metadata.Result.SUCCESS)) {
-            throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 요청 실패");
+        if (isBadRequest(request)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, request.meta().message());
+        }
+        if (isLoopersPaymentServerError(request)) {
+            throw new IllegalStateException("결제 요청 실패");
         }
         return GatewayResponse.Request.success(request.data().transactionKey());
     }
 
     @Override
-    @Retry(name = "getTransaction", fallbackMethod = "getTransactionFallback")
+    @Retry(name = "getTransaction")
     @CircuitBreaker(name = "getTransaction", fallbackMethod = "getTransactionFallback")
     public GatewayResponse.Transaction getTransaction(Payment payment) {
         ApiResponse<LoopersResponse.Transaction> response = loopersGetV1Client.getTransaction(payment.getTransactionKey(),
@@ -54,5 +57,15 @@ public class LoopersPaymentGateway implements PaymentGateway {
     public GatewayResponse.Transaction getTransactionFallback(Payment payment, Throwable throwable) {
         log.error("Loopers PG {} 정보 조회에 실패하였습니다.: {}", payment.getTransactionKey(), throwable.getMessage());
         throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 정보 조회에 실패하였습니다.");
+    }
+
+    private boolean isBadRequest(ApiResponse<LoopersResponse.Request> request) {
+        return request.meta().result().equals(ApiResponse.Metadata.Result.FAIL)
+                && request.meta().errorCode().equals("Bad Request");
+    }
+
+    private boolean isLoopersPaymentServerError(ApiResponse<LoopersResponse.Request> request) {
+        return request.meta().result().equals(ApiResponse.Metadata.Result.FAIL) && request.meta().errorCode()
+                .equals("Internal Server Error");
     }
 }

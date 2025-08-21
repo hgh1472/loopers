@@ -51,7 +51,7 @@ class LoopersPaymentGatewayIntegrationTest {
         }
 
         @Test
-        @DisplayName("실패 후 재시도 요청도 실패하면, 실패 응답 폴백 메서드를 호출한다.")
+        @DisplayName("실패 후 재시도 요청도 실패하면, 서킷 브레이커 폴백 메서드를 호출한다.")
         void fallback_whenRetryFails() {
             given(loopersRequestV1Client.requestPayment(any(), anyString()))
                     .willThrow(FeignException.class);
@@ -69,8 +69,24 @@ class LoopersPaymentGatewayIntegrationTest {
     class GetTransaction {
 
         @Test
-        @DisplayName("결제 정보 조회에 예외가 발생하면, 1회만 재시도하고, INTERNAL_SERVER_ERROR 예외를 발생시킨다.")
+        @DisplayName("결제 정보 조회에 예외가 발생하면, 1회 재시도한다.")
         void retry_whenGetTransactionFails() {
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111"));
+            payment.successRequest("TX-KEY");
+            given(loopersGetV1Client.getTransaction(eq(payment.getTransactionKey()), anyString()))
+                    .willThrow(FeignException.class);
+
+            CoreException thrown = assertThrows(CoreException.class, () -> loopersPaymentGateway.getTransaction(payment));
+
+            verify(loopersGetV1Client, times(2)).getTransaction(anyString(), anyString());
+            assertThat(thrown)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.INTERNAL_ERROR, "결제 정보 조회에 실패하였습니다."));
+        }
+
+        @Test
+        @DisplayName("재시도 요청도 실패한다면, 서킷 브레이커의 폴백으로 넘어간다.")
+        void circuitBreaker_whenRetryFails() {
             Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111"));
             payment.successRequest("TX-KEY");
             given(loopersGetV1Client.getTransaction(eq(payment.getTransactionKey()), anyString()))
