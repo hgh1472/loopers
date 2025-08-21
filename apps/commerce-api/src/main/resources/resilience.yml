@@ -39,6 +39,8 @@ resilience4j:
         minimum-number-of-calls: 10
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 10
+        slow-call-duration-threshold: 300ms
+        slow-call-rate-threshold: 50
     circuit-breaker-aspect-order: 1
 
 ---
