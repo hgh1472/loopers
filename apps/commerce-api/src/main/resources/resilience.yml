@@ -32,6 +32,13 @@ resilience4j:
         minimum-number-of-calls: 10
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 10
+      findProductCache:
+        sliding-window-type: time_based
+        sliding-window-size: 30
+        failure-rate-threshold: 10
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
     circuit-breaker-aspect-order: 1
 
 ---
