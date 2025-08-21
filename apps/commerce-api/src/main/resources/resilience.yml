@@ -1,0 +1,34 @@
+resilience4j:
+  retry:
+    instances:
+      pgRequest:
+        max-attempts: 2
+        wait-duration: 200ms
+        retry-exceptions:
+          - feign.FeignException
+          - feign.RetryableException
+          - com.loopers.support.error.CoreException
+
+---
+spring:
+    config:
+      activate:
+        on-profile: local, test
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: qa
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prd

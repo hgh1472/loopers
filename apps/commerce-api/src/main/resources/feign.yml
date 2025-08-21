@@ -1,0 +1,31 @@
+feign:
+  client:
+    config:
+      loopers-client:
+        connectTimeout: 2000
+        readTimeout: 800
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local, test
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: qa
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prd
+
