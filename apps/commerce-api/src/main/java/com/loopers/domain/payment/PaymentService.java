@@ -30,7 +30,21 @@ public class PaymentService {
         List<Payment> pendingPayments = paymentRepository.findPendingPayments();
 
         return pendingPayments.stream()
-                .map(paymentGateway::getTransaction)
+                .map(pendingPayment -> {
+                    try {
+                        return paymentGateway.getTransaction(pendingPayment);
+                    } catch (CoreException e) {
+                        return new GatewayResponse.Transaction(
+                                Payment.Status.PENDING,
+                                pendingPayment.getTransactionKey(),
+                                pendingPayment.getOrderId(),
+                                pendingPayment.getCard().getType().toString(),
+                                pendingPayment.getCard().getCardNo().value(),
+                                pendingPayment.getAmount().longValue(),
+                                pendingPayment.getReason()
+                        );
+                    }
+                })
                 .filter(transaction -> !transaction.status().equals(Payment.Status.PENDING))
                 .map(PaymentInfo.Transaction::of)
                 .toList();
