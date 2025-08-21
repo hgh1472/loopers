@@ -7,9 +7,10 @@ import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.PaymentCommand;
 import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.point.InsufficientPointException;
 import com.loopers.domain.point.PointCommand;
+import com.loopers.domain.stock.InsufficientStockException;
 import com.loopers.domain.stock.StockCommand;
-import com.loopers.support.error.CoreException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class PaymentFacade {
     private final OrderService orderService;
     private final CouponService couponService;
     private final SuccessProcessor successProcessor;
+    private final RefundProcessor refundProcessor;
 
     @Transactional
     public void success(PaymentCriteria.Success criteria) {
@@ -35,12 +37,12 @@ public class PaymentFacade {
         OrderCommand.Paid orderCommand = new OrderCommand.Paid(orderInfo.id());
         try {
             successProcessor.process(stockCommands, pointCommand, paymentCommand, orderCommand);
-        } catch (CoreException e) {
-            if (orderInfo.couponId() != null) {
-                couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
-            }
-            paymentService.refund(new PaymentCommand.Refund(criteria.transactionKey()));
-            orderService.fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.from(e.getCustomMessage())));
+        } catch (InsufficientPointException e) {
+            refundProcessor.refund(orderInfo.userId(), orderInfo.couponId(), orderInfo.id(), criteria.transactionKey(),
+                    OrderCommand.Fail.Reason.POINT_EXHAUSTED);
+        } catch (InsufficientStockException e) {
+            refundProcessor.refund(orderInfo.userId(), orderInfo.couponId(), orderInfo.id(), criteria.transactionKey(),
+                    OrderCommand.Fail.Reason.OUT_OF_STOCK);
         }
     }
 

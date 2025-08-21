@@ -7,13 +7,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.loopers.domain.coupon.CouponCommand;
 import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.PaymentCommand;
 import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.point.InsufficientPointException;
+import com.loopers.domain.stock.InsufficientStockException;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
@@ -33,11 +34,13 @@ class PaymentFacadeTest {
     @InjectMocks
     PaymentFacade paymentFacade;
     @Mock
+    RefundProcessor refundProcessor;
+    @Mock
+    SuccessProcessor successProcessor;
+    @Mock
     PaymentService paymentService;
     @Mock
     OrderService orderService;
-    @Mock
-    SuccessProcessor successProcessor;
     @Mock
     CouponService couponService;
 
@@ -55,18 +58,19 @@ class PaymentFacadeTest {
                     new OrderInfo.Payment(BigDecimal.ZERO, BigDecimal.ZERO, 100L, BigDecimal.ZERO));
             given(orderService.get(new OrderCommand.Get(criteria.orderId())))
                     .willReturn(orderInfo);
-            doThrow(new CoreException(ErrorType.CONFLICT, "재고가 부족합니다."))
+            doThrow(new InsufficientStockException(ErrorType.CONFLICT, "재고가 부족합니다."))
                     .when(successProcessor)
                     .process(anyList(), any(), any(), any());
 
             paymentFacade.success(criteria);
 
-            verify(couponService, times(1)).restore(new CouponCommand.Restore(1L, 1L));
+            verify(refundProcessor, times(1))
+                    .refund(orderInfo.userId(), orderInfo.couponId(), orderInfo.id(), criteria.transactionKey(), OrderCommand.Fail.Reason.OUT_OF_STOCK);
         }
 
         @Test
-        @DisplayName("성공 처리에서 실패하면, 결제는 환불된다.")
-        void refundPayment_whenResourceProcessorFails() {
+        @DisplayName("재고 차감을 실패할 경우, 재고 차감에 대한 환불이 진행된다.")
+        void refund_whenInsufficientStock() {
             UUID orderId = UUID.randomUUID();
             PaymentCriteria.Success criteria = new PaymentCriteria.Success("transactionKey", orderId);
             OrderInfo orderInfo = new OrderInfo(orderId, 1L, 1L, "PENDING", List.of(new OrderInfo.Line(1L, 1L, new BigDecimal("100"))),
@@ -74,18 +78,19 @@ class PaymentFacadeTest {
                     new OrderInfo.Payment(BigDecimal.ZERO, BigDecimal.ZERO, 100L, BigDecimal.ZERO));
             given(orderService.get(new OrderCommand.Get(criteria.orderId())))
                     .willReturn(orderInfo);
-            doThrow(new CoreException(ErrorType.CONFLICT, "포인트 부족"))
+            doThrow(new InsufficientStockException(ErrorType.CONFLICT, "재고가 부족합니다."))
                     .when(successProcessor)
                     .process(anyList(), any(), any(), any());
 
             paymentFacade.success(criteria);
 
-            verify(paymentService, times(1)).refund(new PaymentCommand.Refund(criteria.transactionKey()));
+            verify(refundProcessor, times(1))
+                    .refund(orderInfo.userId(), orderInfo.couponId(), orderInfo.id(), criteria.transactionKey(), OrderCommand.Fail.Reason.OUT_OF_STOCK);
         }
 
         @Test
-        @DisplayName("성공 처리에서 실패하면, 주문은 실패로 처리된다.")
-        void failOrder_whenResourceProcessorFails() {
+        @DisplayName("포인트가 부족할 경우, 포인트 사용에 대한 환불이 진행된다.")
+        void refund_whenInsufficientPoint() {
             UUID orderId = UUID.randomUUID();
             PaymentCriteria.Success criteria = new PaymentCriteria.Success("transactionKey", orderId);
             OrderInfo orderInfo = new OrderInfo(orderId, 1L, 1L, "PENDING", List.of(new OrderInfo.Line(1L, 1L, new BigDecimal("100"))),
@@ -93,13 +98,14 @@ class PaymentFacadeTest {
                     new OrderInfo.Payment(BigDecimal.ZERO, BigDecimal.ZERO, 100L, BigDecimal.ZERO));
             given(orderService.get(new OrderCommand.Get(criteria.orderId())))
                     .willReturn(orderInfo);
-            doThrow(new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다."))
+            doThrow(new InsufficientPointException(ErrorType.CONFLICT, "포인트가 부족합니다."))
                     .when(successProcessor)
                     .process(anyList(), any(), any(), any());
 
             paymentFacade.success(criteria);
 
-            verify(orderService, times(1)).fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.POINT_EXHAUSTED));
+            verify(refundProcessor, times(1))
+                    .refund(orderInfo.userId(), orderInfo.couponId(), orderInfo.id(), criteria.transactionKey(), OrderCommand.Fail.Reason.POINT_EXHAUSTED);
         }
     }
 }
