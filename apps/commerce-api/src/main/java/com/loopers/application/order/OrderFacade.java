@@ -1,5 +1,7 @@
 package com.loopers.application.order;
 
+import com.loopers.domain.coupon.CouponCommand;
+import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
@@ -12,6 +14,8 @@ import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +32,7 @@ public class OrderFacade {
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final CouponService couponService;
 
     @Transactional
     public OrderResult order(OrderCriteria.Order criteria) {
@@ -77,5 +82,16 @@ public class OrderFacade {
                 .stream()
                 .map(OrderResult::from)
                 .toList();
+    }
+
+    @Transactional
+    public void cancelCreatedOrdersBefore(OrderCriteria.Expire criteria) {
+        List<OrderInfo> expiredOrderInfos = orderService.expireCreatedOrdersBefore(new OrderCommand.Expire(criteria.time()));
+        for (OrderInfo orderInfo : expiredOrderInfos) {
+            if (orderInfo.couponId() == null) {
+                continue;
+            }
+            couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
+        }
     }
 }

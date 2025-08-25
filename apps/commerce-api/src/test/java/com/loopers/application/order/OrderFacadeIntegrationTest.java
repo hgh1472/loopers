@@ -12,6 +12,7 @@ import com.loopers.domain.coupon.DiscountPolicy;
 import com.loopers.domain.coupon.DiscountPolicy.Type;
 import com.loopers.domain.coupon.UserCoupon;
 import com.loopers.domain.order.Order;
+import com.loopers.domain.order.Order.OrderStatus;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
@@ -30,6 +31,7 @@ import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -337,6 +339,38 @@ class OrderFacadeIntegrationTest {
                         .usingRecursiveComparison()
                         .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 만료 처리 시,")
+    class Expire {
+
+        @Test
+        @DisplayName("만료된 주문은 만료처리 되고, 사용된 쿠폰은 복원된다.")
+        void expireOrders() {
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항");
+            List<OrderCommand.Line> orderLines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00")));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
+            Order order = orderRepository.save(Order.of(cmd));
+
+            ZonedDateTime time = ZonedDateTime.now();
+            orderFacade.cancelCreatedOrdersBefore(new OrderCriteria.Expire(time));
+
+            Order expiredOrder = orderRepository.findById(order.getId()).orElseThrow();
+            UserCoupon restoredUserCoupon = couponRepository.findUserCoupon(1L, 1L).orElseThrow();
+            assertAll(
+                    () -> assertThat(expiredOrder.getStatus()).isEqualTo(OrderStatus.EXPIRED),
+                    () -> assertThat(restoredUserCoupon.isUsed()).isFalse()
+            );
         }
     }
 }
