@@ -35,6 +35,15 @@ public class OrderService {
     }
 
     @Transactional
+    public List<OrderInfo> expireCreatedOrdersBefore(OrderCommand.Expire command) {
+        List<Order> createdOrders = orderRepository.findCreatedOrdersBefore(command.time());
+        createdOrders.forEach(Order::expired);
+        return createdOrders.stream()
+                .map(OrderInfo::from)
+                .toList();
+    }
+
+    @Transactional
     public OrderInfo fail(OrderCommand.Fail command) {
         Order order = orderRepository.findById(command.orderId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 주문입니다."));

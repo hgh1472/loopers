@@ -3,6 +3,7 @@ package com.loopers.application.order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.stock.StockCommand;
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -70,6 +71,11 @@ public class OrderCriteria {
 
     public record GetOrders(
             Long userId
+    ) {
+    }
+
+    public record Expire(
+            ZonedDateTime time
     ) {
     }
 }
