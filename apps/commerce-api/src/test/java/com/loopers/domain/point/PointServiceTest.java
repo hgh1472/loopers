@@ -134,7 +134,7 @@ class PointServiceTest {
 
         @DisplayName("사용 후 남은 포인트를 반환한다.")
         @Test
-        void returnPoint_afterUsed() {
+        void returnPoint_afterUsed() throws InsufficientPointException {
             long userId = 1L;
             long initialPoint = 1000L;
             long usePoint = 500L;
@@ -151,7 +151,7 @@ class PointServiceTest {
 
         @DisplayName("포인트 사용 내역을 저장한다.")
         @Test
-        void recordUseHistory() {
+        void recordUseHistory() throws InsufficientPointException {
             long userId = 1L;
             long initialPoint = 1000L;
             long usePoint = 300L;

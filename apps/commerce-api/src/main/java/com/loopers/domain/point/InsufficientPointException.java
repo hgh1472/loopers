@@ -1,15 +1,15 @@
 package com.loopers.domain.point;
 
-import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
-public class InsufficientPointException extends CoreException {
+public class InsufficientPointException extends Exception {
 
-    public InsufficientPointException(ErrorType errorType) {
-        super(errorType);
-    }
+    private final ErrorType errorType;
+    private final String customMessage;
 
     public InsufficientPointException(ErrorType errorType, String customMessage) {
-        super(errorType, customMessage);
+        super(customMessage != null ? customMessage : errorType.getMessage());
+        this.errorType = errorType;
+        this.customMessage = customMessage;
     }
 }

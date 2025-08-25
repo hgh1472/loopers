@@ -66,16 +66,16 @@ class PointTest {
                 Point point = Point.from(1L);
                 point.charge(1000L);
 
-                CoreException thrown = assertThrows(CoreException.class, () -> point.use(2000L));
+                InsufficientPointException thrown = assertThrows(InsufficientPointException.class, () -> point.use(2000L));
 
                 assertThat(thrown)
                         .usingRecursiveComparison()
-                        .isEqualTo(new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다."));
+                        .isEqualTo(new InsufficientPointException(ErrorType.CONFLICT, "포인트가 부족합니다."));
             }
 
             @DisplayName("소유 포인트와 사용 포인트가 같으면, 포인트 사용이 가능하다.")
             @Test
-            void usePoint_whenPointEquals() {
+            void usePoint_whenPointEquals() throws InsufficientPointException {
                 Point point = Point.from(1L);
                 point.charge(1000L);
 
@@ -91,7 +91,7 @@ class PointTest {
 
             @DisplayName("포인트 사용 내역을 반환한다.")
             @Test
-            void returnUseHistory() {
+            void returnUseHistory() throws InsufficientPointException {
                 Point point = Point.from(1L);
                 point.charge(1000L);
 

@@ -50,7 +50,7 @@ class PaymentFacadeTest {
 
         @Test
         @DisplayName("성공 처리에서 실패하면, 사용한 쿠폰은 복원된다.")
-        void restoreCoupon_whenResourceProcessorFails() {
+        void restoreCoupon_whenResourceProcessorFails() throws InsufficientPointException, InsufficientStockException {
             UUID orderId = UUID.randomUUID();
             PaymentCriteria.Success criteria = new PaymentCriteria.Success("transactionKey", orderId);
             OrderInfo orderInfo = new OrderInfo(orderId, 1L, 1L, "PENDING", List.of(new OrderInfo.Line(1L, 1L, new BigDecimal("100"))),
@@ -70,7 +70,7 @@ class PaymentFacadeTest {
 
         @Test
         @DisplayName("재고 차감을 실패할 경우, 재고 차감에 대한 환불이 진행된다.")
-        void refund_whenInsufficientStock() {
+        void refund_whenInsufficientStock() throws InsufficientPointException, InsufficientStockException {
             UUID orderId = UUID.randomUUID();
             PaymentCriteria.Success criteria = new PaymentCriteria.Success("transactionKey", orderId);
             OrderInfo orderInfo = new OrderInfo(orderId, 1L, 1L, "PENDING", List.of(new OrderInfo.Line(1L, 1L, new BigDecimal("100"))),
@@ -90,7 +90,7 @@ class PaymentFacadeTest {
 
         @Test
         @DisplayName("포인트가 부족할 경우, 포인트 사용에 대한 환불이 진행된다.")
-        void refund_whenInsufficientPoint() {
+        void refund_whenInsufficientPoint() throws InsufficientPointException, InsufficientStockException {
             UUID orderId = UUID.randomUUID();
             PaymentCriteria.Success criteria = new PaymentCriteria.Success("transactionKey", orderId);
             OrderInfo orderInfo = new OrderInfo(orderId, 1L, 1L, "PENDING", List.of(new OrderInfo.Line(1L, 1L, new BigDecimal("100"))),

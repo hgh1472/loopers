@@ -35,7 +35,7 @@ public class Stock extends BaseEntity {
         return new Stock(command.productId(), new Quantity(command.quantity()));
     }
 
-    public void deduct(Long quantity) {
+    public void deduct(Long quantity) throws InsufficientStockException {
         if (quantity == null || quantity <= 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "차감할 수량은 1 이상이어야 합니다.");
         }

@@ -1,7 +1,9 @@
 package com.loopers.domain.stock;
 
+import com.loopers.domain.stock.StockCommand.Deduct;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ public class StockService {
     }
 
     @Transactional
-    public StockInfo deduct(StockCommand.Deduct command) {
+    public StockInfo deduct(StockCommand.Deduct command) throws InsufficientStockException {
         Stock stock = stockRepository.findByProductIdWithLock(command.productId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다."));
         stock.deduct(command.quantity());
@@ -32,10 +34,17 @@ public class StockService {
     }
 
     @Transactional
-    public List<StockInfo> deductAll(List<StockCommand.Deduct> commands) {
-        return commands.stream()
-                .sorted(Comparator.comparing(StockCommand.Deduct::productId))
-                .map(this::deduct)
+    public List<StockInfo> deductAll(List<StockCommand.Deduct> commands) throws InsufficientStockException {
+        List<StockCommand.Deduct> sortedCommands = commands.stream()
+                .sorted(Comparator.comparing(Deduct::productId))
                 .toList();
+
+        List<StockInfo> infos = new ArrayList<>();
+        for (StockCommand.Deduct command : sortedCommands) {
+            StockInfo info = this.deduct(command);
+            infos.add(info);
+        }
+
+        return infos;
     }
 }

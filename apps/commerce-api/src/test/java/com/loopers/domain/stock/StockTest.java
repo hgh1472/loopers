@@ -75,11 +75,11 @@ class StockTest {
         @Test
         void throwConflictException_whenInsufficientStock() {
             Stock stock = Stock.create(new StockCommand.Create(1L, 100L));
-            CoreException thrown = assertThrows(CoreException.class, () -> stock.deduct(101L));
+            InsufficientStockException thrown = assertThrows(InsufficientStockException.class, () -> stock.deduct(101L));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "재고가 부족합니다."));
+                    .isEqualTo(new InsufficientStockException(ErrorType.CONFLICT, "재고가 부족합니다."));
         }
     }
 }

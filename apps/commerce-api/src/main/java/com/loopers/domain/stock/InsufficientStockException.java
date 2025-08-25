@@ -1,15 +1,15 @@
 package com.loopers.domain.stock;
 
-import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
-public class InsufficientStockException extends CoreException {
+public class InsufficientStockException extends Exception {
 
-    public InsufficientStockException(ErrorType errorType) {
-        super(errorType);
-    }
+    private final ErrorType errorType;
+    private final String customMessage;
 
     public InsufficientStockException(ErrorType errorType, String customMessage) {
-        super(errorType, customMessage);
+        super(customMessage != null ? customMessage : errorType.getMessage());
+        this.errorType = errorType;
+        this.customMessage = customMessage;
     }
 }
