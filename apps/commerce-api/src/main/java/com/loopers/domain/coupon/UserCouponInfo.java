@@ -14,7 +14,7 @@ public record UserCouponInfo(
     public record Use(
             Long id,
             BigDecimal originalAmount,
-            BigDecimal paymentAmount
+            BigDecimal discountAmount
     ) {
     }
 

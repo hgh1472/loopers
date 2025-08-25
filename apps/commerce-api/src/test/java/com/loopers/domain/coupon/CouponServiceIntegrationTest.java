@@ -71,7 +71,7 @@ class CouponServiceIntegrationTest {
 
             assertThat(use.id()).isEqualTo(userCoupon.getId());
             assertThat(use.originalAmount()).isEqualTo(cmd.originalAmount());
-            assertThat(use.paymentAmount()).isEqualTo(new BigDecimal("4000"));
+            assertThat(use.discountAmount()).isEqualTo(new BigDecimal("1000"));
         }
     }
 
