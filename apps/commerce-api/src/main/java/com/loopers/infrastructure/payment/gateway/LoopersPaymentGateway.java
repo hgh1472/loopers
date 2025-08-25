@@ -23,7 +23,7 @@ public class LoopersPaymentGateway implements PaymentGateway {
     private String userId;
     @Value("${client.loopers.callback-url}")
     private String callbackUrl;
-    private final LoopersRequestV1Client loopersRequestV1Client;
+    private final LoopersPgFeignAPI loopersPgFeignAPI;
     private final LoopersGetV1Client loopersGetV1Client;
 
     @Override
@@ -31,7 +31,7 @@ public class LoopersPaymentGateway implements PaymentGateway {
     @CircuitBreaker(name = "pgRequest", fallbackMethod = "requestFallback")
     public GatewayResponse.Request request(Payment payment, Card card) {
         ApiResponse<LoopersResponse.Request> request =
-                loopersRequestV1Client.requestPayment(LoopersRequest.Request.of(payment, card, callbackUrl), userId);
+                loopersPgFeignAPI.requestPayment(LoopersRequest.Request.of(payment, card, callbackUrl), userId);
         if (isBadRequest(request)) {
             throw new CoreException(ErrorType.BAD_REQUEST, request.meta().message());
         }

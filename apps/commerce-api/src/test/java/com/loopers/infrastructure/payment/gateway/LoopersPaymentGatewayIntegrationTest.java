@@ -31,7 +31,7 @@ class LoopersPaymentGatewayIntegrationTest {
     @MockitoSpyBean
     private LoopersPaymentGateway loopersPaymentGateway;
     @MockitoBean
-    private LoopersRequestV1Client loopersRequestV1Client;
+    private LoopersPgFeignAPI loopersPgFeignAPI;
     @MockitoBean
     private LoopersGetV1Client loopersGetV1Client;
 
@@ -42,25 +42,25 @@ class LoopersPaymentGatewayIntegrationTest {
         @Test
         @DisplayName("결제 요청에 예외가 발생하면, 1회 재시도 한다.")
         void retry_whenPgFails() {
-            given(loopersRequestV1Client.requestPayment(any(), anyString()))
+            given(loopersPgFeignAPI.requestPayment(any(), anyString()))
                     .willThrow(FeignException.class);
             PaymentCommand.Pay command = new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111");
 
             GatewayResponse.Request request = loopersPaymentGateway.request(Payment.of(command), Card.of(command.cardNo(), command.cardType()));
 
-            verify(loopersRequestV1Client, times(2)).requestPayment(any(), anyString());
+            verify(loopersPgFeignAPI, times(2)).requestPayment(any(), anyString());
         }
 
         @Test
         @DisplayName("실패 후 재시도 요청도 실패하면, 서킷 브레이커 폴백 메서드를 호출한다.")
         void fallback_whenRetryFails() {
-            given(loopersRequestV1Client.requestPayment(any(), anyString()))
+            given(loopersPgFeignAPI.requestPayment(any(), anyString()))
                     .willThrow(FeignException.class);
             PaymentCommand.Pay command = new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1111-1111-1111-1111");
 
             GatewayResponse.Request request = loopersPaymentGateway.request(Payment.of(command), Card.of(command.cardNo(), command.cardType()));
 
-            verify(loopersRequestV1Client, times(2)).requestPayment(any(), anyString());
+            verify(loopersPgFeignAPI, times(2)).requestPayment(any(), anyString());
             verify(loopersPaymentGateway, times(1)).requestFallback(any(), any(), any());
         }
     }
