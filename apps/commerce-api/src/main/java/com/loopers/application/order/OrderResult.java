@@ -3,9 +3,10 @@ package com.loopers.application.order;
 import com.loopers.domain.order.OrderInfo;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public record OrderResult(
-        Long id,
+        UUID id,
         String orderStatus,
         List<Line> lines,
         Delivery delivery,

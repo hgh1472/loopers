@@ -37,7 +37,7 @@ public class PointService {
     }
 
     @Transactional
-    public PointInfo use(PointCommand.Use command) {
+    public PointInfo use(PointCommand.Use command) throws InsufficientPointException {
         Point point = pointRepository.findByUserIdWithLock(command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         PointHistory useHistory = point.use(command.amount());

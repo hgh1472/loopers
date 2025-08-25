@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.any;
+import static org.mockito.BDDMockito.given;
 
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.coupon.DiscountPolicy;
@@ -13,14 +15,13 @@ import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.payment.GatewayResponse;
+import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductRepository;
-import com.loopers.domain.stock.Stock;
-import com.loopers.domain.stock.StockCommand;
-import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
@@ -31,15 +32,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 class OrderFacadeIntegrationTest {
@@ -49,17 +53,23 @@ class OrderFacadeIntegrationTest {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private PointRepository pointRepository;
-    @Autowired
     private ProductRepository productRepository;
     @Autowired
     private CouponRepository couponRepository;
     @Autowired
-    private StockRepository stockRepository;
-    @Autowired
     private OrderRepository orderRepository;
     @Autowired
+    private PointRepository pointRepository;
+    @Autowired
     private DatabaseCleanUp databaseCleanUp;
+    @MockitoBean
+    private PaymentGateway paymentGateway;
+
+    @BeforeEach
+    void setUp() {
+        given(paymentGateway.request(any(), any()))
+                .willReturn(new GatewayResponse.Request(true, "TX-KEY"));
+    }
 
     @AfterEach
     void tearDown() {
@@ -81,7 +91,9 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             CoreException thrown = assertThrows(CoreException.class,
-                    () -> orderFacade.order(new OrderCriteria.Order(-1L, List.of(new OrderCriteria.Line(1L, 3L), new OrderCriteria.Line(1L, 2L)), delivery, null)));
+                    () -> orderFacade.order(
+                            new OrderCriteria.Order(-1L, List.of(
+                                    new OrderCriteria.Line(1L, 3L), new OrderCriteria.Line(1L, 2L)), delivery, null, 100L)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -96,7 +108,6 @@ class OrderFacadeIntegrationTest {
             point.charge(10000L);
             pointRepository.save(point);
             Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), -1L));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
@@ -106,7 +117,7 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
 
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null)));
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 100L)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -121,7 +132,6 @@ class OrderFacadeIntegrationTest {
             point.charge(10000L);
             pointRepository.save(point);
             Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 0L));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
@@ -131,60 +141,11 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
 
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null)));
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 100L)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
                     .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "수량은 1 이상이어야 합니다."));
-        }
-
-        @DisplayName("소유 표인트가 부족한 경우, CONFLICT 예외를 발생시킨다.")
-        @Test
-        void throwConflictException_whenPointIsInsufficient() {
-            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-            Point point = Point.from(user.getId());
-            pointRepository.save(point);
-            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
-            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 1L));
-            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
-                    "황건하",
-                    "010-1234-5678",
-                    "서울특별시 강남구 테헤란로 123",
-                    "1층 101호",
-                    "요구사항"
-            );
-
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null)));
-
-            assertThat(thrown)
-                    .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다."));
-        }
-
-        @DisplayName("재고가 부족한 경우, CONFLICT 예외를 발생시킨다.")
-        @Test
-        void throwConflictException_whenStockIsInsufficient() {
-            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-            Point point = Point.from(user.getId());
-            point.charge(10000L);
-            pointRepository.save(point);
-            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 1L)));
-            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 2L));
-            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
-                    "황건하",
-                    "010-1234-5678",
-                    "서울특별시 강남구 테헤란로 123",
-                    "1층 101호",
-                    "요구사항"
-            );
-
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null)));
-
-            assertThat(thrown)
-                    .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "재고가 부족합니다."));
         }
 
         @DisplayName("같은 아이템이 구분되어 요청되는 경우, 하나의 요청으로 처리한다.")
@@ -192,10 +153,9 @@ class OrderFacadeIntegrationTest {
         void orderDuplicateLine() {
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             Point point = Point.from(user.getId());
-            point.charge(30000L);
+            point.charge(10000L);
             pointRepository.save(point);
             Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("5000"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
                     "010-1234-5678",
@@ -204,7 +164,7 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 3L), new OrderCriteria.Line(product.getId(), 2L));
-            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null));
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 0L));
 
             assertAll(
                     () -> assertThat(orderResult.lines().size()).isEqualTo(1),
@@ -221,10 +181,9 @@ class OrderFacadeIntegrationTest {
             Point point = Point.from(user.getId());
             point.charge(10000L);
             pointRepository.save(point);
+            couponRepository.save(UserCoupon.of(user.getId(), 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10)));
             Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
             Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
                     "010-1234-5678",
@@ -233,17 +192,17 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
-            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null));
+
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, 1L, 1000L));
 
             Optional<Order> order = orderRepository.findById(orderResult.id());
-            Point afterPoint = pointRepository.findByUserId(user.getId()).get();
             assertAll(
                     () -> assertThat(order).isPresent(),
-                    () -> assertThat(afterPoint.getAmount().getValue()).isEqualTo(3000L),
+                    () -> assertThat(order.get().getCouponId()).isEqualTo(1L),
                     () -> assertThat(order.get().getOrderLines()).extracting("productId", "quantity", "amount")
                             .contains(tuple(product1.getId(), 3L, product1.getPrice().getValue().multiply(BigDecimal.valueOf(3))),
                                     tuple(product2.getId(), 2L, product2.getPrice().getValue().multiply(BigDecimal.valueOf(2)))),
-                    () -> assertThat(order.get().getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("7000.00"))
+                    () -> assertThat(order.get().getOrderPayment().getPaymentAmount()).isEqualTo(new BigDecimal("5000.00"))
             );
         }
 
@@ -257,9 +216,7 @@ class OrderFacadeIntegrationTest {
             Long couponId = 1L;
             couponRepository.save(UserCoupon.of(user.getId(), couponId, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10)));
             Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
             Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
                     "황건하",
                     "010-1234-5678",
@@ -268,12 +225,12 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
-            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId));
+
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId, 0L));
 
             Order order = orderRepository.findById(orderResult.id()).orElseThrow();
-            Point afterPoint = pointRepository.findByUserId(user.getId()).get();
             assertAll(
-                    () -> assertThat(afterPoint.getAmount().getValue()).isEqualTo(4000L),
+                    () -> assertThat(order.getCouponId()).isEqualTo(couponId),
                     () -> assertThat(order.getOrderLines()).extracting("productId", "quantity", "amount")
                             .contains(tuple(product1.getId(), 3L, product1.getPrice().getValue().multiply(BigDecimal.valueOf(3))),
                                     tuple(product2.getId(), 2L, product2.getPrice().getValue().multiply(BigDecimal.valueOf(2)))),
@@ -286,61 +243,16 @@ class OrderFacadeIntegrationTest {
     @Nested
     @DisplayName("동시에 주문할 때,")
     class OrderConcurrency {
-        @DisplayName("재고와 포인트 차감은 정확히 이루어져야 한다.")
-        @Test
-        void deductStock_concurrent() throws InterruptedException {
-            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-            Point point = Point.from(user.getId());
-            point.charge(300000L);
-            pointRepository.save(point);
-            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
-            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
-            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
-                    "황건하",
-                    "010-1234-5678",
-                    "서울특별시 강남구 테헤란로 123",
-                    "1층 101호",
-                    "요구사항"
-            );
-            int threadCount = 10;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-
-            for (int i = 0; i < threadCount; i++) {
-                executorService.submit(() -> {
-                    try {
-                        orderFacade.order(new OrderCriteria.Order(user.getId(),
-                                List.of(new OrderCriteria.Line(product1.getId(), 10L), new OrderCriteria.Line(product2.getId(), 10L)), delivery, null));
-                    } catch (Exception e) {
-                        System.out.println("Order failed: " + e.getMessage());
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
-            latch.await();
-
-            Stock stock1 = stockRepository.findByProductId(product1.getId()).orElseThrow();
-            assertThat(stock1.getQuantity().getValue()).isEqualTo(0);
-            Stock stock2 = stockRepository.findByProductId(product2.getId()).orElseThrow();
-            assertThat(stock2.getQuantity().getValue()).isEqualTo(0);
-            Point usedPoint = pointRepository.findByUserId(user.getId()).orElseThrow();
-            assertThat(usedPoint.getAmount().getValue()).isEqualTo(0L);
-        }
 
         @DisplayName("쿠폰은 단 한 번만 사용되어야 한다.")
         @Test
         void useCoupon_concurrent() throws InterruptedException {
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             Point point = Point.from(user.getId());
-            point.charge(300000L);
+            point.charge(10000L);
             pointRepository.save(point);
             Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product1.getId(), 100L)));
             Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
-            stockRepository.save(Stock.create(new StockCommand.Create(product2.getId(), 100L)));
             UserCoupon coupon = couponRepository.save(UserCoupon.of(user.getId(), 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10)));
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 10L), new OrderCriteria.Line(product2.getId(), 10L));
             OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
@@ -357,8 +269,9 @@ class OrderFacadeIntegrationTest {
             for (int i = 0; i < threadCount; i++) {
                 executorService.submit(() -> {
                     try {
-                        orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, coupon.getCouponId()));
+                        orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, coupon.getCouponId(), 100L));
                     } catch (Exception e) {
+                        System.out.println("Order failed: " + e.getMessage());
                     } finally {
                         latch.countDown();
                     }
@@ -378,7 +291,7 @@ class OrderFacadeIntegrationTest {
         @Test
         void throwNotFoundException_whenUserDoesNotExist() {
             CoreException thrown = assertThrows(CoreException.class,
-                    () -> orderFacade.get(new OrderCriteria.Get(-1L, 1L)));
+                    () -> orderFacade.get(new OrderCriteria.Get(-1L, UUID.randomUUID())));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -397,7 +310,7 @@ class OrderFacadeIntegrationTest {
                     "1층 101호",
                     "요구사항");
             List<OrderCommand.Line> orderLines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00")));
-            OrderCommand.Order cmd = new OrderCommand.Order(user1.getId(), orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000));
+            OrderCommand.Order cmd = new OrderCommand.Order(user1.getId(), null, orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
             Order order = Order.of(cmd);
 
             order.addLine(OrderLine.from(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00"))));

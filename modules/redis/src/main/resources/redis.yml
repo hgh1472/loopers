@@ -3,6 +3,7 @@ spring:
     redis:
       repositories:
         enabled: false
+      timeout: 2000
 
 datasource:
   redis:

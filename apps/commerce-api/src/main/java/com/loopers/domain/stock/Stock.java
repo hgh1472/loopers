@@ -35,12 +35,12 @@ public class Stock extends BaseEntity {
         return new Stock(command.productId(), new Quantity(command.quantity()));
     }
 
-    public void deduct(Long quantity) {
+    public void deduct(Long quantity) throws InsufficientStockException {
         if (quantity == null || quantity <= 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "차감할 수량은 1 이상이어야 합니다.");
         }
         if (this.quantity.getValue() < quantity) {
-            throw new CoreException(ErrorType.CONFLICT, "재고가 부족합니다.");
+            throw new InsufficientStockException(ErrorType.CONFLICT, "재고가 부족합니다.");
         }
         this.quantity = new Quantity(this.quantity.getValue() - quantity);
     }

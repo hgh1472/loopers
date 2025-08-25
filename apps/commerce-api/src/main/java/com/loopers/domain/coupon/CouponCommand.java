@@ -17,4 +17,7 @@ public class CouponCommand {
 
     public record Use(Long couponId, Long userId, BigDecimal originalAmount) {
     }
+
+    public record Restore(Long couponId, Long userId) {
+    }
 }

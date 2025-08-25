@@ -81,11 +81,11 @@ class AmountTest {
         void throwConflictException_whenUseOverPoint() {
             Amount amount = new Amount(1000L);
 
-            CoreException thrown = assertThrows(CoreException.class, () -> amount.use(2000L));
+            InsufficientPointException thrown = assertThrows(InsufficientPointException.class, () -> amount.use(2000L));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
-                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다."));
+                    .isEqualTo(new InsufficientPointException(ErrorType.CONFLICT, "포인트가 부족합니다."));
         }
     }
 

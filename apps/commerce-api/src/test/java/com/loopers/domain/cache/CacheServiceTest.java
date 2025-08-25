@@ -1,12 +1,9 @@
 package com.loopers.domain.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,18 +18,6 @@ class CacheServiceTest {
     private CacheService cacheService;
     @Mock
     private ProductCacheRepository productCacheRepository;
-
-    @Test
-    @DisplayName("캐시 조회 시 예외가 발생하면, 빈 Optional을 반환한다.")
-    void returnOptionalEmpty_whenCacheReadFails() {
-        Long productId = 1L;
-        String key = String.format(CacheKeys.PRODUCT_DETAIL.key(), productId);
-        given(productCacheRepository.findProductDetail(key)).willThrow(RuntimeException.class);
-
-        Optional<ProductDetailCache> productDetail = cacheService.findProductDetail(productId);
-
-        assertThat(productDetail).isEmpty();
-    }
 
     @Test
     @DisplayName("캐시 쓰기 중 예외가 발생하더라도, 예외를 그대로 던지지 않는다.")

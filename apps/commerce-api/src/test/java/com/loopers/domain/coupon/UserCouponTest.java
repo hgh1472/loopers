@@ -155,4 +155,40 @@ class UserCouponTest {
 
         assertThat(isExpired).isTrue();
     }
+
+    @Nested
+    @DisplayName("쿠폰 복원 시,")
+    class Restore {
+
+        @DisplayName("사용하지 않은 쿠폰을 복원하려고 하면, CONFLICT 예외가 발생한다.")
+        @Test
+        void throwConflictException_whenCouponNotUsed() {
+            Long userId = 1L;
+            Long couponId = 1L;
+            LocalDateTime expiredAt = LocalDateTime.now().plusDays(7);
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), DiscountPolicy.Type.FIXED);
+            UserCoupon userCoupon = UserCoupon.of(userId, couponId, discountPolicy, expiredAt);
+
+            Exception exception = assertThrows(CoreException.class, userCoupon::restore);
+
+            assertThat(exception)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.CONFLICT, "사용하지 않은 쿠폰은 복원할 수 없습니다."));
+        }
+
+        @DisplayName("사용한 쿠폰을 복원하면, 사용 시간이 null로 설정된다.")
+        @Test
+        void resetUsedAt_whenCouponRestored() {
+            Long userId = 1L;
+            Long couponId = 1L;
+            LocalDateTime expiredAt = LocalDateTime.now().plusDays(7);
+            DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), DiscountPolicy.Type.FIXED);
+            UserCoupon userCoupon = UserCoupon.of(userId, couponId, discountPolicy, expiredAt);
+            userCoupon.use(LocalDateTime.now());
+
+            userCoupon.restore();
+
+            assertThat(userCoupon.getUsedAt()).isNull();
+        }
+    }
 }

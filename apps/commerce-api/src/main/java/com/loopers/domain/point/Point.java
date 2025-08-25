@@ -35,7 +35,7 @@ public class Point extends BaseEntity {
         return PointHistory.chargeOf(getId(), amount);
     }
 
-    public PointHistory use(Long amount) {
+    public PointHistory use(Long amount) throws InsufficientPointException {
         this.amount.use(amount);
         return PointHistory.useOf(getId(), amount);
     }

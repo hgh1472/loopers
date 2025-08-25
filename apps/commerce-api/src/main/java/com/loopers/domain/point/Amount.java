@@ -29,12 +29,12 @@ public class Amount {
         this.value += amount;
     }
 
-    public void use(Long amount) {
+    public void use(Long amount) throws InsufficientPointException {
         if (amount == null || amount <= 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "0 이하의 포인트는 사용할 수 없습니다.");
         }
         if (this.value < amount) {
-            throw new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다.");
+            throw new InsufficientPointException(ErrorType.CONFLICT, "포인트가 부족합니다.");
         }
         this.value -= amount;
     }

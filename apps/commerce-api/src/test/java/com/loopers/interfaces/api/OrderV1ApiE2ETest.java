@@ -2,10 +2,13 @@ package com.loopers.interfaces.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.BDDMockito.*;
 
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.payment.GatewayResponse;
+import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -34,6 +38,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderV1ApiE2ETest {
@@ -44,6 +49,8 @@ public class OrderV1ApiE2ETest {
     private final StockRepository stockRepository;
     private final PointRepository pointRepository;
     private final OrderRepository orderRepository;
+    @MockitoBean
+    private PaymentGateway paymentGateway;
 
     @Autowired
     public OrderV1ApiE2ETest(TestRestTemplate testRestTemplate, DatabaseCleanUp databaseCleanUp,
@@ -76,7 +83,7 @@ public class OrderV1ApiE2ETest {
             httpHeaders.set("X-USER-ID", "9999999"); // 존재하지 않는 사용자 ID
             List<OrderV1Dto.Line> lines = List.of(new OrderV1Dto.Line(1L, 2L));
             OrderV1Dto.Delivery delivery = new OrderV1Dto.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null);
+            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null, 0L);
             ParameterizedTypeReference<ApiResponse<Void>> responseType = new ParameterizedTypeReference<>() {
             };
 
@@ -91,6 +98,7 @@ public class OrderV1ApiE2ETest {
         @DisplayName("주문을 성공적으로 생성할 경우, 주문 정보를 반환한다.")
         @Test
         void returnOrderResponse() {
+            given(paymentGateway.request(any(), any())).willReturn(new GatewayResponse.Request(true, "TX-KEY"));
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             Point point = Point.from(user.getId());
             point.charge(10000L);
@@ -104,7 +112,7 @@ public class OrderV1ApiE2ETest {
             httpHeaders.set("X-USER-ID", String.valueOf(user.getId()));
             List<OrderV1Dto.Line> lines = List.of(new OrderV1Dto.Line(product1.getId(), 2L), new OrderV1Dto.Line(product2.getId(), 3L));
             OrderV1Dto.Delivery delivery = new OrderV1Dto.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null);
+            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null, 0L);
             ParameterizedTypeReference<ApiResponse<OrderV1Dto.OrderResponse>> responseType = new ParameterizedTypeReference<>() {
             };
 
@@ -131,7 +139,7 @@ public class OrderV1ApiE2ETest {
         User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
         OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
         List<OrderCommand.Line> lines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("3000")));
-        OrderCommand.Order cmd = new OrderCommand.Order(1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"));
+        OrderCommand.Order cmd = new OrderCommand.Order(1L, null, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"),  0L);
         Order order = Order.of(cmd);
         Order saved = orderRepository.save(order);
 
@@ -170,7 +178,7 @@ public class OrderV1ApiE2ETest {
         List<OrderCommand.Line> lines1 = List.of(
                 new OrderCommand.Line(1L, 2L, new BigDecimal("1000")),
                 new OrderCommand.Line(2L, 3L, new BigDecimal("2000")));
-        OrderCommand.Order cmd1 = new OrderCommand.Order(1L, lines1, delivery, new BigDecimal("8000"), new BigDecimal("8000"));
+        OrderCommand.Order cmd1 = new OrderCommand.Order(1L, null, lines1, delivery, new BigDecimal("8000"), new BigDecimal("8000"), 0L);
         Order order1 = Order.of(cmd1);
         Order saved1 = orderRepository.save(order1);
 
@@ -178,7 +186,7 @@ public class OrderV1ApiE2ETest {
                 new OrderCommand.Line(1L, 2L, new BigDecimal("1000")),
                 new OrderCommand.Line(2L, 3L, new BigDecimal("2000"))
         );
-        OrderCommand.Order cmd2 = new OrderCommand.Order(1L, lines2, delivery, new BigDecimal("8000"), new BigDecimal("8000"));
+        OrderCommand.Order cmd2 = new OrderCommand.Order(1L, null, lines2, delivery, new BigDecimal("8000"), new BigDecimal("8000"), 0L);
         Order order2 = Order.of(cmd2);
         Order saved2 = orderRepository.save(order2);
 

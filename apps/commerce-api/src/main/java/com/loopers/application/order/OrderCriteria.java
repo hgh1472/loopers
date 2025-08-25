@@ -5,17 +5,19 @@ import com.loopers.domain.stock.StockCommand;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class OrderCriteria {
     public record Order(
             Long userId,
             List<Line> lines,
             Delivery delivery,
-            Long couponId
+            Long couponId,
+            Long point
     ) {
-        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines,
-                                                     BigDecimal originalAmount, BigDecimal paymentAmount) {
-            return new OrderCommand.Order(userId, lines, toCommandDelivery(), originalAmount, paymentAmount);
+        public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines, Long couponId, AmountResult amountResult) {
+            return new OrderCommand.Order(userId, couponId, lines, toCommandDelivery(), amountResult.originalAmount(),
+                    amountResult.discountAmount(), amountResult.pointAmount());
         }
 
         public List<OrderCommand.Line> toCommandLines(Map<Long, BigDecimal> productPriceMap) {
@@ -62,7 +64,7 @@ public class OrderCriteria {
 
     public record Get(
             Long userId,
-            Long orderId
+            UUID orderId
     ) {
     }
 

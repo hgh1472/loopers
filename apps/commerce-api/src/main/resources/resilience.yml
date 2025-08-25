@@ -1,0 +1,68 @@
+resilience4j:
+  retry:
+    instances:
+      pgRequest:
+        max-attempts: 2
+        wait-duration: 200ms
+        retry-exceptions:
+          - feign.FeignException
+          - feign.RetryableException
+          - java.lang.IllegalStateException
+      getTransaction:
+        max-attempts: 2
+        wait-duration: 100ms
+        retry-exceptions:
+          - feign.FeignException
+          - feign.RetryableException
+    retry-aspect-order: 2
+
+  circuitbreaker:
+    instances:
+      pgRequest:
+        sliding-window-type: time_based
+        sliding-window-size: 60
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+      getTransaction:
+        sliding-window-type: time_based
+        sliding-window-size: 60
+        failure-rate-threshold: 20
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+      findProductCache:
+        sliding-window-type: time_based
+        sliding-window-size: 30
+        failure-rate-threshold: 10
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+        slow-call-duration-threshold: 300ms
+        slow-call-rate-threshold: 50
+    circuit-breaker-aspect-order: 1
+
+---
+spring:
+    config:
+      activate:
+        on-profile: local, test
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: qa
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prd
