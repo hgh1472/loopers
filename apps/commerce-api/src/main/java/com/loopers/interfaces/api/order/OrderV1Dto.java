@@ -11,9 +11,7 @@ public class OrderV1Dto {
             List<Line> lines,
             Delivery delivery,
             Long couponId,
-            Long point,
-            String cardType,
-            String cardNo
+            Long point
     ) {
     }
 

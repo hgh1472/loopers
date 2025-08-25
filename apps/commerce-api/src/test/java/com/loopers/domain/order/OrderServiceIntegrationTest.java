@@ -61,7 +61,7 @@ class OrderServiceIntegrationTest {
             );
         }
 
-        @DisplayName("주문이 상태는 PENDING 상태로 저장된다.")
+        @DisplayName("주문이 상태는 CREATED 상태로 저장된다.")
         @Test
         void saveOrderWithPendingStatus() {
             List<OrderCommand.Line> lines = List.of(
@@ -79,7 +79,7 @@ class OrderServiceIntegrationTest {
 
             OrderInfo orderInfo = orderService.order(command);
 
-            assertThat(orderInfo.orderStatus()).isEqualTo("PENDING");
+            assertThat(orderInfo.orderStatus()).isEqualTo("CREATED");
         }
     }
 }

@@ -49,4 +49,12 @@ public class OrderService {
         order.paid();
         return OrderInfo.from(order);
     }
+
+    @Transactional
+    public OrderInfo pending(OrderCommand.Pending command) {
+        Order order = orderRepository.findById(command.orderId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 주문입니다."));
+        order.pending();
+        return OrderInfo.from(order);
+    }
 }

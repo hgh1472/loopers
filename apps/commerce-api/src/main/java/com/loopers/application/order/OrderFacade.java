@@ -3,8 +3,6 @@ package com.loopers.application.order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
-import com.loopers.domain.payment.PaymentCommand;
-import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
@@ -30,7 +28,6 @@ public class OrderFacade {
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
-    private final PaymentService paymentService;
 
     @Transactional
     public OrderResult order(OrderCriteria.Order criteria) {
@@ -49,12 +46,10 @@ public class OrderFacade {
         }
         List<OrderCommand.Line> lines = criteria.toCommandLines(productPriceMap);
 
-        AmountResult amountResult = amountProcessor.applyDiscount(criteria.couponId(), criteria.userId(), lines, criteria.point());
+        AmountResult amountResult = amountProcessor.applyDiscount(criteria.couponId(), criteria.userId(), lines,
+                criteria.point());
 
         OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, criteria.couponId(), amountResult));
-
-        paymentService.pay(new PaymentCommand.Pay(
-                orderInfo.payment().paymentAmount(), orderInfo.id(), criteria.cardType(), criteria.cardNo()));
         return OrderResult.from(orderInfo);
     }
 

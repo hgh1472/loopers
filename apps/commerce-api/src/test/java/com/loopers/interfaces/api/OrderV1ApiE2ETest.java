@@ -83,7 +83,7 @@ public class OrderV1ApiE2ETest {
             httpHeaders.set("X-USER-ID", "9999999"); // 존재하지 않는 사용자 ID
             List<OrderV1Dto.Line> lines = List.of(new OrderV1Dto.Line(1L, 2L));
             OrderV1Dto.Delivery delivery = new OrderV1Dto.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null, 0L, "SAMSUNG", "0000-0000-0000-0000");
+            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null, 0L);
             ParameterizedTypeReference<ApiResponse<Void>> responseType = new ParameterizedTypeReference<>() {
             };
 
@@ -112,7 +112,7 @@ public class OrderV1ApiE2ETest {
             httpHeaders.set("X-USER-ID", String.valueOf(user.getId()));
             List<OrderV1Dto.Line> lines = List.of(new OrderV1Dto.Line(product1.getId(), 2L), new OrderV1Dto.Line(product2.getId(), 3L));
             OrderV1Dto.Delivery delivery = new OrderV1Dto.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 테헤란로 123", "1층 101호", "요구사항");
-            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null, 0L, "SAMSUNG", "0000-0000-0000-0000");
+            OrderV1Dto.OrderRequest request = new OrderV1Dto.OrderRequest(lines, delivery, null, 0L);
             ParameterizedTypeReference<ApiResponse<OrderV1Dto.OrderResponse>> responseType = new ParameterizedTypeReference<>() {
             };
 

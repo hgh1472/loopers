@@ -13,9 +13,7 @@ public class OrderCriteria {
             List<Line> lines,
             Delivery delivery,
             Long couponId,
-            Long point,
-            String cardType,
-            String cardNo
+            Long point
     ) {
         public OrderCommand.Order toOrderCommandWith(List<OrderCommand.Line> lines, Long couponId, AmountResult amountResult) {
             return new OrderCommand.Order(userId, couponId, lines, toCommandDelivery(), amountResult.originalAmount(),

@@ -69,4 +69,7 @@ public class OrderCommand {
             }
         }
     }
+
+    public record Pending(UUID orderId) {
+    }
 }

@@ -90,7 +90,6 @@ class OrderTest {
             OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
 
             Order order = Order.of(cmd);
-            order.fail(OrderCommand.Fail.Reason.PAYMENT_FAILED);
 
             CoreException thrown = assertThrows(CoreException.class, () -> order.fail(OrderCommand.Fail.Reason.OUT_OF_STOCK));
 
@@ -112,9 +111,8 @@ class OrderTest {
             OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines, delivery, new BigDecimal("6000"), new BigDecimal("6000"), 0L);
 
             Order order = Order.of(cmd);
-            order.paid();
 
-            CoreException thrown = assertThrows(CoreException.class, () -> order.paid());
+            CoreException thrown = assertThrows(CoreException.class, order::paid);
 
             assertThat(thrown)
                     .usingRecursiveComparison()

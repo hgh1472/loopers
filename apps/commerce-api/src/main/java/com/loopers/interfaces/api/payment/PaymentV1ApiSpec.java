@@ -12,4 +12,11 @@ public interface PaymentV1ApiSpec {
             description = "결제 요청에 대한 콜백입니다."
     )
     ApiResponse<?> callback(PaymentV1Dto.CallbackRequest request);
+
+    @Operation(
+            summary = "결제 요청",
+            description = "PG사에 결제를 요청합니다."
+    )
+    ApiResponse<PaymentV1Dto.PaymentResponse> requestPayment(PaymentV1Dto.PaymentRequest request,
+                                                             Long userId);
 }

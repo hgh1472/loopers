@@ -92,7 +92,7 @@ public class Order {
         }
         OrderPayment orderPayment = new OrderPayment(command.originalAmount(), command.discountAmount(), command.pointAmount());
 
-        Order order = new Order(command.userId(), command.couponId(), OrderStatus.PENDING, OrderDelivery.from(command.delivery()),
+        Order order = new Order(command.userId(), command.couponId(), OrderStatus.CREATED, OrderDelivery.from(command.delivery()),
                 orderPayment);
 
         List<OrderLine> orderLines = OrderLine.of(command.lines());
@@ -127,7 +127,14 @@ public class Order {
         this.status = OrderStatus.PAID;
     }
 
+    public void pending() {
+        if (this.status != OrderStatus.CREATED) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 결제 대기할 수 없는 상태입니다.");
+        }
+        this.status = OrderStatus.PENDING;
+    }
+
     public enum OrderStatus {
-        PENDING, OUT_OF_STOCK, POINT_EXHAUSTED, PAYMENT_FAILED, PAID, DELIVERING, COMPLETED, CANCELED
+        CREATED, PENDING, OUT_OF_STOCK, POINT_EXHAUSTED, PAYMENT_FAILED, PAID, DELIVERING, COMPLETED, CANCELED
     }
 }

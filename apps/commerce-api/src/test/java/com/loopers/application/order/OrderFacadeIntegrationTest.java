@@ -93,7 +93,7 @@ class OrderFacadeIntegrationTest {
             CoreException thrown = assertThrows(CoreException.class,
                     () -> orderFacade.order(
                             new OrderCriteria.Order(-1L, List.of(
-                                    new OrderCriteria.Line(1L, 3L), new OrderCriteria.Line(1L, 2L)), delivery, null, 100L, "SAMSUNG", "0000-0000-0000-0000")));
+                                    new OrderCriteria.Line(1L, 3L), new OrderCriteria.Line(1L, 2L)), delivery, null, 100L)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -117,7 +117,7 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
 
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 100L, "SAMSUNG", "0000-0000-0000-0000")));
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 100L)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -141,7 +141,7 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
 
-            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 100L, "SAMSUNG", "0000-0000-0000-0000")));
+            CoreException thrown = assertThrows(CoreException.class, () -> orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 100L)));
 
             assertThat(thrown)
                     .usingRecursiveComparison()
@@ -164,7 +164,7 @@ class OrderFacadeIntegrationTest {
                     "요구사항"
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product.getId(), 3L), new OrderCriteria.Line(product.getId(), 2L));
-            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 0L, "SAMSUNG", "0000-0000-0000-0000"));
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, null, 0L));
 
             assertAll(
                     () -> assertThat(orderResult.lines().size()).isEqualTo(1),
@@ -193,7 +193,7 @@ class OrderFacadeIntegrationTest {
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
 
-            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, 1L, 1000L, "SAMSUNG", "0000-0000-0000-0000"));
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, 1L, 1000L));
 
             Optional<Order> order = orderRepository.findById(orderResult.id());
             assertAll(
@@ -226,7 +226,7 @@ class OrderFacadeIntegrationTest {
             );
             List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
 
-            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId, 0L, "SAMSUNG", "0000-0000-0000-0000"));
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId, 0L));
 
             Order order = orderRepository.findById(orderResult.id()).orElseThrow();
             assertAll(
@@ -269,7 +269,7 @@ class OrderFacadeIntegrationTest {
             for (int i = 0; i < threadCount; i++) {
                 executorService.submit(() -> {
                     try {
-                        orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, coupon.getCouponId(), 100L, "SAMSUNG", "0000-0000-0000-0000"));
+                        orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, coupon.getCouponId(), 100L));
                     } catch (Exception e) {
                         System.out.println("Order failed: " + e.getMessage());
                     } finally {

@@ -29,9 +29,9 @@ public class OrderV1ApiController implements OrderV1ApiSpec {
         List<OrderCriteria.Line> lines = orderRequest.lines().stream()
                 .map(OrderV1Dto.Line::toCriteriaLine)
                 .toList();
-        OrderResult orderResult = orderFacade.order(
-                new OrderCriteria.Order(userId, lines, orderRequest.delivery().toCriteriaDelivery(), orderRequest.couponId(),
-                        orderRequest.point(), orderRequest.cardType(), orderRequest.cardNo()));
+        OrderCriteria.Order criteria = new OrderCriteria.Order(userId, lines, orderRequest.delivery().toCriteriaDelivery(),
+                orderRequest.couponId(), orderRequest.point());
+        OrderResult orderResult = orderFacade.order(criteria);
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(orderResult));
     }
 

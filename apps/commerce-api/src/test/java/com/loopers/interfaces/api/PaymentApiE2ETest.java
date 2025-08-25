@@ -1,6 +1,9 @@
 package com.loopers.interfaces.api;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.coupon.DiscountPolicy;
@@ -10,8 +13,10 @@ import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderCommand.Line;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.payment.GatewayResponse;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentCommand;
+import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.domain.payment.PaymentRepository;
 import com.loopers.domain.payment.Refund;
 import com.loopers.domain.point.Point;
@@ -40,6 +45,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class PaymentApiE2ETest {
@@ -56,6 +62,8 @@ public class PaymentApiE2ETest {
     private PaymentRepository paymentRepository;
     @Autowired
     private CouponRepository couponRepository;
+    @MockitoBean
+    private PaymentGateway paymentGateway;
     @Autowired
     private TestRestTemplate testRestTemplate;
     @Autowired
@@ -64,6 +72,40 @@ public class PaymentApiE2ETest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+    }
+
+    @Nested
+    @DisplayName("POST /api/v1/payment")
+    class Pay {
+
+        final String url = "/api/v1/payments";
+
+        @Test
+        @DisplayName("결제 요청이 오면, 결제 정보가 저장되고, 주문 상태가 변경된다.")
+        void pay() {
+            given(paymentGateway.request(any(), any()))
+                    .willReturn(new GatewayResponse.Request(true, "TX-KEY"));
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = orderRepository.save(Order.of(new OrderCommand.Order(1L, null,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L)));
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.set("X-USER-ID", "1");
+            PaymentV1Dto.PaymentRequest payRequest = new PaymentV1Dto.PaymentRequest(order.getId(), "SAMSUNG", "1234-1234-1234-1234");
+            ParameterizedTypeReference<ApiResponse<PaymentV1Dto.PaymentResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+
+            ResponseEntity<ApiResponse<PaymentV1Dto.PaymentResponse>> response =
+                    testRestTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(payRequest, httpHeaders), responseType);
+
+            Payment payment = paymentRepository.findByTransactionKey("TX-KEY").orElseThrow();
+            assertThat(response.getBody().data().transactionKey()).isEqualTo(payment.getTransactionKey());
+            assertThat(response.getBody().data().amount()).isEqualTo(payment.getAmount());
+            assertThat(response.getBody().data().orderId()).isEqualTo(order.getId());
+            assertThat(response.getBody().data().status()).isEqualTo(Payment.Status.PENDING.toString());
+        }
     }
 
     @Nested
@@ -78,6 +120,7 @@ public class PaymentApiE2ETest {
             List<Line> lines1 = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000")));
             OrderCommand.Order cmd = new OrderCommand.Order(1L, null, lines1, delivery, new BigDecimal("8000"), new BigDecimal("8000"), 100L);
             Order order = Order.of(cmd);
+            order.pending();
             Order savedOrder = orderRepository.save(order);
             stockRepository.save(Stock.create(new StockCommand.Create(1L, 100L)));
             Point point = Point.from(user.getId());
@@ -121,6 +164,7 @@ public class PaymentApiE2ETest {
             List<Line> lines1 = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000")));
             OrderCommand.Order cmd = new OrderCommand.Order(1L, null, lines1, delivery, new BigDecimal("8000"), new BigDecimal("8000"), 100L);
             Order order = Order.of(cmd);
+            order.pending();
             Order savedOrder = orderRepository.save(order);
             stockRepository.save(Stock.create(new StockCommand.Create(1L, 0L)));
             Point point = Point.from(user.getId());
@@ -158,6 +202,7 @@ public class PaymentApiE2ETest {
             List<Line> lines1 = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000")));
             OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, lines1, delivery, new BigDecimal("8000"), new BigDecimal("8000"), 100L);
             Order order = Order.of(cmd);
+            order.pending();
             Order savedOrder = orderRepository.save(order);
             stockRepository.save(Stock.create(new StockCommand.Create(1L, 0L)));
             UserCoupon userCoupon = UserCoupon.of(user.getId(), 1L, new DiscountPolicy(new BigDecimal("100"), Type.FIXED), LocalDateTime.now().plusDays(1));

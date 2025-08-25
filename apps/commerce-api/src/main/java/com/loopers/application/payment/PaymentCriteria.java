@@ -4,6 +4,13 @@ import java.util.UUID;
 
 public class PaymentCriteria {
 
+    public record Pay(
+            UUID orderId,
+            String cardType,
+            String cardNo
+    ) {
+    }
+
     public record Success(
             String transactionKey,
             UUID orderId
