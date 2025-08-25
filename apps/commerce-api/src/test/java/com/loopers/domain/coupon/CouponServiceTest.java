@@ -34,7 +34,7 @@ class CouponServiceTest {
         @Test
         void throwNotFoundException_whenCouponNotOwned() {
             CouponCommand.Use command = new CouponCommand.Use(1L, 1L, new BigDecimal("10000"));
-            given(couponRepository.findUserCoupon(command.couponId(), command.userId()))
+            given(couponRepository.findUserCouponWithLock(command.couponId(), command.userId()))
                     .willReturn(Optional.empty());
 
             CoreException exception = assertThrows(CoreException.class, () -> couponService.use(command));
@@ -92,7 +92,7 @@ class CouponServiceTest {
         @Test
         void throwNotFoundException_whenCouponNotOwned() {
             CouponCommand.Restore command = new CouponCommand.Restore(1L, 1L);
-            given(couponRepository.findUserCoupon(command.couponId(), command.userId()))
+            given(couponRepository.findUserCouponWithLock(command.couponId(), command.userId()))
                     .willReturn(Optional.empty());
 
             CoreException exception = assertThrows(CoreException.class, () -> couponService.restore(command));
