@@ -6,6 +6,7 @@ import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
@@ -16,7 +17,9 @@ import lombok.Getter;
 @Getter
 @Table(
         name = "user_coupon",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"ref_user_id", "ref_coupon_id"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"ref_user_id", "ref_coupon_id"}),
+        indexes = @Index(name = "idx_user_coupon", columnList = "ref_user_id, ref_coupon_id")
+)
 public class UserCoupon extends BaseEntity {
 
     @Column(name = "ref_user_id", nullable = false)

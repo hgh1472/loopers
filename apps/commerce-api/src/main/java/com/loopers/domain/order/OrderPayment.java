@@ -4,7 +4,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Embeddable;
 import java.math.BigDecimal;
-import java.util.Objects;
+import java.math.RoundingMode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -43,10 +43,10 @@ public class OrderPayment {
         if (pointAmount < 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용한 포인트는 0 이상이어야 합니다.");
         }
-        this.originalAmount = originalAmount;
-        this.discountAmount = discountAmount;
+        this.originalAmount = originalAmount.setScale(0, RoundingMode.FLOOR);
+        this.discountAmount = discountAmount.setScale(0, RoundingMode.FLOOR);
         this.pointAmount = pointAmount;
         this.paymentAmount = originalAmount.subtract(discountAmount)
-                .subtract(BigDecimal.valueOf(pointAmount));
+                .subtract(BigDecimal.valueOf(pointAmount)).setScale(0, RoundingMode.FLOOR);
     }
 }

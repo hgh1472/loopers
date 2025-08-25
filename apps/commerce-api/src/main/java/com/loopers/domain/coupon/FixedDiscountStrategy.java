@@ -1,7 +1,6 @@
 package com.loopers.domain.coupon;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 public class FixedDiscountStrategy implements DiscountStrategy {
 
@@ -13,6 +12,6 @@ public class FixedDiscountStrategy implements DiscountStrategy {
 
     @Override
     public BigDecimal discount(BigDecimal amount) {
-        return amount.subtract(this.amount).setScale(0, RoundingMode.FLOOR).max(BigDecimal.ZERO);
+        return this.amount;
     }
 }
