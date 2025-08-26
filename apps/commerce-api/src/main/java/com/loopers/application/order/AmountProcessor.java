@@ -26,8 +26,8 @@ public class AmountProcessor {
         BigDecimal originalAmount = calculateOriginalAmountOf(lines);
         BigDecimal discountAmount = BigDecimal.ZERO;
         if (couponId != null) {
-            UserCouponInfo.Use useInfo = couponService.use(new CouponCommand.Use(couponId, userId, originalAmount));
-            discountAmount = discountAmount.add(useInfo.discountAmount());
+            UserCouponInfo.Preview preview = couponService.preview(new CouponCommand.Preview(couponId, userId, originalAmount));
+            discountAmount = discountAmount.add(preview.discountAmount());
         }
 
         if (pointAmount == null) {

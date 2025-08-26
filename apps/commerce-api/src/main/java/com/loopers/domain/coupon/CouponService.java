@@ -30,13 +30,11 @@ public class CouponService {
     }
 
     @Transactional
-    public UserCouponInfo.Use use(CouponCommand.Use command) {
+    public UserCouponInfo use(CouponCommand.Use command) {
         UserCoupon userCoupon = couponRepository.findUserCouponWithLock(command.couponId(), command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
-        DiscountStrategy discountStrategy = discountPolicyAdapter.from(userCoupon.getDiscountPolicy());
-        BigDecimal discountAmount = discountStrategy.discount(command.originalAmount()).setScale(0, RoundingMode.FLOOR);
         userCoupon.use(LocalDateTime.now());
-        return new UserCouponInfo.Use(userCoupon.getId(), command.originalAmount(), discountAmount);
+        return UserCouponInfo.from(userCoupon);
     }
 
     @Transactional
@@ -45,5 +43,14 @@ public class CouponService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
         userCoupon.restore();
         return UserCouponInfo.from(userCoupon);
+    }
+
+    @Transactional
+    public UserCouponInfo.Preview preview(CouponCommand.Preview command) {
+        UserCoupon userCoupon = couponRepository.findUserCoupon(command.couponId(), command.userId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
+        DiscountStrategy discountStrategy = discountPolicyAdapter.from(userCoupon.getDiscountPolicy());
+        BigDecimal discountAmount = discountStrategy.discount(command.originalAmount()).setScale(0, RoundingMode.FLOOR);
+        return new UserCouponInfo.Preview(userCoupon.getId(), discountAmount);
     }
 }

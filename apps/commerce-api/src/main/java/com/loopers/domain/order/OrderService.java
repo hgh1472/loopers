@@ -12,11 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderEventPublisher eventPublisher;
 
     @Transactional
     public OrderInfo order(OrderCommand.Order command) {
-        Order order = Order.of(command);
-        return OrderInfo.from(orderRepository.save(order));
+        Order order = orderRepository.save(Order.of(command));
+        eventPublisher.publish(OrderEvent.Created.from(order));
+        return OrderInfo.from(order);
     }
 
     @Transactional(readOnly = true)
