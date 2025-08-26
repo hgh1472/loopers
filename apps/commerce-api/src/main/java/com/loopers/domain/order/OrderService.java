@@ -13,6 +13,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderEventPublisher eventPublisher;
+    private final ExternalDataSender externalDataSender;
 
     @Transactional
     public OrderInfo order(OrderCommand.Order command) {
@@ -67,5 +68,11 @@ public class OrderService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 주문입니다."));
         order.pending();
         return OrderInfo.from(order);
+    }
+
+    public void sendOrder(OrderCommand.Send command) {
+        Order order = orderRepository.findById(command.orderId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 주문입니다."));
+        externalDataSender.send(order);
     }
 }
