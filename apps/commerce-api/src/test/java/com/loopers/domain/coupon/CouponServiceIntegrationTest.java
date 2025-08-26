@@ -38,7 +38,7 @@ class CouponServiceIntegrationTest {
         void useCoupon_concurrency() throws InterruptedException {
             DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), Type.FIXED);
             UserCoupon userCoupon = couponRepository.save(UserCoupon.of(1L, 1L, discountPolicy, LocalDateTime.now().plusHours(24)));
-            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L, new BigDecimal("5000.00"));
+            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L);
             int threadCount = 10;
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
             CountDownLatch latch = new CountDownLatch(threadCount);
@@ -65,13 +65,12 @@ class CouponServiceIntegrationTest {
         void returnUserCouponInfo() {
             DiscountPolicy discountPolicy = new DiscountPolicy(new BigDecimal("1000.00"), Type.FIXED);
             UserCoupon userCoupon = couponRepository.save(UserCoupon.of(1L, 1L, discountPolicy, LocalDateTime.now().plusHours(24)));
-            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L, new BigDecimal("5000.00"));
+            CouponCommand.Use cmd = new CouponCommand.Use(1L, 1L);
 
-            UserCouponInfo.Use use = couponService.use(cmd);
+            UserCouponInfo info = couponService.use(cmd);
 
-            assertThat(use.id()).isEqualTo(userCoupon.getId());
-            assertThat(use.originalAmount()).isEqualTo(cmd.originalAmount());
-            assertThat(use.discountAmount()).isEqualTo(new BigDecimal("1000"));
+            assertThat(info.id()).isEqualTo(userCoupon.getId());
+            assertThat(info.couponId()).isEqualTo(userCoupon.getCouponId());
         }
     }
 

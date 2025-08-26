@@ -76,4 +76,7 @@ public class OrderCommand {
 
     public record Expire(ZonedDateTime time) {
     }
+
+    public record Send(UUID orderId) {
+    }
 }
