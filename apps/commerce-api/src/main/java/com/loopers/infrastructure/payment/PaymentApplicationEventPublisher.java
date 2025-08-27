@@ -16,4 +16,9 @@ public class PaymentApplicationEventPublisher implements PaymentEventPublisher {
     public void publish(PaymentEvent.Success event) {
         eventPublisher.publishEvent(event);
     }
+
+    @Override
+    public void publish(PaymentEvent.Fail event) {
+        eventPublisher.publishEvent(event);
+    }
 }

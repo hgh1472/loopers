@@ -7,8 +7,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.loopers.infrastructure.payment.gateway.LoopersPaymentGateway;
+import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,13 @@ class PaymentServiceIntegrationTest {
     private PaymentEventPublisher paymentEventPublisher;
     @MockitoBean
     private LoopersPaymentGateway paymentGateway;
+    @Autowired
+    private DatabaseCleanUp databaseCleanUp;
+
+    @AfterEach
+    void tearDown() {
+        databaseCleanUp.truncateAllTables();
+    }
 
     @Nested
     @DisplayName("결제 요청 시,")
@@ -61,6 +70,23 @@ class PaymentServiceIntegrationTest {
             paymentService.success(new PaymentCommand.Success(payment.getTransactionKey()));
 
             verify(paymentEventPublisher, times(1)).publish(new PaymentEvent.Success(payment.getTransactionKey(), payment.getOrderId()));
+        }
+    }
+
+    @Nested
+    @DisplayName("결제 실패 시,")
+    class Fail {
+
+        @Test
+        @DisplayName("결제 실패 이벤트를 발행한다.")
+        void publishPaymentFailEvent() {
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1234-1234-1234-1234"));
+            payment.successRequest("TX-KEY");
+            paymentRepository.save(payment);
+
+            paymentService.fail(new PaymentCommand.Fail(payment.getTransactionKey(), "결제 실패"));
+
+            verify(paymentEventPublisher, times(1)).publish(new PaymentEvent.Fail(payment.getTransactionKey(), payment.getOrderId(), "결제 실패"));
         }
     }
 }

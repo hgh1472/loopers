@@ -12,4 +12,14 @@ public class PaymentEvent {
             return new Success(payment.getTransactionKey(), payment.getOrderId());
         }
     }
+
+    public record Fail(
+            String transactionKey,
+            UUID orderId,
+            String reason
+    ) {
+        public static Fail from(Payment payment) {
+            return new Fail(payment.getTransactionKey(), payment.getOrderId(), payment.getReason());
+        }
+    }
 }

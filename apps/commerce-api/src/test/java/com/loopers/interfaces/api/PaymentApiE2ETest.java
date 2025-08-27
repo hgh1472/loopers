@@ -5,9 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import com.loopers.domain.coupon.CouponRepository;
-import com.loopers.domain.coupon.DiscountPolicy;
-import com.loopers.domain.coupon.DiscountPolicy.Type;
-import com.loopers.domain.coupon.UserCoupon;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderCommand.Line;
@@ -17,10 +14,7 @@ import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentCommand;
 import com.loopers.domain.payment.PaymentGateway;
 import com.loopers.domain.payment.PaymentRepository;
-import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
-import com.loopers.domain.stock.Stock;
-import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
@@ -28,7 +22,6 @@ import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.payment.PaymentV1Dto;
 import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -140,7 +133,7 @@ public class PaymentApiE2ETest {
         }
 
         @Test
-        @DisplayName("실패 폴백이 올 경우, 주문과 결제 상태가 실패로 변경되고 쿠폰이 복원된다.")
+        @DisplayName("실패 폴백이 올 경우, 결제 상태가 실패로 변경된다.")
         void fallback_whenFail() {
             User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
             OrderCommand.Delivery delivery = new OrderCommand.Delivery("황건하", "010-1234-5678", "서울특별시 강남구 강남대로 지하396", "강남역 지하 XX", "요구사항");
@@ -149,15 +142,8 @@ public class PaymentApiE2ETest {
             Order order = Order.of(cmd);
             order.pending();
             Order savedOrder = orderRepository.save(order);
-            stockRepository.save(Stock.create(new StockCommand.Create(1L, 0L)));
-            UserCoupon userCoupon = UserCoupon.of(user.getId(), 1L, new DiscountPolicy(new BigDecimal("100"), Type.FIXED), LocalDateTime.now().plusDays(1));
-            userCoupon.use(LocalDateTime.now());
-            UserCoupon savedCoupon = couponRepository.save(userCoupon);
-            Point point = Point.from(user.getId());
-            point.charge(10000L);
-            pointRepository.save(point);
 
-            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("100"), order.getId(), "SAMSUNG", "1234-1234-1234-1234"));
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("100"), savedOrder.getId(), "SAMSUNG", "1234-1234-1234-1234"));
             payment.successRequest("TX-KEY");
             Payment savedPayment = paymentRepository.save(payment);
 
@@ -177,11 +163,7 @@ public class PaymentApiE2ETest {
 
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(callbackRequest), responseType);
 
-            Order afterOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
             Payment afterPayment = paymentRepository.findById(savedPayment.getId()).orElseThrow();
-            UserCoupon afterCoupon = couponRepository.findUserCoupon(1L, user.getId()).orElseThrow();
-            assertThat(afterCoupon.isUsed()).isFalse();
-            assertThat(afterOrder.getStatus()).isEqualTo(Order.OrderStatus.PAYMENT_FAILED);
             assertThat(afterPayment.getStatus()).isEqualTo(Payment.Status.FAILED);
         }
     }

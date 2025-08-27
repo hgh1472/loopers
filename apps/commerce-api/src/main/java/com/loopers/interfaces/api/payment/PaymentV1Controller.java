@@ -27,8 +27,7 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
     public ApiResponse<?> callback(@RequestBody PaymentV1Dto.CallbackRequest request) {
         switch (request.status()) {
             case SUCCESS -> paymentService.success(new PaymentCommand.Success(request.transactionKey()));
-            case FAILED -> paymentFacade.fail(
-                    new PaymentCriteria.Fail(request.transactionKey(), UUID.fromString(request.orderId()), request.reason()));
+            case FAILED -> paymentService.fail(new PaymentCommand.Fail(request.transactionKey(), request.reason()));
         }
         return ApiResponse.success();
     }

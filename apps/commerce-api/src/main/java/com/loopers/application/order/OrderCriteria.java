@@ -84,4 +84,9 @@ public class OrderCriteria {
             ZonedDateTime time
     ) {
     }
+
+    public record FailPayment(
+            UUID orderId
+    ) {
+    }
 }

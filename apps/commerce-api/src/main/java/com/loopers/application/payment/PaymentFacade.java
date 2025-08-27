@@ -1,6 +1,5 @@
 package com.loopers.application.payment;
 
-import com.loopers.domain.coupon.CouponCommand;
 import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
@@ -31,15 +30,5 @@ public class PaymentFacade {
             orderService.pending(new OrderCommand.Pending(orderInfo.id()));
         }
         return PaymentResult.from(paymentInfo);
-    }
-
-    @Transactional
-    public void fail(PaymentCriteria.Fail criteria) {
-        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
-        if (orderInfo.couponId() != null) {
-            couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
-        }
-        paymentService.fail(new PaymentCommand.Fail(criteria.transactionKey(), criteria.reason()));
-        orderService.fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.PAYMENT_FAILED));
     }
 }
