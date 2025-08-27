@@ -13,6 +13,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentGateway paymentGateway;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     @Transactional
     public PaymentInfo pay(PaymentCommand.Pay command) {
@@ -61,6 +62,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findByTransactionKey(command.transactionKey())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "해당하는 결제 정보가 없습니다."));
         payment.success();
+        paymentEventPublisher.publish(PaymentEvent.Success.from(payment));
         return PaymentInfo.of(payment);
     }
 
@@ -70,8 +72,5 @@ public class PaymentService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "해당하는 결제 정보가 없습니다."));
         payment.fail(command.reason());
         return PaymentInfo.of(payment);
-    }
-
-    public void check() {
     }
 }

@@ -3,6 +3,7 @@ package com.loopers.interfaces.scheduler;
 import com.loopers.application.payment.PaymentCriteria;
 import com.loopers.application.payment.PaymentFacade;
 import com.loopers.domain.payment.Payment;
+import com.loopers.domain.payment.PaymentCommand;
 import com.loopers.domain.payment.PaymentInfo;
 import com.loopers.domain.payment.PaymentService;
 import java.util.List;
@@ -22,8 +23,7 @@ public class PaymentScheduler {
         List<PaymentInfo.Transaction> transactionInfos = paymentService.getUnsyncedPendingPayments();
         for (PaymentInfo.Transaction info : transactionInfos) {
             switch (info.status()) {
-                case Payment.Status.COMPLETED ->
-                        paymentFacade.success(new PaymentCriteria.Success(info.transactionKey(), info.orderId()));
+                case Payment.Status.COMPLETED -> paymentService.success(new PaymentCommand.Success(info.transactionKey()));
                 case Payment.Status.FAILED ->
                         paymentFacade.fail(new PaymentCriteria.Fail(info.transactionKey(), info.orderId(), info.reason()));
             }

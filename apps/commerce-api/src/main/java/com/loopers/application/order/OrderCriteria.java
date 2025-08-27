@@ -63,6 +63,12 @@ public class OrderCriteria {
     ) {
     }
 
+    public record Success(
+            UUID orderId,
+            String transactionKey
+    ) {
+    }
+
     public record Get(
             Long userId,
             UUID orderId

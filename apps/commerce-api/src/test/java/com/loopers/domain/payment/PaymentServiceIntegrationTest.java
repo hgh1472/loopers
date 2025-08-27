@@ -3,6 +3,8 @@ package com.loopers.domain.payment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.loopers.infrastructure.payment.gateway.LoopersPaymentGateway;
 import java.math.BigDecimal;
@@ -13,14 +15,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.event.RecordApplicationEvents;
 
 @SpringBootTest
+@RecordApplicationEvents
 class PaymentServiceIntegrationTest {
 
     @Autowired
     private PaymentService paymentService;
     @Autowired
     private PaymentRepository paymentRepository;
+    @MockitoBean
+    private PaymentEventPublisher paymentEventPublisher;
     @MockitoBean
     private LoopersPaymentGateway paymentGateway;
 
@@ -38,6 +44,23 @@ class PaymentServiceIntegrationTest {
             PaymentInfo paymentInfo = paymentService.pay(command);
 
             assertThat(paymentInfo.transactionKey()).isEqualTo("transactionKey123");
+        }
+    }
+
+    @Nested
+    @DisplayName("결제 성공 시,")
+    class Success {
+
+        @Test
+        @DisplayName("결제 성공 이벤트를 발행한다.")
+        void publishPaymentSuccessEvent() {
+            Payment payment = Payment.of(new PaymentCommand.Pay(new BigDecimal("1000"), UUID.randomUUID(), "SAMSUNG", "1234-1234-1234-1234"));
+            payment.successRequest("TX-KEY");
+            paymentRepository.save(payment);
+
+            paymentService.success(new PaymentCommand.Success(payment.getTransactionKey()));
+
+            verify(paymentEventPublisher, times(1)).publish(new PaymentEvent.Success(payment.getTransactionKey(), payment.getOrderId()));
         }
     }
 }
