@@ -373,4 +373,46 @@ class OrderFacadeIntegrationTest {
             );
         }
     }
+
+    @Nested
+    @DisplayName("결제 실패 처리 시,")
+    class FailPayment {
+
+        @Test
+        @DisplayName("쿠폰을 사용했다면 쿠폰은 복구된다.")
+        void restoreCoupon_whenPaymentFails() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = Order.of(new OrderCommand.Order(1L, 1L,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L));
+            order.pending();
+            Order savedOrder = orderRepository.save(order);
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(new BigDecimal("100"), DiscountPolicy.Type.FIXED), LocalDateTime.now().plusHours(1));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+
+            orderFacade.failPayment(new OrderCriteria.FailPayment(savedOrder.getId()));
+
+            UserCoupon after = couponRepository.findUserCoupon(1L, 1L).orElseThrow();
+            assertThat(after.isUsed()).isFalse();
+        }
+
+        @Test
+        @DisplayName("주문 정보는 실패로 기록된다.")
+        void orderAndPaymentStatusFail_whenPaymentFails() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = Order.of(new OrderCommand.Order(1L, null,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L));
+            order.pending();
+            Order savedOrder = orderRepository.save(order);
+
+            orderFacade.failPayment(new OrderCriteria.FailPayment(savedOrder.getId()));
+
+            Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
+            assertThat(updatedOrder.getStatus()).isEqualTo(Order.OrderStatus.PAYMENT_FAILED);
+        }
+    }
 }

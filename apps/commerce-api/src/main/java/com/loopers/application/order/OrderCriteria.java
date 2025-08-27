@@ -63,6 +63,12 @@ public class OrderCriteria {
     ) {
     }
 
+    public record Success(
+            UUID orderId,
+            String transactionKey
+    ) {
+    }
+
     public record Get(
             Long userId,
             UUID orderId
@@ -76,6 +82,11 @@ public class OrderCriteria {
 
     public record Expire(
             ZonedDateTime time
+    ) {
+    }
+
+    public record FailPayment(
+            UUID orderId
     ) {
     }
 }

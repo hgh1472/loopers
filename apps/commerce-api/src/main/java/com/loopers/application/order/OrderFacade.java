@@ -14,8 +14,6 @@ import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,6 +89,15 @@ public class OrderFacade {
             if (orderInfo.couponId() == null) {
                 continue;
             }
+            couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
+        }
+    }
+
+    @Transactional
+    public void failPayment(OrderCriteria.FailPayment criteria) {
+        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
+        orderService.fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.PAYMENT_FAILED));
+        if (orderInfo.couponId() != null) {
             couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
         }
     }
