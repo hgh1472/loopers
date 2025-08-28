@@ -1,5 +1,6 @@
 package com.loopers.application.order;
 
+import com.loopers.support.event.UserActivityEvent;
 import java.util.List;
 import java.util.UUID;
 
@@ -8,7 +9,7 @@ public class OrderApplicationEvent {
             UUID orderId,
             Long userId,
             Long couponId
-    ) {
+    ) implements UserActivityEvent {
     }
 
     public record Refund(
