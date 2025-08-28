@@ -5,9 +5,13 @@ import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.point.InsufficientPointException;
+import com.loopers.domain.point.PointCommand;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.stock.InsufficientStockException;
+import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
@@ -26,7 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderFacade {
 
+    private final OrderApplicationEventPublisher orderApplicationEventPublisher;
     private final AmountProcessor amountProcessor;
+    private final ResourceProcessor resourceProcessor;
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
@@ -100,5 +106,27 @@ public class OrderFacade {
         if (orderInfo.couponId() != null) {
             couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
         }
+    }
+
+    @Transactional
+    public void succeedPayment(OrderCriteria.Success criteria) {
+        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
+
+        List<StockCommand.Deduct> stockCommands = orderInfo.lines().stream()
+                .map(line -> new StockCommand.Deduct(line.productId(), line.quantity()))
+                .toList();
+        PointCommand.Use pointCommand = new PointCommand.Use(orderInfo.userId(), orderInfo.payment().pointAmount());
+
+        try {
+            resourceProcessor.deduct(stockCommands, pointCommand);
+        } catch (InsufficientPointException e) {
+            orderApplicationEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
+                    criteria.transactionKey(), orderInfo.userId(), OrderApplicationEvent.Refund.Reason.POINT_EXHAUSTED));
+        } catch (InsufficientStockException e) {
+            orderApplicationEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
+                    criteria.transactionKey(), orderInfo.userId(), OrderApplicationEvent.Refund.Reason.OUT_OF_STOCK));
+        }
+
+        orderService.paid(new OrderCommand.Paid(orderInfo.id()));
     }
 }

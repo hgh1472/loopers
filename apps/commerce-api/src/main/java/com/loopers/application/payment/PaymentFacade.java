@@ -1,5 +1,6 @@
 package com.loopers.application.payment;
 
+import com.loopers.domain.coupon.CouponCommand;
 import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
@@ -30,5 +31,20 @@ public class PaymentFacade {
             orderService.pending(new OrderCommand.Pending(orderInfo.id()));
         }
         return PaymentResult.from(paymentInfo);
+    }
+
+    @Transactional
+    public void refund(PaymentCriteria.Refund criteria) {
+        if (criteria.couponId() != null) {
+            couponService.restore(new CouponCommand.Restore(criteria.couponId(), criteria.userId()));
+        }
+
+        paymentService.refund(new PaymentCommand.Refund(criteria.transactionKey()));
+
+        OrderCommand.Fail.Reason reason = switch (criteria.reason()) {
+            case OUT_OF_STOCK -> OrderCommand.Fail.Reason.OUT_OF_STOCK;
+            case POINT_EXHAUSTED -> OrderCommand.Fail.Reason.POINT_EXHAUSTED;
+        };
+        orderService.fail(new OrderCommand.Fail(criteria.orderId(), reason));
     }
 }

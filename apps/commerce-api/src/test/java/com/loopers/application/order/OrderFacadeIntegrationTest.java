@@ -23,6 +23,9 @@ import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.stock.Stock;
+import com.loopers.domain.stock.StockCommand;
+import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
@@ -62,6 +65,8 @@ class OrderFacadeIntegrationTest {
     private OrderRepository orderRepository;
     @Autowired
     private PointRepository pointRepository;
+    @Autowired
+    private StockRepository stockRepository;
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
     @MockitoBean
@@ -413,6 +418,32 @@ class OrderFacadeIntegrationTest {
 
             Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
             assertThat(updatedOrder.getStatus()).isEqualTo(Order.OrderStatus.PAYMENT_FAILED);
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 결제 완료 처리 시,")
+    class SucceedPayment {
+
+        @Test
+        @DisplayName("주문 상태는 PAID로 변경된다.")
+        void orderAndPaymentStatusCompleted_whenPaymentSucceed() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = Order.of(new OrderCommand.Order(1L, null,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L));
+            order.pending();
+            Order savedOrder = orderRepository.save(order);
+            stockRepository.save(Stock.create(new StockCommand.Create(1L, 10L)));
+            Point point = Point.from(1L);
+            point.charge(10000L);
+            pointRepository.save(point);
+
+            orderFacade.succeedPayment(new OrderCriteria.Success(savedOrder.getId(), "TX-KEY"));
+
+            Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
+            assertThat(updatedOrder.getStatus()).isEqualTo(Order.OrderStatus.PAID);
         }
     }
 }

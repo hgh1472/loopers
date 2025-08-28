@@ -2,7 +2,6 @@ package com.loopers.interfaces.event.order;
 
 import com.loopers.application.order.OrderCriteria;
 import com.loopers.application.order.OrderFacade;
-import com.loopers.application.order.SuccessProcessor;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderEvent;
 import com.loopers.domain.order.OrderService;
@@ -19,7 +18,6 @@ public class OrderEventListener {
 
     private final OrderService orderService;
     private final OrderFacade orderFacade;
-    private final SuccessProcessor successProcessor;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -30,7 +28,7 @@ public class OrderEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PaymentEvent.Success event) {
-        successProcessor.success(new OrderCriteria.Success(event.orderId(), event.transactionKey()));
+        orderFacade.succeedPayment(new OrderCriteria.Success(event.orderId(), event.transactionKey()));
     }
 
     @Async

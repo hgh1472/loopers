@@ -71,4 +71,10 @@ class PaymentFacadeIntegrationTest {
             assertThat(afterOrder.getStatus()).isEqualTo(Order.OrderStatus.PENDING);
         }
     }
+
+    @Nested
+    @DisplayName("환불 처리 시,")
+    class Refund {
+
+    }
 }
