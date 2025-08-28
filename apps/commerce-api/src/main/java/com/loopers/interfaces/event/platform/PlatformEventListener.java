@@ -1,7 +1,6 @@
 package com.loopers.interfaces.event.platform;
 
 import com.loopers.application.order.OrderApplicationEvent;
-import com.loopers.domain.order.OrderEvent;
 import com.loopers.domain.payment.PaymentEvent;
 import com.loopers.domain.platform.DataPlatformService;
 import com.loopers.domain.platform.PlatformCommand;
@@ -19,7 +18,7 @@ public class PlatformEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(OrderEvent.Created event) {
+    public void handle(OrderApplicationEvent.Created event) {
         dataPlatformService.send(new PlatformCommand.Order(event.orderId(), PlatformCommand.Order.Status.CREATED));
     }
 

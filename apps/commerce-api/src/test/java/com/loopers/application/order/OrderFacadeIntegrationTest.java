@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.coupon.DiscountPolicy;
@@ -49,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
 class OrderFacadeIntegrationTest {
@@ -71,6 +74,8 @@ class OrderFacadeIntegrationTest {
     private DatabaseCleanUp databaseCleanUp;
     @MockitoBean
     private PaymentGateway paymentGateway;
+    @MockitoSpyBean
+    private OrderEventPublisher orderEventPublisher;
 
     @BeforeEach
     void setUp() {
@@ -244,6 +249,32 @@ class OrderFacadeIntegrationTest {
                     () -> assertThat(orderResult.payment().originalAmount()).isEqualTo(new BigDecimal("7000")),
                     () -> assertThat(orderResult.payment().paymentAmount()).isEqualTo(new BigDecimal("6000"))
             );
+        }
+
+        @DisplayName("주문 생성 이벤트를 발행한다.")
+        @Test
+        void publishOrderCreatedEvent() {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            point.charge(10000L);
+            pointRepository.save(point);
+            Long couponId = 1L;
+            couponRepository.save(UserCoupon.of(user.getId(), couponId, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10)));
+            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
+
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId, 0L));
+
+            verify(orderEventPublisher, times(1))
+                    .publish(new OrderApplicationEvent.Created(orderResult.id(), user.getId(), couponId));
         }
     }
 

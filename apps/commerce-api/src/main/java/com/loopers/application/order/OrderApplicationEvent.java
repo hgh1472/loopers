@@ -4,6 +4,13 @@ import java.util.List;
 import java.util.UUID;
 
 public class OrderApplicationEvent {
+    public record Created(
+            UUID orderId,
+            Long userId,
+            Long couponId
+    ) {
+    }
+
     public record Refund(
             UUID orderId,
             Long couponId,
