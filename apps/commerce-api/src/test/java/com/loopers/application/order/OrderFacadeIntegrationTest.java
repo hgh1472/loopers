@@ -408,6 +408,29 @@ class OrderFacadeIntegrationTest {
                     () -> assertThat(restoredUserCoupon.isUsed()).isFalse()
             );
         }
+
+        @Test
+        @DisplayName("주문 만료 이벤트가 발행된다.")
+        void publishOrderExpiredEvent() {
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항");
+            List<OrderCommand.Line> orderLines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00")));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
+            Order order = orderRepository.save(Order.of(cmd));
+
+            ZonedDateTime time = ZonedDateTime.now();
+            orderFacade.cancelCreatedOrdersBefore(new OrderCriteria.Expire(time));
+
+            verify(orderEventPublisher, times(1))
+                    .publish(new OrderApplicationEvent.Expired(List.of(order.getId())));
+        }
     }
 
     @Nested

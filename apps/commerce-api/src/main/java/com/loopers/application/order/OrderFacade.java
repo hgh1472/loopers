@@ -99,6 +99,7 @@ public class OrderFacade {
             }
             couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
         }
+        orderEventPublisher.publish(new OrderApplicationEvent.Expired(expiredOrderInfos.stream().map(OrderInfo::id).toList()));
     }
 
     @Transactional
