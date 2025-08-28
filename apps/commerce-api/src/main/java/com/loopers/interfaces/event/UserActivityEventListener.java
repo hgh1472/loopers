@@ -1,6 +1,7 @@
 package com.loopers.interfaces.event;
 
 import com.loopers.support.event.UserActivityEvent;
+import java.time.ZonedDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +17,6 @@ public class UserActivityEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(UserActivityEvent event) {
-        log.info("{} : {}", event.getClass(), event.userId());
+        log.info("{} :UserActivityEvent-{}", ZonedDateTime.now(), event.toString());
     }
 }
