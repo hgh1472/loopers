@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
 import java.util.Set;
@@ -22,9 +24,10 @@ class ProductLikeServiceTest {
 
     @InjectMocks
     private ProductLikeService productLikeService;
-
     @Mock
     private ProductLikeRepository productLikeRepository;
+    @Mock
+    private LikeEventPublisher likeEventPublisher;
 
     @Nested
     @DisplayName("유저의 상품 좋아요 여부 조회 시,")
@@ -97,6 +100,20 @@ class ProductLikeServiceTest {
                     () -> assertThat(actionInfo.changed()).isTrue()
             );
         }
+
+        @DisplayName("좋아요가 존재하지 않을 경우, LikeEvent.Liked 이벤트를 발행한다.")
+        @Test
+        void publishLikeEvent_whenProductLikeCreated() {
+            ProductLikeCommand.Create command = new ProductLikeCommand.Create(1L, 1L);
+            ProductLike productLike = ProductLike.create(command);
+            given(productLikeRepository.save(any(ProductLike.class)))
+                    .willReturn(productLike);
+
+            productLikeService.like(command);
+
+            verify(likeEventPublisher, times(1))
+                    .publish(new LikeEvent.Liked(productLike.getProductId(), productLike.getUserId()));
+        }
     }
 
     @Nested
@@ -148,6 +165,19 @@ class ProductLikeServiceTest {
                     () -> assertThat(actionInfo.userId()).isEqualTo(command.userId()),
                     () -> assertThat(actionInfo.changed()).isTrue()
             );
+        }
+
+        @DisplayName("좋아요가 존재할 경우, LikeEvent.LikeCancelled 이벤트를 발행한다.")
+        @Test
+        void publishLikeCancelledEvent_whenProductLikeExists() {
+            ProductLikeCommand.Delete command = new ProductLikeCommand.Delete(1L, 1L);
+            given(productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId()))
+                    .willReturn(true);
+
+            productLikeService.cancelLike(command);
+
+            verify(likeEventPublisher, times(1))
+                    .publish(new LikeEvent.LikeCanceled(command.productId(), command.userId()));
         }
     }
 
