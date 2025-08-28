@@ -1,6 +1,7 @@
 package com.loopers.infrastructure.order;
 
 import com.loopers.application.order.OrderApplicationEvent;
+import com.loopers.application.order.OrderApplicationEvent.Paid;
 import com.loopers.application.order.OrderApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -19,6 +20,11 @@ public class OrderCoreApplicationEventPublisher implements OrderApplicationEvent
 
     @Override
     public void publish(OrderApplicationEvent.Expired event) {
+        eventPublisher.publishEvent(event);
+    }
+
+    @Override
+    public void publish(OrderApplicationEvent.Paid event) {
         eventPublisher.publishEvent(event);
     }
 }

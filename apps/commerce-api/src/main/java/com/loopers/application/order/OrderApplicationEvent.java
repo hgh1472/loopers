@@ -21,4 +21,10 @@ public class OrderApplicationEvent {
             List<UUID> orderIds
     ) {
     }
+
+    public record Paid(
+            UUID orderId,
+            String transactionKey
+    ) {
+    }
 }

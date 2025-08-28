@@ -128,5 +128,6 @@ public class OrderFacade {
         }
 
         orderService.paid(new OrderCommand.Paid(orderInfo.id()));
+        orderApplicationEventPublisher.publish(new OrderApplicationEvent.Paid(orderInfo.id(), criteria.transactionKey()));
     }
 }

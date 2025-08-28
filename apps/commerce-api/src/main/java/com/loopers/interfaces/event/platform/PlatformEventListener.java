@@ -45,4 +45,10 @@ public class PlatformEventListener {
                 .toList();
         dataPlatformService.send(commands);
     }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handle(OrderApplicationEvent.Paid event) {
+        dataPlatformService.send(new PlatformCommand.Order(event.orderId(), PlatformCommand.Order.Status.PAID));
+    }
 }
