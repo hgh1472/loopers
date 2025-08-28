@@ -19,4 +19,10 @@ public class CountEventListener {
     void handle(LikeEvent.Liked event) {
         productCountService.incrementLike(new ProductCountCommand.Increment(event.productId()));
     }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    void handle(LikeEvent.LikeCanceled event) {
+        productCountService.decrementLike(new ProductCountCommand.Decrement(event.productId()));
+    }
 }

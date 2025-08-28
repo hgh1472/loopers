@@ -31,6 +31,9 @@ public class ProductLikeService {
     @Transactional
     public LikeInfo.ProductAction cancelLike(ProductLikeCommand.Delete command) {
         boolean deleted = productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId());
+        if (deleted) {
+            likeEventPublisher.publish(new LikeEvent.LikeCanceled(command.productId(), command.userId()));
+        }
         return new LikeInfo.ProductAction(command.productId(), command.userId(), deleted);
     }
 

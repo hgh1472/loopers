@@ -126,27 +126,6 @@ class LikeFacadeIntegrationTest {
                     () -> assertThat(after.get().getLikeCount()).isEqualTo(before.getLikeCount())
             );
         }
-
-        @DisplayName("좋아요가 취소되고, 상품 좋아요 수가 감소한다.")
-        @Test
-        void cancelLike() {
-            User user = userRepository.save(User.create(new UserCommand.Join("LoginId", "hgh1472@loopers.im", "1999-06-23", "MALE")));
-            Product product = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product", new BigDecimal("2000"), "ON_SALE")));
-            ProductCount before = ProductCount.from(product.getId());
-            before.incrementLike();
-            productCountRepository.save(before);
-            productLikeRepository.save(ProductLike.create(new ProductLikeCommand.Create(product.getId(), user.getId())));
-
-            LikeResult.Product result = likeFacade.cancelLike(new LikeCriteria.Product(product.getId(), user.getId()));
-
-            boolean likeExists = productLikeRepository.existsByProductIdAndUserId(result.productId(), result.userId());
-            Optional<ProductCount> after = productCountRepository.findBy(product.getId());
-            assertAll(
-                    () -> assertThat(after).isPresent(),
-                    () -> assertThat(likeExists).isFalse(),
-                    () -> assertThat(after.get().getLikeCount()).isEqualTo(before.getLikeCount() - 1)
-            );
-        }
     }
 
     @Nested

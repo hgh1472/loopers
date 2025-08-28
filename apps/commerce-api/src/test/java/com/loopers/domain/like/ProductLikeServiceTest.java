@@ -166,6 +166,19 @@ class ProductLikeServiceTest {
                     () -> assertThat(actionInfo.changed()).isTrue()
             );
         }
+
+        @DisplayName("좋아요가 존재할 경우, LikeEvent.LikeCancelled 이벤트를 발행한다.")
+        @Test
+        void publishLikeCancelledEvent_whenProductLikeExists() {
+            ProductLikeCommand.Delete command = new ProductLikeCommand.Delete(1L, 1L);
+            given(productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId()))
+                    .willReturn(true);
+
+            productLikeService.cancelLike(command);
+
+            verify(likeEventPublisher, times(1))
+                    .publish(new LikeEvent.LikeCanceled(command.productId(), command.userId()));
+        }
     }
 
     @Nested
