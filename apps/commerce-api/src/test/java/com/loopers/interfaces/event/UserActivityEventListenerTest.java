@@ -6,7 +6,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.like.LikeEvent;
-import com.loopers.domain.like.ProductLikeService;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -27,11 +25,7 @@ class UserActivityEventListenerTest {
     @MockitoSpyBean
     private UserActivityEventListener userActivityEventListener;
     @Autowired
-    private ProductLikeService productLikeService;
-    @Autowired
     private ApplicationEventPublisher eventPublisher;
-    @Autowired
-    private ApplicationEvents events;
     @Autowired
     private PlatformTransactionManager transactionManager;
 
