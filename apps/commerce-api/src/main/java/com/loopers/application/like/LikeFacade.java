@@ -34,9 +34,6 @@ public class LikeFacade {
     public LikeResult.Product like(LikeCriteria.Product criteria) {
         validateProductCriteria(criteria);
         LikeInfo.ProductAction actionInfo = productLikeService.like(criteria.toLikeCreateCommand());
-        if (actionInfo.changed()) {
-            productCountService.incrementLike(new ProductCountCommand.Increment(criteria.productId()));
-        }
         return LikeResult.Product.from(actionInfo);
     }
 
