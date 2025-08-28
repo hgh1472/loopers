@@ -4,8 +4,8 @@ import static org.mockito.BDDMockito.any;
 import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.verify;
 
+import com.loopers.application.order.OrderApplicationEvent;
 import com.loopers.domain.coupon.CouponService;
-import com.loopers.domain.order.OrderEvent;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +30,7 @@ class CouponEventListenerTest {
         @Test
         @DisplayName("쿠폰 ID가 null일 경우, 쿠폰을 사용하지 않는다.")
         void doNotUseCoupon_whenCouponIdIsNull() {
-            couponEventListener.handle(new OrderEvent.Created(UUID.randomUUID(), 1L, null));
+            couponEventListener.handle(new OrderApplicationEvent.Created(UUID.randomUUID(), 1L, null));
 
             verify(couponService, never()).use(any());
         }

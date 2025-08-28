@@ -1,8 +1,16 @@
 package com.loopers.application.order;
 
+import java.util.List;
 import java.util.UUID;
 
 public class OrderApplicationEvent {
+    public record Created(
+            UUID orderId,
+            Long userId,
+            Long couponId
+    ) {
+    }
+
     public record Refund(
             UUID orderId,
             Long couponId,
@@ -14,5 +22,16 @@ public class OrderApplicationEvent {
             OUT_OF_STOCK,
             POINT_EXHAUSTED
         }
+    }
+
+    public record Expired(
+            List<UUID> orderIds
+    ) {
+    }
+
+    public record Paid(
+            UUID orderId,
+            String transactionKey
+    ) {
     }
 }

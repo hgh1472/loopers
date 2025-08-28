@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderFacade {
 
-    private final OrderApplicationEventPublisher orderApplicationEventPublisher;
+    private final OrderEventPublisher orderEventPublisher;
     private final AmountProcessor amountProcessor;
     private final ResourceProcessor resourceProcessor;
     private final UserService userService;
@@ -59,6 +59,8 @@ public class OrderFacade {
                 criteria.point());
 
         OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, criteria.couponId(), amountResult));
+        orderEventPublisher.publish(new OrderApplicationEvent.Created(orderInfo.id(), orderInfo.userId(), orderInfo.couponId()));
+
         return OrderResult.from(orderInfo);
     }
 
@@ -120,13 +122,14 @@ public class OrderFacade {
         try {
             resourceProcessor.deduct(stockCommands, pointCommand);
         } catch (InsufficientPointException e) {
-            orderApplicationEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
+            orderEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
                     criteria.transactionKey(), orderInfo.userId(), OrderApplicationEvent.Refund.Reason.POINT_EXHAUSTED));
         } catch (InsufficientStockException e) {
-            orderApplicationEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
+            orderEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
                     criteria.transactionKey(), orderInfo.userId(), OrderApplicationEvent.Refund.Reason.OUT_OF_STOCK));
         }
 
         orderService.paid(new OrderCommand.Paid(orderInfo.id()));
+        orderEventPublisher.publish(new OrderApplicationEvent.Paid(orderInfo.id(), criteria.transactionKey()));
     }
 }

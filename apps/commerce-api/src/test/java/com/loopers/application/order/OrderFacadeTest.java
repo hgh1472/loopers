@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
-import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.point.InsufficientPointException;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
@@ -33,7 +32,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,7 +42,7 @@ class OrderFacadeTest {
     @InjectMocks
     private OrderFacade orderFacade;
     @Mock
-    private OrderApplicationEventPublisher orderApplicationEventPublisher;
+    private OrderEventPublisher orderEventPublisher;
     @Mock
     private AmountProcessor amountProcessor;
     @Mock
@@ -120,7 +118,7 @@ class OrderFacadeTest {
 
             orderFacade.succeedPayment(criteria);
 
-            verify(orderApplicationEventPublisher, times(1))
+            verify(orderEventPublisher, times(1))
                     .publish(new OrderApplicationEvent.Refund(orderId, 1L, "TX-KEY", 1L, OrderApplicationEvent.Refund.Reason.OUT_OF_STOCK));
         }
 
@@ -140,7 +138,7 @@ class OrderFacadeTest {
 
             orderFacade.succeedPayment(criteria);
 
-            verify(orderApplicationEventPublisher, times(1))
+            verify(orderEventPublisher, times(1))
                     .publish(new OrderApplicationEvent.Refund(orderId, 1L, "TX-KEY", 1L, OrderApplicationEvent.Refund.Reason.POINT_EXHAUSTED));
         }
     }

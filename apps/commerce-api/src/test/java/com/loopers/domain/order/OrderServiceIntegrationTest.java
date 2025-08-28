@@ -1,6 +1,5 @@
 package com.loopers.domain.order;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 
 @SpringBootTest
@@ -25,8 +23,6 @@ class OrderServiceIntegrationTest {
     private OrderService orderService;
     @Autowired
     private OrderRepository orderRepository;
-    @Autowired
-    private ApplicationEvents applicationEvents;
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
 
@@ -84,29 +80,6 @@ class OrderServiceIntegrationTest {
             OrderInfo orderInfo = orderService.order(command);
 
             assertThat(orderInfo.orderStatus()).isEqualTo("CREATED");
-        }
-
-        @Test
-        @DisplayName("주문 생성 시, 주문 생성 이벤트가 발행된다.")
-        void publishOrderCreatedEvent() {
-            List<OrderCommand.Line> lines = List.of(
-                    new OrderCommand.Line(1L, 2L, BigDecimal.valueOf(1000L)),
-                    new OrderCommand.Line(2L, 3L, BigDecimal.valueOf(2000L))
-            );
-            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
-                    "홍길동",
-                    "010-1234-5678",
-                    "서울시 강남구 역삼동 123-456",
-                    "101호",
-                    "배송 요청사항"
-            );
-            OrderCommand.Order command = new OrderCommand.Order(1L, null, lines, delivery, BigDecimal.valueOf(3000), BigDecimal.valueOf(2000), 0L);
-
-            OrderInfo orderInfo = orderService.order(command);
-
-            List<OrderEvent.Created> events = applicationEvents.stream(OrderEvent.Created.class)
-                    .toList();
-            assertThat(events.size()).isEqualTo(1);
         }
     }
 
