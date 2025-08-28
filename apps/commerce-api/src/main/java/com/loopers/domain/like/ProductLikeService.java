@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -16,7 +15,7 @@ public class ProductLikeService {
     private final LikeEventPublisher likeEventPublisher;
     private final ProductLikeRepository productLikeRepository;
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional
     public LikeInfo.ProductAction like(ProductLikeCommand.Create command) {
         ProductLike productLike = ProductLike.create(command);
         try {

@@ -24,9 +24,10 @@ class PointServiceTest {
 
     @InjectMocks
     private PointService pointService;
-
     @Mock
     private PointRepository pointRepository;
+    @Mock
+    private PointEventPublisher pointEventPublisher;
 
     @Nested
     @DisplayName("포인트를 생성할 때,")
@@ -113,6 +114,22 @@ class PointServiceTest {
                                     && history.getType().equals(PointHistory.Type.CHARGED))
                     );
         }
+
+        @Test
+        @DisplayName("포인트 충전 이벤트를 발행한다.")
+        void publishEvent_afterCharged() {
+            long userId = 1L;
+            long chargePoint = 1000L;
+            Point point = Point.from(userId);
+
+            given(pointRepository.findByUserIdWithLock(userId))
+                    .willReturn(Optional.of(point));
+
+            pointService.charge(new PointCommand.Charge(userId, chargePoint));
+
+            verify(pointEventPublisher, times(1))
+                    .publish(new PointEvent.Charged(userId, chargePoint));
+        }
     }
 
     @Nested
@@ -169,6 +186,24 @@ class PointServiceTest {
                                     && history.getAmount().equals(usePoint)
                                     && history.getType().equals(PointHistory.Type.USED))
                     );
+        }
+
+        @Test
+        @DisplayName("포인트 사용 이벤트를 발행한다.")
+        void publishEvent_afterUsed() throws InsufficientPointException {
+            long userId = 1L;
+            long initialPoint = 1000L;
+            long usePoint = 300L;
+            Point point = Point.from(userId);
+            point.charge(initialPoint);
+
+            given(pointRepository.findByUserIdWithLock(userId))
+                    .willReturn(Optional.of(point));
+
+            pointService.use(new PointCommand.Use(userId, usePoint));
+
+            verify(pointEventPublisher, times(1))
+                    .publish(new PointEvent.Used(userId, usePoint));
         }
     }
 }

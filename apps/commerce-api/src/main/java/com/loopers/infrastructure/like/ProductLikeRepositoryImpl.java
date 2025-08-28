@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -14,6 +16,7 @@ public class ProductLikeRepositoryImpl implements ProductLikeRepository {
     private final ProductLikeJpaRepository productLikeJpaRepository;
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProductLike save(ProductLike productLike) {
         return productLikeJpaRepository.save(productLike);
     }
