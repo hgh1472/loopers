@@ -1,5 +1,6 @@
 package com.loopers.domain.platform;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,10 @@ public class DataPlatformService {
 
     public void send(PlatformCommand.Order command) {
         dataPlatformGateway.send(command);
+    }
+
+    public void send(List<PlatformCommand.Order> commands) {
+        commands.forEach(dataPlatformGateway::send);
     }
 
     public void send(PlatformCommand.Payment command) {

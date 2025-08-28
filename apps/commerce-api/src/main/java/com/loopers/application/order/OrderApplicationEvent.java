@@ -1,5 +1,6 @@
 package com.loopers.application.order;
 
+import java.util.List;
 import java.util.UUID;
 
 public class OrderApplicationEvent {
@@ -14,5 +15,10 @@ public class OrderApplicationEvent {
             OUT_OF_STOCK,
             POINT_EXHAUSTED
         }
+    }
+
+    public record Expired(
+            List<UUID> orderIds
+    ) {
     }
 }

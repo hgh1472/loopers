@@ -9,7 +9,7 @@ public class PlatformCommand {
             Order.Status status
     ) {
         public enum Status {
-            CREATED, FAILED, PAID
+            CREATED, FAILED, PAID, EXPIRED
         }
     }
 

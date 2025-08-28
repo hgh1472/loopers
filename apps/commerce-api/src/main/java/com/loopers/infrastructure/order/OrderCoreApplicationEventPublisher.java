@@ -1,6 +1,6 @@
 package com.loopers.infrastructure.order;
 
-import com.loopers.application.order.OrderApplicationEvent.Refund;
+import com.loopers.application.order.OrderApplicationEvent;
 import com.loopers.application.order.OrderApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -13,7 +13,12 @@ public class OrderCoreApplicationEventPublisher implements OrderApplicationEvent
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public void publish(Refund event) {
+    public void publish(OrderApplicationEvent.Refund event) {
+        eventPublisher.publishEvent(event);
+    }
+
+    @Override
+    public void publish(OrderApplicationEvent.Expired event) {
         eventPublisher.publishEvent(event);
     }
 }
