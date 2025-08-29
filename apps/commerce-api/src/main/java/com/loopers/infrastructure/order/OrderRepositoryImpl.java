@@ -2,6 +2,7 @@ package com.loopers.infrastructure.order;
 
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderRepository;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,5 +28,10 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public List<Order> findAllByUserId(Long userId) {
         return orderJpaRepository.findAllByUserId(userId);
+    }
+
+    @Override
+    public List<Order> findCreatedOrdersBefore(ZonedDateTime zonedDateTime) {
+        return orderJpaRepository.findOrdersByCreatedAtBeforeAndStatus(zonedDateTime, Order.OrderStatus.CREATED);
     }
 }

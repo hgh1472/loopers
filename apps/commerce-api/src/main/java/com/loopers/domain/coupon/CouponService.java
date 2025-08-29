@@ -2,12 +2,13 @@ package com.loopers.domain.coupon;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,20 +30,27 @@ public class CouponService {
     }
 
     @Transactional
-    public UserCouponInfo.Use use(CouponCommand.Use command) {
-        UserCoupon userCoupon = couponRepository.findUserCoupon(command.couponId(), command.userId())
+    public UserCouponInfo use(CouponCommand.Use command) {
+        UserCoupon userCoupon = couponRepository.findUserCouponWithLock(command.couponId(), command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
-        DiscountStrategy discountStrategy = discountPolicyAdapter.from(userCoupon.getDiscountPolicy());
-        BigDecimal paymentAmount = discountStrategy.discount(command.originalAmount());
         userCoupon.use(LocalDateTime.now());
-        return new UserCouponInfo.Use(userCoupon.getId(), command.originalAmount(), paymentAmount);
+        return UserCouponInfo.from(userCoupon);
     }
 
     @Transactional
     public UserCouponInfo restore(CouponCommand.Restore command) {
-        UserCoupon userCoupon = couponRepository.findUserCoupon(command.couponId(), command.userId())
+        UserCoupon userCoupon = couponRepository.findUserCouponWithLock(command.couponId(), command.userId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
         userCoupon.restore();
         return UserCouponInfo.from(userCoupon);
+    }
+
+    @Transactional
+    public UserCouponInfo.Preview preview(CouponCommand.Preview command) {
+        UserCoupon userCoupon = couponRepository.findUserCoupon(command.couponId(), command.userId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 소유하고 있지 않습니다."));
+        DiscountStrategy discountStrategy = discountPolicyAdapter.from(userCoupon.getDiscountPolicy());
+        BigDecimal discountAmount = discountStrategy.discount(command.originalAmount()).setScale(0, RoundingMode.FLOOR);
+        return new UserCouponInfo.Preview(userCoupon.getId(), discountAmount);
     }
 }

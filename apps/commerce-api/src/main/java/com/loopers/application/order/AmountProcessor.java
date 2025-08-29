@@ -24,12 +24,11 @@ public class AmountProcessor {
 
     public AmountResult applyDiscount(Long couponId, Long userId, List<OrderCommand.Line> lines, Long pointAmount) {
         BigDecimal originalAmount = calculateOriginalAmountOf(lines);
-        BigDecimal paymentAmount = originalAmount;
+        BigDecimal discountAmount = BigDecimal.ZERO;
         if (couponId != null) {
-            UserCouponInfo.Use useInfo = couponService.use(new CouponCommand.Use(couponId, userId, originalAmount));
-            paymentAmount = useInfo.paymentAmount();
+            UserCouponInfo.Preview preview = couponService.preview(new CouponCommand.Preview(couponId, userId, originalAmount));
+            discountAmount = discountAmount.add(preview.discountAmount());
         }
-        BigDecimal discountAmount = originalAmount.subtract(paymentAmount);
 
         if (pointAmount == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용할 포인트에 대한 정보가 존재하지 않습니다.");
@@ -44,9 +43,7 @@ public class AmountProcessor {
         if (pointInfo.amount() < pointAmount) {
             throw new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다.");
         }
-
-        pointAmount = Math.min(pointAmount, paymentAmount.longValue());
-        paymentAmount = paymentAmount.subtract(BigDecimal.valueOf(pointAmount)).max(BigDecimal.ZERO);
+        pointAmount = Math.min(pointAmount, originalAmount.subtract(discountAmount).longValue());
         return new AmountResult(originalAmount, discountAmount, pointAmount);
     }
 

@@ -13,7 +13,6 @@ public class RateDiscountStrategy implements DiscountStrategy {
 
     @Override
     public BigDecimal discount(BigDecimal amount) {
-        BigDecimal discount = amount.multiply(rate);
-        return amount.subtract(discount).setScale(0, RoundingMode.FLOOR);
+        return amount.multiply(rate).setScale(0, RoundingMode.FLOOR);
     }
 }

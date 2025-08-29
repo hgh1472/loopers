@@ -1,6 +1,7 @@
 package com.loopers.domain.order;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,5 +72,11 @@ public class OrderCommand {
     }
 
     public record Pending(UUID orderId) {
+    }
+
+    public record Expire(ZonedDateTime time) {
+    }
+
+    public record Send(UUID orderId) {
     }
 }

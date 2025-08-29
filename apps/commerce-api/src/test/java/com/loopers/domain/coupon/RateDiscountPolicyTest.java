@@ -18,6 +18,6 @@ class RateDiscountPolicyTest {
 
         BigDecimal paymentAmount = rateDiscountPolicy.discount(amount);
 
-        assertThat(paymentAmount).isEqualTo(new BigDecimal("900"));
+        assertThat(paymentAmount).isEqualTo(new BigDecimal("100"));
     }
 }

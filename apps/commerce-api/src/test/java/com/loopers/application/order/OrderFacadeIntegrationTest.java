@@ -6,12 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.coupon.DiscountPolicy;
 import com.loopers.domain.coupon.DiscountPolicy.Type;
 import com.loopers.domain.coupon.UserCoupon;
 import com.loopers.domain.order.Order;
+import com.loopers.domain.order.Order.OrderStatus;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderRepository;
@@ -22,6 +25,9 @@ import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.stock.Stock;
+import com.loopers.domain.stock.StockCommand;
+import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
@@ -30,6 +36,7 @@ import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
 class OrderFacadeIntegrationTest {
@@ -61,9 +69,13 @@ class OrderFacadeIntegrationTest {
     @Autowired
     private PointRepository pointRepository;
     @Autowired
+    private StockRepository stockRepository;
+    @Autowired
     private DatabaseCleanUp databaseCleanUp;
     @MockitoBean
     private PaymentGateway paymentGateway;
+    @MockitoSpyBean
+    private OrderEventPublisher orderEventPublisher;
 
     @BeforeEach
     void setUp() {
@@ -238,6 +250,32 @@ class OrderFacadeIntegrationTest {
                     () -> assertThat(orderResult.payment().paymentAmount()).isEqualTo(new BigDecimal("6000"))
             );
         }
+
+        @DisplayName("주문 생성 이벤트를 발행한다.")
+        @Test
+        void publishOrderCreatedEvent() {
+            User user = userRepository.save(User.create(new UserCommand.Join("test1", "hgh1472@loopers.im", "1999-06-23", "MALE")));
+            Point point = Point.from(user.getId());
+            point.charge(10000L);
+            pointRepository.save(point);
+            Long couponId = 1L;
+            couponRepository.save(UserCoupon.of(user.getId(), couponId, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10)));
+            Product product1 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product1", new BigDecimal("1000.00"), "ON_SALE")));
+            Product product2 = productRepository.save(Product.create(new ProductCommand.Create(1L, "Test Product2", new BigDecimal("2000.00"), "ON_SALE")));
+            OrderCriteria.Delivery delivery = new OrderCriteria.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항"
+            );
+            List<OrderCriteria.Line> lines = List.of(new OrderCriteria.Line(product1.getId(), 3L), new OrderCriteria.Line(product2.getId(), 2L));
+
+            OrderResult orderResult = orderFacade.order(new OrderCriteria.Order(user.getId(), lines, delivery, couponId, 0L));
+
+            verify(orderEventPublisher, times(1))
+                    .publish(new OrderApplicationEvent.Created(orderResult.id(), user.getId(), couponId));
+        }
     }
 
     @Nested
@@ -337,6 +375,129 @@ class OrderFacadeIntegrationTest {
                         .usingRecursiveComparison()
                         .isEqualTo(new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 만료 처리 시,")
+    class Expire {
+
+        @Test
+        @DisplayName("만료된 주문은 만료처리 되고, 사용된 쿠폰은 복원된다.")
+        void expireOrders() {
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항");
+            List<OrderCommand.Line> orderLines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00")));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
+            Order order = orderRepository.save(Order.of(cmd));
+
+            ZonedDateTime time = ZonedDateTime.now();
+            orderFacade.cancelCreatedOrdersBefore(new OrderCriteria.Expire(time));
+
+            Order expiredOrder = orderRepository.findById(order.getId()).orElseThrow();
+            UserCoupon restoredUserCoupon = couponRepository.findUserCoupon(1L, 1L).orElseThrow();
+            assertAll(
+                    () -> assertThat(expiredOrder.getStatus()).isEqualTo(OrderStatus.EXPIRED),
+                    () -> assertThat(restoredUserCoupon.isUsed()).isFalse()
+            );
+        }
+
+        @Test
+        @DisplayName("주문 만료 이벤트가 발행된다.")
+        void publishOrderExpiredEvent() {
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(BigDecimal.valueOf(1000), Type.FIXED), LocalDateTime.now().plusDays(10));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "황건하",
+                    "010-1234-5678",
+                    "서울특별시 강남구 테헤란로 123",
+                    "1층 101호",
+                    "요구사항");
+            List<OrderCommand.Line> orderLines = List.of(new OrderCommand.Line(1L, 2L, new BigDecimal("1000.00")));
+            OrderCommand.Order cmd = new OrderCommand.Order(1L, 1L, orderLines, delivery, BigDecimal.valueOf(2000), BigDecimal.valueOf(2000), 0L);
+            Order order = orderRepository.save(Order.of(cmd));
+
+            ZonedDateTime time = ZonedDateTime.now();
+            orderFacade.cancelCreatedOrdersBefore(new OrderCriteria.Expire(time));
+
+            verify(orderEventPublisher, times(1))
+                    .publish(new OrderApplicationEvent.Expired(List.of(order.getId())));
+        }
+    }
+
+    @Nested
+    @DisplayName("결제 실패 처리 시,")
+    class FailPayment {
+
+        @Test
+        @DisplayName("쿠폰을 사용했다면 쿠폰은 복구된다.")
+        void restoreCoupon_whenPaymentFails() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = Order.of(new OrderCommand.Order(1L, 1L,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L));
+            order.pending();
+            Order savedOrder = orderRepository.save(order);
+            UserCoupon userCoupon = UserCoupon.of(1L, 1L, new DiscountPolicy(new BigDecimal("100"), DiscountPolicy.Type.FIXED), LocalDateTime.now().plusHours(1));
+            userCoupon.use(LocalDateTime.now());
+            couponRepository.save(userCoupon);
+
+            orderFacade.failPayment(new OrderCriteria.FailPayment(savedOrder.getId()));
+
+            UserCoupon after = couponRepository.findUserCoupon(1L, 1L).orElseThrow();
+            assertThat(after.isUsed()).isFalse();
+        }
+
+        @Test
+        @DisplayName("주문 정보는 실패로 기록된다.")
+        void orderAndPaymentStatusFail_whenPaymentFails() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = Order.of(new OrderCommand.Order(1L, null,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L));
+            order.pending();
+            Order savedOrder = orderRepository.save(order);
+
+            orderFacade.failPayment(new OrderCriteria.FailPayment(savedOrder.getId()));
+
+            Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
+            assertThat(updatedOrder.getStatus()).isEqualTo(Order.OrderStatus.PAYMENT_FAILED);
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 결제 완료 처리 시,")
+    class SucceedPayment {
+
+        @Test
+        @DisplayName("주문 상태는 PAID로 변경된다.")
+        void orderAndPaymentStatusCompleted_whenPaymentSucceed() {
+            OrderCommand.Delivery delivery = new OrderCommand.Delivery(
+                    "hwang", "010-1234-5678", "서울시 강남구 역삼동 123-45", "12345", "택배");
+            Order order = Order.of(new OrderCommand.Order(1L, null,
+                    List.of(new OrderCommand.Line(1L, 1L, new BigDecimal("1000"))),
+                    delivery, new BigDecimal("1000"), new BigDecimal("100"), 100L));
+            order.pending();
+            Order savedOrder = orderRepository.save(order);
+            stockRepository.save(Stock.create(new StockCommand.Create(1L, 10L)));
+            Point point = Point.from(1L);
+            point.charge(10000L);
+            pointRepository.save(point);
+
+            orderFacade.succeedPayment(new OrderCriteria.Success(savedOrder.getId(), "TX-KEY"));
+
+            Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
+            assertThat(updatedOrder.getStatus()).isEqualTo(Order.OrderStatus.PAID);
         }
     }
 }

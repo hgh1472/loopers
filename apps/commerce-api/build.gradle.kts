@@ -23,4 +23,5 @@ dependencies {
     // test-fixtures
     testImplementation(testFixtures(project(":modules:jpa")))
     testImplementation(testFixtures(project(":modules:redis")))
+    testImplementation("org.awaitility:awaitility:4.2.0")
 }
