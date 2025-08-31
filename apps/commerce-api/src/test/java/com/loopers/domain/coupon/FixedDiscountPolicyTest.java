@@ -17,7 +17,7 @@ class FixedDiscountPolicyTest {
 
         BigDecimal paymentAmount = fixedDiscountPolicy.discount(originalAmount);
 
-        assertThat(paymentAmount).isEqualTo(new BigDecimal("4000"));
+        assertThat(paymentAmount).isEqualTo(new BigDecimal("1000"));
     }
 
 }

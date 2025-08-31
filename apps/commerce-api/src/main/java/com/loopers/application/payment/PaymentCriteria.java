@@ -23,4 +23,16 @@ public class PaymentCriteria {
             String reason
     ) {
     }
+
+    public record Refund(
+            Long userId,
+            Long couponId,
+            UUID orderId,
+            String transactionKey,
+            Reason reason
+    ) {
+        public enum Reason {
+            OUT_OF_STOCK, POINT_EXHAUSTED
+        }
+    }
 }

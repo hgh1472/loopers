@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PointService {
     private final PointRepository pointRepository;
+    private final PointEventPublisher pointEventPublisher;
 
     @Transactional
     public PointInfo initialize(PointCommand.Initialize command) {
@@ -33,6 +34,7 @@ public class PointService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         PointHistory chargeHistory = point.charge(command.amount());
         pointRepository.record(chargeHistory);
+        pointEventPublisher.publish(new PointEvent.Charged(command.userId(), command.amount()));
         return PointInfo.from(point);
     }
 
@@ -42,6 +44,7 @@ public class PointService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다."));
         PointHistory useHistory = point.use(command.amount());
         pointRepository.record(useHistory);
+        pointEventPublisher.publish(new PointEvent.Used(command.userId(), command.amount()));
         return PointInfo.from(point);
     }
 }

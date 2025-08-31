@@ -11,12 +11,6 @@ public record UserCouponInfo(
         LocalDateTime usedAt,
         LocalDateTime expiredAt
 ) {
-    public record Use(
-            Long id,
-            BigDecimal originalAmount,
-            BigDecimal paymentAmount
-    ) {
-    }
 
     public static UserCouponInfo from(UserCoupon userCoupon) {
         return new UserCouponInfo(
@@ -27,5 +21,11 @@ public record UserCouponInfo(
                 userCoupon.getUsedAt(),
                 userCoupon.getExpiredAt()
         );
+    }
+
+    public record Preview(
+            Long id,
+            BigDecimal discountAmount
+    ) {
     }
 }

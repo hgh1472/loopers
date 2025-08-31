@@ -34,9 +34,6 @@ public class LikeFacade {
     public LikeResult.Product like(LikeCriteria.Product criteria) {
         validateProductCriteria(criteria);
         LikeInfo.ProductAction actionInfo = productLikeService.like(criteria.toLikeCreateCommand());
-        if (actionInfo.changed()) {
-            productCountService.incrementLike(new ProductCountCommand.Increment(criteria.productId()));
-        }
         return LikeResult.Product.from(actionInfo);
     }
 
@@ -44,9 +41,6 @@ public class LikeFacade {
     public LikeResult.Product cancelLike(LikeCriteria.Product criteria) {
         validateProductCriteria(criteria);
         LikeInfo.ProductAction actionInfo = productLikeService.cancelLike(criteria.toLikeDeleteCommand());
-        if (actionInfo.changed()) {
-            productCountService.decrementLike(new ProductCountCommand.Decrement(criteria.productId()));
-        }
         return LikeResult.Product.from(actionInfo);
     }
 

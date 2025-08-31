@@ -6,20 +6,21 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class ProductLikeService {
 
+    private final LikeEventPublisher likeEventPublisher;
     private final ProductLikeRepository productLikeRepository;
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional
     public LikeInfo.ProductAction like(ProductLikeCommand.Create command) {
         ProductLike productLike = ProductLike.create(command);
         try {
             productLikeRepository.save(productLike);
+            likeEventPublisher.publish(new LikeEvent.Liked(productLike.getProductId(), productLike.getUserId()));
             return LikeInfo.ProductAction.of(productLike, true);
         } catch (DataIntegrityViolationException e) {
             return LikeInfo.ProductAction.of(productLike, false);
@@ -29,6 +30,9 @@ public class ProductLikeService {
     @Transactional
     public LikeInfo.ProductAction cancelLike(ProductLikeCommand.Delete command) {
         boolean deleted = productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId());
+        if (deleted) {
+            likeEventPublisher.publish(new LikeEvent.LikeCanceled(command.productId(), command.userId()));
+        }
         return new LikeInfo.ProductAction(command.productId(), command.userId(), deleted);
     }
 

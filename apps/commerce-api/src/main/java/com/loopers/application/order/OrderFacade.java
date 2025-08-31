@@ -1,11 +1,17 @@
 package com.loopers.application.order;
 
+import com.loopers.domain.coupon.CouponCommand;
+import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderCommand;
 import com.loopers.domain.order.OrderInfo;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.point.InsufficientPointException;
+import com.loopers.domain.point.PointCommand;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.stock.InsufficientStockException;
+import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
@@ -24,10 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderFacade {
 
+    private final OrderEventPublisher orderEventPublisher;
     private final AmountProcessor amountProcessor;
+    private final ResourceProcessor resourceProcessor;
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final CouponService couponService;
 
     @Transactional
     public OrderResult order(OrderCriteria.Order criteria) {
@@ -50,6 +59,8 @@ public class OrderFacade {
                 criteria.point());
 
         OrderInfo orderInfo = orderService.order(criteria.toOrderCommandWith(lines, criteria.couponId(), amountResult));
+        orderEventPublisher.publish(new OrderApplicationEvent.Created(orderInfo.id(), orderInfo.userId(), orderInfo.couponId()));
+
         return OrderResult.from(orderInfo);
     }
 
@@ -77,5 +88,49 @@ public class OrderFacade {
                 .stream()
                 .map(OrderResult::from)
                 .toList();
+    }
+
+    @Transactional
+    public void cancelCreatedOrdersBefore(OrderCriteria.Expire criteria) {
+        List<OrderInfo> expiredOrderInfos = orderService.expireCreatedOrdersBefore(new OrderCommand.Expire(criteria.time()));
+        for (OrderInfo orderInfo : expiredOrderInfos) {
+            if (orderInfo.couponId() == null) {
+                continue;
+            }
+            couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
+        }
+        orderEventPublisher.publish(new OrderApplicationEvent.Expired(expiredOrderInfos.stream().map(OrderInfo::id).toList()));
+    }
+
+    @Transactional
+    public void failPayment(OrderCriteria.FailPayment criteria) {
+        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
+        orderService.fail(new OrderCommand.Fail(orderInfo.id(), OrderCommand.Fail.Reason.PAYMENT_FAILED));
+        if (orderInfo.couponId() != null) {
+            couponService.restore(new CouponCommand.Restore(orderInfo.couponId(), orderInfo.userId()));
+        }
+    }
+
+    @Transactional
+    public void succeedPayment(OrderCriteria.Success criteria) {
+        OrderInfo orderInfo = orderService.get(new OrderCommand.Get(criteria.orderId()));
+
+        List<StockCommand.Deduct> stockCommands = orderInfo.lines().stream()
+                .map(line -> new StockCommand.Deduct(line.productId(), line.quantity()))
+                .toList();
+        PointCommand.Use pointCommand = new PointCommand.Use(orderInfo.userId(), orderInfo.payment().pointAmount());
+
+        try {
+            resourceProcessor.deduct(stockCommands, pointCommand);
+        } catch (InsufficientPointException e) {
+            orderEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
+                    criteria.transactionKey(), orderInfo.userId(), OrderApplicationEvent.Refund.Reason.POINT_EXHAUSTED));
+        } catch (InsufficientStockException e) {
+            orderEventPublisher.publish(new OrderApplicationEvent.Refund(orderInfo.id(), orderInfo.couponId(),
+                    criteria.transactionKey(), orderInfo.userId(), OrderApplicationEvent.Refund.Reason.OUT_OF_STOCK));
+        }
+
+        orderService.paid(new OrderCommand.Paid(orderInfo.id()));
+        orderEventPublisher.publish(new OrderApplicationEvent.Paid(orderInfo.id(), criteria.transactionKey()));
     }
 }

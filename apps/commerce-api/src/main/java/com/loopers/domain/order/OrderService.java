@@ -15,8 +15,8 @@ public class OrderService {
 
     @Transactional
     public OrderInfo order(OrderCommand.Order command) {
-        Order order = Order.of(command);
-        return OrderInfo.from(orderRepository.save(order));
+        Order order = orderRepository.save(Order.of(command));
+        return OrderInfo.from(order);
     }
 
     @Transactional(readOnly = true)
@@ -30,6 +30,15 @@ public class OrderService {
     public List<OrderInfo> getOrdersOf(OrderCommand.GetOrders command) {
         return orderRepository.findAllByUserId(command.userId())
                 .stream()
+                .map(OrderInfo::from)
+                .toList();
+    }
+
+    @Transactional
+    public List<OrderInfo> expireCreatedOrdersBefore(OrderCommand.Expire command) {
+        List<Order> createdOrders = orderRepository.findCreatedOrdersBefore(command.time());
+        createdOrders.forEach(Order::expired);
+        return createdOrders.stream()
                 .map(OrderInfo::from)
                 .toList();
     }

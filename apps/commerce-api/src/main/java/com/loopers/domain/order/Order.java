@@ -134,7 +134,14 @@ public class Order {
         this.status = OrderStatus.PENDING;
     }
 
+    public void expired() {
+        if (this.status != OrderStatus.CREATED) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 만료할 수 없는 상태입니다.");
+        }
+        this.status = OrderStatus.EXPIRED;
+    }
+
     public enum OrderStatus {
-        CREATED, PENDING, OUT_OF_STOCK, POINT_EXHAUSTED, PAYMENT_FAILED, PAID, DELIVERING, COMPLETED, CANCELED
+        CREATED, EXPIRED, PENDING, OUT_OF_STOCK, POINT_EXHAUSTED, PAYMENT_FAILED, PAID, DELIVERING, COMPLETED, CANCELED
     }
 }
