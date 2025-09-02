@@ -10,19 +10,9 @@ dependencies {
     // web
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${project.properties["springDocOpenApiVersion"]}")
-
-    // Feign Client
-    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
-
-    // querydsl
-    implementation("com.querydsl:querydsl-jpa::jakarta")
-
-    implementation("io.github.resilience4j:resilience4j-spring-boot3")
-    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // test-fixtures
     testImplementation(testFixtures(project(":modules:jpa")))
     testImplementation(testFixtures(project(":modules:redis")))
-    testImplementation("org.awaitility:awaitility:4.2.0")
+    testImplementation(testFixtures(project(":modules:kafka")))
 }

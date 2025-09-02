@@ -9,46 +9,37 @@ server:
     accept-count: 100 # 대기 큐 크기 (default : 100)
     keep-alive-timeout: 60s # 60s
   max-http-request-header-size: 8KB
+  port: 18080
 
 spring:
   main:
     web-application-type: servlet
   application:
-    name: commerce-api
+    name: commerce-streamer
   profiles:
     active: local
   config:
     import:
       - jpa.yml
       - redis.yml
-      - feign.yml
       - kafka.yml
-      - resilience.yml
-      - logging.yml
-      - monitoring.yml
+#      - logging.yml
+#      - monitoring.yml
 
-springdoc:
-  use-fqn: true
-  swagger-ui:
-    path: /swagger-ui.html
+demo-kafka:
+  test:
+    topic-name: demo.internal.topic-v1
 
-client:
-  loopers:
-    base-url: ${LOOPERS_URL}
-    user-id: ${LOOPERS_USER_ID}
-    callback-url: ${CALLBACK_URL}
+kafka:
+  topics:
+    liked: internal.liked-events.v1
+
 
 ---
 spring:
   config:
     activate:
       on-profile: local, test
-
-client:
-  loopers:
-    base-url: localhost:8082
-    user-id: 135135
-    callback-url: http://localhost:8080/api/v1/payments/callback
 
 ---
 spring:
