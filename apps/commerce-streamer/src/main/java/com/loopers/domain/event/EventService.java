@@ -13,7 +13,7 @@ public class EventService {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public HandledEvent save(EventCommand.Save cmd) throws DuplicatedEventException {
-        HandledEvent handledEvent = new HandledEvent(cmd.eventId(), cmd.consumerGroup(), cmd.payload());
+        HandledEvent handledEvent = new HandledEvent(cmd.eventId(), cmd.consumerGroup(), cmd.payload(), cmd.createdAt());
         try {
             return handledEventRepository.save(handledEvent);
         } catch (DataIntegrityViolationException e) {

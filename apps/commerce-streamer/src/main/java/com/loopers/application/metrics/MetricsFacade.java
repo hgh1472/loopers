@@ -16,19 +16,19 @@ public class MetricsFacade {
 
     public void incrementLikeCount(MetricCriteria.IncrementLike cri) {
         try {
-            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload()));
+            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        metricsService.incrementLikeCount(new MetricCommand.IncrementLike(cri.productId()));
+        metricsService.incrementLikeCount(new MetricCommand.IncrementLike(cri.productId(), cri.createdAt().toLocalDate()));
     }
 
     public void decrementLikeCount(MetricCriteria.DecrementLike cri) {
         try {
-            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload()));
+            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        metricsService.decrementLikeCount(new MetricCommand.DecrementLike(cri.productId()));
+        metricsService.decrementLikeCount(new MetricCommand.DecrementLike(cri.productId(), cri.createdAt().toLocalDate()));
     }
 }

@@ -1,17 +1,21 @@
 package com.loopers.interfaces.consumer.like;
 
+import java.time.ZonedDateTime;
+
 public class LikeEvent {
     public record Liked(
             String eventId,
             Long productId,
-            Long memberId
+            Long userId,
+            ZonedDateTime createdAt
     ) {
     }
 
     public record Canceled(
             String eventId,
             Long productId,
-            Long memberId
+            Long userId,
+            ZonedDateTime createdAt
     ) {
     }
 }

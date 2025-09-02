@@ -32,7 +32,7 @@ public class LikeKafkaConsumer {
             LikeEvent.Liked event = objectMapper.readValue(message.value(), LikeEvent.Liked.class);
 
             MetricCriteria.IncrementLike cri =
-                    new MetricCriteria.IncrementLike(event.eventId(), LIKE_CONSUMER_GROUP, event.toString(), event.productId());
+                    new MetricCriteria.IncrementLike(event.eventId(), LIKE_CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
 
             metricsFacade.incrementLikeCount(cri);
         }
@@ -50,7 +50,7 @@ public class LikeKafkaConsumer {
             LikeEvent.Canceled event = objectMapper.readValue(message.value(), LikeEvent.Canceled.class);
 
             MetricCriteria.DecrementLike cri =
-                    new MetricCriteria.DecrementLike(event.eventId(), LIKE_CONSUMER_GROUP, event.toString(), event.productId());
+                    new MetricCriteria.DecrementLike(event.eventId(), LIKE_CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
 
             metricsFacade.decrementLikeCount(cri);
         }

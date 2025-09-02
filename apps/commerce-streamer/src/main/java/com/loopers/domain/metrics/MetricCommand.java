@@ -1,13 +1,17 @@
 package com.loopers.domain.metrics;
 
+import java.time.LocalDate;
+
 public class MetricCommand {
     public record IncrementLike(
-            Long productId
+            Long productId,
+            LocalDate createdAt
     ) {
     }
 
     public record DecrementLike(
-            Long productId
+            Long productId,
+            LocalDate createdAt
     ) {
     }
 }

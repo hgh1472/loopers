@@ -1,11 +1,14 @@
 package com.loopers.application.metrics;
 
+import java.time.ZonedDateTime;
+
 public class MetricCriteria {
     public record IncrementLike(
             String eventId,
             String consumerGroup,
             String payload,
-            Long productId
+            Long productId,
+            ZonedDateTime createdAt
     ) {
     }
 
@@ -13,7 +16,8 @@ public class MetricCriteria {
             String eventId,
             String consumerGroup,
             String payload,
-            Long productId
+            Long productId,
+            ZonedDateTime createdAt
     ) {
     }
 }

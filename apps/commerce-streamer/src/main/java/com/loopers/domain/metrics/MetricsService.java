@@ -11,16 +11,16 @@ public class MetricsService {
 
     @Transactional
     public ProductMetricsInfo incrementLikeCount(MetricCommand.IncrementLike cmd) {
-        ProductMetrics productMetrics = productMetricsRepository.findByProductId(cmd.productId())
-                        .orElseGet(() -> new ProductMetrics(cmd.productId()));
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+                .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
         productMetrics.incrementLikeCount();
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
     }
 
     @Transactional
     public ProductMetricsInfo decrementLikeCount(MetricCommand.DecrementLike cmd) {
-        ProductMetrics productMetrics = productMetricsRepository.findByProductId(cmd.productId())
-                        .orElseGet(() -> new ProductMetrics(cmd.productId()));
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+                .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
         productMetrics.decrementLikeCount();
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
     }

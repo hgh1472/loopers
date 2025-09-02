@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class ProductMetricsTest {
         @Test
         @DisplayName("좋아요 수가 0일 경우, Conflict 예외가 발생한다.")
         void decrementLikeCount_Conflict() {
-            ProductMetrics productMetrics = new ProductMetrics(1L);
+            ProductMetrics productMetrics = new ProductMetrics(1L, LocalDate.now());
 
             CoreException exception = assertThrows(CoreException.class, productMetrics::decrementLikeCount);
 
