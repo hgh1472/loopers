@@ -20,9 +20,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class MetricServiceTest {
+class MetricsServiceTest {
     @InjectMocks
-    private MetricService metricService;
+    private MetricsService metricsService;
     @Mock
     private ProductMetricsRepository productMetricsRepository;
 
@@ -36,7 +36,7 @@ class MetricServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(new ProductMetrics(1L));
 
-            metricService.incrementsLikeCount(new MetricCommand.IncrementLike(1L));
+            metricsService.incrementLikeCount(new MetricCommand.IncrementLike(1L));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(1L)));
@@ -52,7 +52,7 @@ class MetricServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(existMetrics);
 
-            metricService.incrementsLikeCount(new MetricCommand.IncrementLike(1L));
+            metricsService.incrementLikeCount(new MetricCommand.IncrementLike(1L));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(2L)));
@@ -67,7 +67,7 @@ class MetricServiceTest {
         void throwIllegalStateException_whenDecrementNotExistMetric() {
             given(productMetricsRepository.findByProductId(1L)).willReturn(Optional.empty());
 
-            CoreException exception = assertThrows(CoreException.class, () -> metricService.decrementsLikeCount(new MetricCommand.DecrementLike(1L)));
+            CoreException exception = assertThrows(CoreException.class, () -> metricsService.decrementLikeCount(new MetricCommand.DecrementLike(1L)));
 
             assertThat(exception)
                     .usingRecursiveComparison()
@@ -84,7 +84,7 @@ class MetricServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(existMetrics);
 
-            metricService.decrementsLikeCount(new MetricCommand.DecrementLike(1L));
+            metricsService.decrementLikeCount(new MetricCommand.DecrementLike(1L));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(0L)));

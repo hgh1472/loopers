@@ -2,6 +2,7 @@ package com.loopers.domain.like;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,7 +21,8 @@ public class ProductLikeService {
         ProductLike productLike = ProductLike.create(command);
         try {
             productLikeRepository.save(productLike);
-            likeEventPublisher.publish(new LikeEvent.Liked(productLike.getProductId(), productLike.getUserId()));
+            likeEventPublisher.publish(
+                    new LikeEvent.Liked(UUID.randomUUID(), productLike.getProductId(), productLike.getUserId()));
             return LikeInfo.ProductAction.of(productLike, true);
         } catch (DataIntegrityViolationException e) {
             return LikeInfo.ProductAction.of(productLike, false);
@@ -31,7 +33,7 @@ public class ProductLikeService {
     public LikeInfo.ProductAction cancelLike(ProductLikeCommand.Delete command) {
         boolean deleted = productLikeRepository.deleteByProductIdAndUserId(command.productId(), command.userId());
         if (deleted) {
-            likeEventPublisher.publish(new LikeEvent.LikeCanceled(command.productId(), command.userId()));
+            likeEventPublisher.publish(new LikeEvent.LikeCanceled(UUID.randomUUID(), command.productId(), command.userId()));
         }
         return new LikeInfo.ProductAction(command.productId(), command.userId(), deleted);
     }

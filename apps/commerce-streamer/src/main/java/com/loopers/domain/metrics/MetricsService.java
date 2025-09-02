@@ -6,11 +6,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class MetricService {
+public class MetricsService {
     private final ProductMetricsRepository productMetricsRepository;
 
     @Transactional
-    public ProductMetricsInfo incrementsLikeCount(MetricCommand.IncrementLike cmd) {
+    public ProductMetricsInfo incrementLikeCount(MetricCommand.IncrementLike cmd) {
         ProductMetrics productMetrics = productMetricsRepository.findByProductId(cmd.productId())
                         .orElseGet(() -> new ProductMetrics(cmd.productId()));
         productMetrics.incrementLikeCount();
@@ -18,7 +18,7 @@ public class MetricService {
     }
 
     @Transactional
-    public ProductMetricsInfo decrementsLikeCount(MetricCommand.DecrementLike cmd) {
+    public ProductMetricsInfo decrementLikeCount(MetricCommand.DecrementLike cmd) {
         ProductMetrics productMetrics = productMetricsRepository.findByProductId(cmd.productId())
                         .orElseGet(() -> new ProductMetrics(cmd.productId()));
         productMetrics.decrementLikeCount();

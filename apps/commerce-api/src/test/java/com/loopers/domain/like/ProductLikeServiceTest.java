@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -112,7 +113,11 @@ class ProductLikeServiceTest {
             productLikeService.like(command);
 
             verify(likeEventPublisher, times(1))
-                    .publish(new LikeEvent.Liked(productLike.getProductId(), productLike.getUserId()));
+                    .publish((LikeEvent.Liked) argThat(event ->
+                            event instanceof LikeEvent.Liked
+                                    && ((LikeEvent.Liked) event).productId().equals(command.productId())
+                                    && ((LikeEvent.Liked) event).userId().equals(command.userId())
+                    ));
         }
     }
 
@@ -167,7 +172,7 @@ class ProductLikeServiceTest {
             );
         }
 
-        @DisplayName("좋아요가 존재할 경우, LikeEvent.LikeCancelled 이벤트를 발행한다.")
+        @DisplayName("좋아요가 존재할 경우, LikeEvent.LikeCanceled 이벤트를 발행한다.")
         @Test
         void publishLikeCancelledEvent_whenProductLikeExists() {
             ProductLikeCommand.Delete command = new ProductLikeCommand.Delete(1L, 1L);
@@ -177,7 +182,11 @@ class ProductLikeServiceTest {
             productLikeService.cancelLike(command);
 
             verify(likeEventPublisher, times(1))
-                    .publish(new LikeEvent.LikeCanceled(command.productId(), command.userId()));
+                    .publish((LikeEvent.LikeCanceled) argThat(event ->
+                            event instanceof LikeEvent.LikeCanceled
+                                    && ((LikeEvent.LikeCanceled) event).productId().equals(command.productId())
+                                    && ((LikeEvent.LikeCanceled) event).userId().equals(command.userId())
+                    ));
         }
     }
 

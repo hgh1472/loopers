@@ -1,6 +1,7 @@
 package com.loopers.domain.like;
 
 import com.loopers.support.event.UserActivityEvent;
+import java.util.UUID;
 
 public class LikeEvent {
     public static final class TOPIC {
@@ -8,9 +9,17 @@ public class LikeEvent {
         public static final String LIKE_CANCELED = "internal.like-canceled-events.v1";
     }
 
-    public record Liked(Long productId, Long userId) implements UserActivityEvent {
+    public record Liked(
+            UUID eventId,
+            Long productId,
+            Long userId
+    ) implements UserActivityEvent {
     }
 
-    public record LikeCanceled(Long productId, Long userId) implements UserActivityEvent {
+    public record LikeCanceled(
+            UUID eventId,
+            Long productId,
+            Long userId
+    ) implements UserActivityEvent {
     }
 }
