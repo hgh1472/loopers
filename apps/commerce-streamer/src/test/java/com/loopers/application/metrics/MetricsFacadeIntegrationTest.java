@@ -7,7 +7,9 @@ import static org.mockito.Mockito.verify;
 import com.loopers.domain.event.HandledEvent;
 import com.loopers.domain.event.HandledEventRepository;
 import com.loopers.domain.metrics.MetricsService;
+import com.loopers.utils.DatabaseCleanUp;
 import java.time.ZonedDateTime;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,13 @@ class MetricsFacadeIntegrationTest {
     private MetricsService metricsService;
     @Autowired
     private HandledEventRepository handledEventRepository;
+    @Autowired
+    private DatabaseCleanUp databaseCleanUp;
+
+    @AfterEach
+    void tearDown() {
+        databaseCleanUp.truncateAllTables();
+    }
 
     @Nested
     @DisplayName("상품 판매량 증가 시,")
