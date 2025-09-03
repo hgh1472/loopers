@@ -31,4 +31,13 @@ public class MetricsFacade {
         }
         metricsService.decrementLikeCount(new MetricCommand.DecrementLike(cri.productId(), cri.createdAt().toLocalDate()));
     }
+
+    public void incrementSalesCount(MetricCriteria.IncrementSales cri) {
+        try {
+            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
+        } catch (DuplicatedEventException ignored) {
+            return;
+        }
+        metricsService.incrementSalesCount(new MetricCommand.IncrementSales(cri.productId(), cri.quantity(), cri.createdAt().toLocalDate()));
+    }
 }

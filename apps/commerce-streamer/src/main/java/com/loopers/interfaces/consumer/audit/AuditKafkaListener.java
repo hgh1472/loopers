@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.config.kafka.KafkaConfig;
 import com.loopers.domain.audit.AuditCommand;
 import com.loopers.domain.audit.AuditService;
-import com.loopers.interfaces.consumer.like.LikeEvent;
+import com.loopers.interfaces.consumer.metrics.LikeEvent;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

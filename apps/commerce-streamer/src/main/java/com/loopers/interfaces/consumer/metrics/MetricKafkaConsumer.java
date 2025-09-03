@@ -1,4 +1,4 @@
-package com.loopers.interfaces.consumer.like;
+package com.loopers.interfaces.consumer.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.metrics.MetricCriteria;
@@ -16,15 +16,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LikeKafkaConsumer {
-    private static final String LIKE_CONSUMER_GROUP = "like-consumer";
+public class MetricKafkaConsumer {
+    private static final String CONSUMER_GROUP = "metrics-consumer";
+
     private final MetricsFacade metricsFacade;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
             topics = "${kafka.topics.liked}",
             containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = LIKE_CONSUMER_GROUP
+            groupId = CONSUMER_GROUP
     )
     public void consumeLikedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
@@ -32,7 +33,7 @@ public class LikeKafkaConsumer {
             LikeEvent.Liked event = objectMapper.readValue(message.value(), LikeEvent.Liked.class);
 
             MetricCriteria.IncrementLike cri =
-                    new MetricCriteria.IncrementLike(event.eventId(), LIKE_CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
+                    new MetricCriteria.IncrementLike(event.eventId(), CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
 
             metricsFacade.incrementLikeCount(cri);
         }
@@ -42,7 +43,7 @@ public class LikeKafkaConsumer {
     @KafkaListener(
             topics = "${kafka.topics.like-canceled}",
             containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = LIKE_CONSUMER_GROUP
+            groupId = CONSUMER_GROUP
     )
     public void consumeLikeCanceledEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
@@ -50,9 +51,35 @@ public class LikeKafkaConsumer {
             LikeEvent.Canceled event = objectMapper.readValue(message.value(), LikeEvent.Canceled.class);
 
             MetricCriteria.DecrementLike cri =
-                    new MetricCriteria.DecrementLike(event.eventId(), LIKE_CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
+                    new MetricCriteria.DecrementLike(event.eventId(), CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
 
             metricsFacade.decrementLikeCount(cri);
+        }
+        acknowledgment.acknowledge();
+    }
+
+    @KafkaListener(
+            topics = "${kafka.topics.order-paid}",
+            containerFactory = KafkaConfig.BATCH_LISTENER,
+            groupId = CONSUMER_GROUP
+    )
+    public void consumeOrderPaidEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
+            throws IOException {
+        for (ConsumerRecord<String, byte[]> message : messages) {
+            OrderEvent.Paid event = objectMapper.readValue(message.value(), OrderEvent.Paid.class);
+
+            for (OrderEvent.Line line : event.lines()) {
+                MetricCriteria.IncrementSales cri = new MetricCriteria.IncrementSales(
+                        event.eventId(),
+                        CONSUMER_GROUP,
+                        event.toString(),
+                        line.productId(),
+                        line.quantity(),
+                        event.createdAt()
+                );
+                metricsFacade.incrementSalesCount(cri);
+            }
+
         }
         acknowledgment.acknowledge();
     }
