@@ -29,6 +29,9 @@ public class ProductMetrics {
     @Column(name = "sales_count", nullable = false)
     private Long salesCount;
 
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount;
+
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
@@ -38,8 +41,9 @@ public class ProductMetrics {
     public ProductMetrics(Long productId, LocalDate date) {
         this.productId = productId;
         this.date = date;
-        this.salesCount = 0L;
         this.likeCount = 0L;
+        this.salesCount = 0L;
+        this.viewCount = 0L;
     }
 
     public void incrementLikeCount() {
@@ -58,5 +62,9 @@ public class ProductMetrics {
             throw new CoreException(ErrorType.BAD_REQUEST, "판매 수량은 0보다 커야 합니다.");
         }
         this.salesCount += quantity;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 }

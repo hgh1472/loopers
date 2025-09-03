@@ -40,4 +40,13 @@ public class MetricsFacade {
         }
         metricsService.incrementSalesCount(new MetricCommand.IncrementSales(cri.productId(), cri.quantity(), cri.createdAt().toLocalDate()));
     }
+
+    public void incrementViewCount(MetricCriteria.IncrementView cri) {
+        try {
+            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
+        } catch (DuplicatedEventException ignored) {
+            return;
+        }
+        metricsService.incrementViewCount(new MetricCommand.IncrementView(cri.productId(), cri.createdAt().toLocalDate()));
+    }
 }

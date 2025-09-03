@@ -32,4 +32,12 @@ public class MetricsService {
         productMetrics.incrementSalesCount(cmd.quantity());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
     }
+
+    @Transactional
+    public ProductMetricsInfo incrementViewCount(MetricCommand.IncrementView cmd) {
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+                .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
+        productMetrics.incrementViewCount();
+        return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
+    }
 }
