@@ -130,4 +130,39 @@ class MetricsServiceTest {
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getSalesCount().equals(5L)));
         }
     }
+
+    @Nested
+    @DisplayName("상품 조회 수 증가 시,")
+    class IncrementViewCount {
+        @Test
+        @DisplayName("당일 상품 메트릭 정보가 존재하지 않는 경우, 생성한다.")
+        void createProductMetrics_whenNotExist() {
+            LocalDate now = LocalDate.now();
+            given(productMetricsRepository.findByDailyMetrics(1L, now)).willReturn(Optional.empty());
+            given(productMetricsRepository.save(any()))
+                    .willReturn(new ProductMetrics(1L, LocalDate.now()));
+
+            metricsService.incrementViewCount(new MetricCommand.IncrementView(1L, now));
+
+            verify(productMetricsRepository, times(1))
+                    .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getViewCount().equals(1L)));
+        }
+
+        @Test
+        @DisplayName("당일 상품 메트릭 정보가 존재하는 경우, 기존 메트릭을 업데이트한다.")
+        void updateProductMetrics_whenExist() {
+            LocalDate now = LocalDate.now();
+            ProductMetrics existMetrics = new ProductMetrics(1L, now);
+            existMetrics.incrementViewCount();
+            given(productMetricsRepository.findByDailyMetrics(1L, now))
+                    .willReturn(Optional.of(existMetrics));
+            given(productMetricsRepository.save(any()))
+                    .willReturn(existMetrics);
+
+            metricsService.incrementViewCount(new MetricCommand.IncrementView(1L, now));
+
+            verify(productMetricsRepository, times(1))
+                    .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getViewCount().equals(2L)));
+        }
+    }
 }

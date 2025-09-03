@@ -44,4 +44,25 @@ class MetricsFacadeIntegrationTest {
                     .incrementSalesCount(any());
         }
     }
+
+    @Nested
+    @DisplayName("상품 조회수 증가 시,")
+    class IncrementView {
+        @Test
+        @DisplayName("이미 해당 이벤트에 대한 처리 이력이 존재하면, 아무런 작업도 수행하지 않는다.")
+        void ignore_whenEventDuplicate() {
+            String eventId = "event-id";
+            String consumerGroup = "consumer-group";
+            String payload = "{}";
+            ZonedDateTime now = ZonedDateTime.now();
+            HandledEvent handledEvent = new HandledEvent(eventId, consumerGroup, payload, now);
+            handledEventRepository.save(handledEvent);
+            MetricCriteria.IncrementView cri = new MetricCriteria.IncrementView(eventId, consumerGroup, payload, 1L, now);
+
+            metricsFacade.incrementViewCount(cri);
+
+            verify(metricsService, never())
+                    .incrementViewCount(any());
+        }
+    }
 }

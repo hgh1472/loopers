@@ -6,6 +6,7 @@ import com.loopers.domain.audit.AuditCommand;
 import com.loopers.domain.audit.AuditService;
 import com.loopers.interfaces.consumer.metrics.LikeEvent;
 import com.loopers.interfaces.consumer.metrics.OrderEvent;
+import com.loopers.interfaces.consumer.metrics.ProductEvent;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,20 @@ public class AuditKafkaListener {
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             OrderEvent.Paid event = objectMapper.readValue(message.value(), OrderEvent.Paid.class);
+            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+        }
+        acknowledgment.acknowledge();
+    }
+
+    @KafkaListener(
+            topics = "${kafka.topics.product-viewed}",
+            containerFactory = KafkaConfig.BATCH_LISTENER,
+            groupId = AUDIT_CONSUMER_GROUP
+    )
+    void consumeProductViewedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
+            throws IOException {
+        for (ConsumerRecord<String, byte[]> message : messages) {
+            ProductEvent.Viewed event = objectMapper.readValue(message.value(), ProductEvent.Viewed.class);
             auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
         }
         acknowledgment.acknowledge();

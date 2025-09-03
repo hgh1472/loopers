@@ -21,9 +21,9 @@ public class KafkaTestContainersConfig {
                 String.format("%s:%d", kafkaContainer.getHost(), kafkaContainer.getFirstMappedPort()));
 
         System.setProperty("spring.kafka.producer.key-serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        System.setProperty("spring.kafka.producer.value-serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        System.setProperty("spring.kafka.producer.value-serializer", "org.springframework.kafka.support.serializer.JsonSerializer");
         System.setProperty("spring.kafka.consumer.key-deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        System.setProperty("spring.kafka.consumer.value-deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        System.setProperty("spring.kafka.consumer.value-deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         System.setProperty("spring.kafka.consumer.auto-offset-reset", "latest");
         System.setProperty("spring.kafka.consumer.group-id", "test-group");
     }

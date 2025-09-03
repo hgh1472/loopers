@@ -21,4 +21,10 @@ public class MetricCommand {
             LocalDate createdAt
     ) {
     }
+
+    public record IncrementView(
+            Long productId,
+            LocalDate createdAt
+    ) {
+    }
 }

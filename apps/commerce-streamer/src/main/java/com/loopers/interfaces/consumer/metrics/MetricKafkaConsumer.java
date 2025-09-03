@@ -83,4 +83,26 @@ public class MetricKafkaConsumer {
         }
         acknowledgment.acknowledge();
     }
+
+    @KafkaListener(
+            topics = "${kafka.topics.product-viewed}",
+            containerFactory = KafkaConfig.BATCH_LISTENER,
+            groupId = CONSUMER_GROUP
+    )
+    void consumeProductViewedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
+            throws IOException {
+        for (ConsumerRecord<String, byte[]> message : messages) {
+            ProductEvent.Viewed event = objectMapper.readValue(message.value(), ProductEvent.Viewed.class);
+
+            MetricCriteria.IncrementView cri =
+                    new MetricCriteria.IncrementView(event.eventId(),
+                            CONSUMER_GROUP,
+                            event.toString(),
+                            event.productId(),
+                            event.createdAt());
+
+            metricsFacade.incrementViewCount(cri);
+        }
+        acknowledgment.acknowledge();
+    }
 }
