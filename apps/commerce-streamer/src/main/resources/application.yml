@@ -33,7 +33,7 @@ demo-kafka:
 kafka:
   topics:
     liked: internal.liked-events.v1
-
+    like-canceled: internal.like-canceled-events.v1
 
 ---
 spring:
