@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.config.kafka.KafkaConfig;
 import com.loopers.domain.audit.AuditCommand;
 import com.loopers.domain.audit.AuditService;
-import com.loopers.interfaces.consumer.like.LikeEvent;
+import com.loopers.interfaces.consumer.metrics.LikeEvent;
+import com.loopers.interfaces.consumer.metrics.OrderEvent;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,20 @@ public class AuditKafkaListener {
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             LikeEvent.Canceled event = objectMapper.readValue(message.value(), LikeEvent.Canceled.class);
+            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+        }
+        acknowledgment.acknowledge();
+    }
+
+    @KafkaListener(
+            topics = "${kafka.topics.order-paid}",
+            containerFactory = KafkaConfig.BATCH_LISTENER,
+            groupId = AUDIT_CONSUMER_GROUP
+    )
+    void consumeOrderPaidEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
+            throws IOException {
+        for (ConsumerRecord<String, byte[]> message : messages) {
+            OrderEvent.Paid event = objectMapper.readValue(message.value(), OrderEvent.Paid.class);
             auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
         }
         acknowledgment.acknowledge();

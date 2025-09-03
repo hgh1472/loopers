@@ -20,4 +20,14 @@ public class MetricCriteria {
             ZonedDateTime createdAt
     ) {
     }
+
+    public record IncrementSales(
+            String eventId,
+            String consumerGroup,
+            String payload,
+            Long productId,
+            Long quantity,
+            ZonedDateTime createdAt
+    ) {
+    }
 }

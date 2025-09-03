@@ -35,6 +35,8 @@ kafka:
     liked: internal.liked-events.v1
     like-canceled: internal.like-canceled-events.v1
 
+    order-paid: internal.order-paid-events.v1
+
 ---
 spring:
   config:

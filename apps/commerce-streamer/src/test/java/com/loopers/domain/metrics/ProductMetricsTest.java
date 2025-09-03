@@ -27,4 +27,20 @@ class ProductMetricsTest {
                     .isEqualTo(new CoreException(ErrorType.CONFLICT, "좋아요 수는 0보다 작을 수 없습니다."));
         }
     }
+
+    @Nested
+    @DisplayName("판매량 증가 시,")
+    class IncrementSalesCount {
+        @Test
+        @DisplayName("판매량이 0보다 작을 경우, BadRequest 예외가 발생한다.")
+        void incrementSalesCount_BadRequest() {
+            ProductMetrics productMetrics = new ProductMetrics(1L, LocalDate.now());
+
+            CoreException exception = assertThrows(CoreException.class, () -> productMetrics.incrementSalesCount(-1L));
+
+            assertThat(exception)
+                    .usingRecursiveComparison()
+                    .isEqualTo(new CoreException(ErrorType.BAD_REQUEST, "판매 수량은 0보다 커야 합니다."));
+        }
+    }
 }
