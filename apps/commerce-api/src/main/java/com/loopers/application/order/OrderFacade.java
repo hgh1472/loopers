@@ -18,11 +18,9 @@ import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -133,10 +131,6 @@ public class OrderFacade {
         }
 
         orderService.paid(new OrderCommand.Paid(orderInfo.id()));
-        orderEventPublisher.publish(
-                new OrderApplicationEvent.Paid(UUID.randomUUID().toString(), orderInfo.id(), orderInfo.userId(),
-                        orderInfo.couponId(), criteria.transactionKey(), orderInfo.lines().stream()
-                        .map(line -> new OrderApplicationEvent.Line(line.productId(), line.quantity()))
-                        .toList(), ZonedDateTime.now()));
+        orderEventPublisher.publish(new OrderApplicationEvent.Paid(orderInfo.id(), criteria.transactionKey()));
     }
 }
