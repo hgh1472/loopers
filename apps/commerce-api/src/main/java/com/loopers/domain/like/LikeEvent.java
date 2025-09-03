@@ -1,21 +1,11 @@
 package com.loopers.domain.like;
 
 import com.loopers.support.event.UserActivityEvent;
-import java.util.UUID;
 
 public class LikeEvent {
-
-    public record Liked(
-            UUID eventId,
-            Long productId,
-            Long userId
-    ) implements UserActivityEvent {
+    public record Liked(Long productId, Long userId) implements UserActivityEvent {
     }
 
-    public record LikeCanceled(
-            UUID eventId,
-            Long productId,
-            Long userId
-    ) implements UserActivityEvent {
+    public record LikeCanceled(Long productId, Long userId) implements UserActivityEvent {
     }
 }
