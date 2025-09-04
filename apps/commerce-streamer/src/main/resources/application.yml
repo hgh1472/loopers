@@ -36,6 +36,7 @@ kafka:
     like-canceled: internal.like-canceled-events.v1
     order-paid: internal.order-paid-events.v1
     product-viewed: internal.product-viewed-events.v1
+    cache-evict-command: internal.cache.product-evict-command.v1
 
 ---
 spring:
