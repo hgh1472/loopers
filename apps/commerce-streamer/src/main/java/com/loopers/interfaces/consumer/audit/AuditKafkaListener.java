@@ -1,94 +1,48 @@
 package com.loopers.interfaces.consumer.audit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loopers.config.kafka.KafkaConfig;
-import com.loopers.domain.audit.AuditCommand;
-import com.loopers.domain.audit.AuditService;
-import com.loopers.interfaces.consumer.events.CacheEvent;
-import com.loopers.interfaces.consumer.events.LikeEvent;
-import com.loopers.interfaces.consumer.events.OrderEvent;
-import com.loopers.interfaces.consumer.events.ProductEvent;
-import java.io.IOException;
+import com.loopers.application.audit.AuditFacade;
+import com.loopers.support.error.CoreException;
+import io.confluent.parallelconsumer.ParallelConsumerOptions;
+import io.confluent.parallelconsumer.ParallelStreamProcessor;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuditKafkaListener {
     private static final String AUDIT_CONSUMER_GROUP = "audit-consumer";
-    private final ObjectMapper objectMapper;
-    private final AuditService auditService;
+    private final EventMapper eventMapper;
+    private final AuditFacade auditFacade;
 
-    @KafkaListener(
-            topics = "${kafka.topics.liked}",
-            containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = AUDIT_CONSUMER_GROUP
-    )
-    void consumeLikedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment) throws IOException {
-        for (ConsumerRecord<String, byte[]> message : messages) {
-            LikeEvent.Liked event = objectMapper.readValue(message.value(), LikeEvent.Liked.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
-        }
-        acknowledgment.acknowledge();
-    }
+    @Bean(destroyMethod = "close")
+    public ParallelStreamProcessor<Object, Object> auditProcessor(ParallelConsumerOptions<Object, Object> options,
+                                                                  @Value("${kafka.topics.liked}") String likedTopic,
+                                                                  @Value("${kafka.topics.like-canceled}") String likeCanceledTopic,
+                                                                  @Value("${kafka.topics.order-paid}") String orderPaidTopic,
+                                                                  @Value("${kafka.topics.product-viewed}") String viewedTopic,
+                                                                  @Value("${kafka.topics.cache-evict-command}") String evictTopic
+    ) {
+        ParallelStreamProcessor<Object, Object> processor = ParallelStreamProcessor.createEosStreamProcessor(options);
 
-    @KafkaListener(
-            topics = "${kafka.topics.like-canceled}",
-            containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = AUDIT_CONSUMER_GROUP
-    )
-    void consumeLikeCanceledEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
-            throws IOException {
-        for (ConsumerRecord<String, byte[]> message : messages) {
-            LikeEvent.Canceled event = objectMapper.readValue(message.value(), LikeEvent.Canceled.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
-        }
-        acknowledgment.acknowledge();
-    }
-
-    @KafkaListener(
-            topics = "${kafka.topics.order-paid}",
-            containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = AUDIT_CONSUMER_GROUP
-    )
-    void consumeOrderPaidEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
-            throws IOException {
-        for (ConsumerRecord<String, byte[]> message : messages) {
-            OrderEvent.Paid event = objectMapper.readValue(message.value(), OrderEvent.Paid.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
-        }
-        acknowledgment.acknowledge();
-    }
-
-    @KafkaListener(
-            topics = "${kafka.topics.product-viewed}",
-            containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = AUDIT_CONSUMER_GROUP
-    )
-    void consumeProductViewedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
-            throws IOException {
-        for (ConsumerRecord<String, byte[]> message : messages) {
-            ProductEvent.Viewed event = objectMapper.readValue(message.value(), ProductEvent.Viewed.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
-        }
-        acknowledgment.acknowledge();
-    }
-
-    @KafkaListener(
-            topics = "${kafka.topics.cache-evict-command}",
-            containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = AUDIT_CONSUMER_GROUP
-    )
-    void consumeCacheEvictEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
-            throws IOException {
-        for (ConsumerRecord<String, byte[]> message : messages) {
-            CacheEvent.ProductEvict event = objectMapper.readValue(message.value(), CacheEvent.ProductEvict.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
-        }
-        acknowledgment.acknowledge();
+        processor.subscribe(List.of(likedTopic, likeCanceledTopic, orderPaidTopic, viewedTopic, evictTopic));
+        processor.poll(record -> {
+            record.stream()
+                    .map(r -> {
+                        try {
+                            return eventMapper.map(r.topic(), r.value(), AUDIT_CONSUMER_GROUP);
+                        } catch (CoreException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .forEach(auditFacade::audit);
+        });
+        return processor;
     }
 }

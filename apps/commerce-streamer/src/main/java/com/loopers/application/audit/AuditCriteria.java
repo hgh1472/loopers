@@ -1,12 +1,13 @@
-package com.loopers.domain.audit;
+package com.loopers.application.audit;
 
 import java.time.ZonedDateTime;
 
-public class AuditCommand {
+public class AuditCriteria {
     public record Audit(
             String eventId,
-            String eventName,
+            String consumerGroup,
             String payload,
+            String eventName,
             ZonedDateTime createdAt
     ) {
     }

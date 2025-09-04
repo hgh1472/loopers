@@ -30,17 +30,21 @@ public class EventLog {
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;
 
+    @Column(name = "received_at", nullable = false)
+    private ZonedDateTime receivedAt;
+
     protected EventLog() {
     }
 
-    public EventLog(String eventId, String eventName, String payload) {
+    public EventLog(String eventId, String eventName, String payload, ZonedDateTime createdAt) {
         this.eventId = eventId;
         this.eventName = eventName;
         this.payload = payload;
+        this.createdAt = createdAt;
     }
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = ZonedDateTime.now();
+        this.receivedAt = ZonedDateTime.now();
     }
 }
