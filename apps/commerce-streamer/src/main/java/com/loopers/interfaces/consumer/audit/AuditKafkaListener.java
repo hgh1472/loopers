@@ -1,9 +1,9 @@
 package com.loopers.interfaces.consumer.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loopers.application.audit.AuditCriteria;
+import com.loopers.application.audit.AuditFacade;
 import com.loopers.config.kafka.KafkaConfig;
-import com.loopers.domain.audit.AuditCommand;
-import com.loopers.domain.audit.AuditService;
 import com.loopers.interfaces.consumer.events.CacheEvent;
 import com.loopers.interfaces.consumer.events.LikeEvent;
 import com.loopers.interfaces.consumer.events.OrderEvent;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class AuditKafkaListener {
     private static final String AUDIT_CONSUMER_GROUP = "audit-consumer";
     private final ObjectMapper objectMapper;
-    private final AuditService auditService;
+    private final AuditFacade auditFacade;
 
     @KafkaListener(
             topics = "${kafka.topics.liked}",
@@ -31,7 +31,9 @@ public class AuditKafkaListener {
     void consumeLikedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment) throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             LikeEvent.Liked event = objectMapper.readValue(message.value(), LikeEvent.Liked.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+            auditFacade.audit(
+                    new AuditCriteria.Audit(event.eventId(), AUDIT_CONSUMER_GROUP, event.toString(), event.getClass().getName(),
+                            event.createdAt()));
         }
         acknowledgment.acknowledge();
     }
@@ -45,7 +47,9 @@ public class AuditKafkaListener {
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             LikeEvent.Canceled event = objectMapper.readValue(message.value(), LikeEvent.Canceled.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+            auditFacade.audit(
+                    new AuditCriteria.Audit(event.eventId(), AUDIT_CONSUMER_GROUP, event.toString(), event.getClass().getName(),
+                            event.createdAt()));
         }
         acknowledgment.acknowledge();
     }
@@ -59,7 +63,9 @@ public class AuditKafkaListener {
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             OrderEvent.Paid event = objectMapper.readValue(message.value(), OrderEvent.Paid.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+            auditFacade.audit(
+                    new AuditCriteria.Audit(event.eventId(), AUDIT_CONSUMER_GROUP, event.toString(), event.getClass().getName(),
+                            event.createdAt()));
         }
         acknowledgment.acknowledge();
     }
@@ -73,7 +79,9 @@ public class AuditKafkaListener {
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             ProductEvent.Viewed event = objectMapper.readValue(message.value(), ProductEvent.Viewed.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+            auditFacade.audit(
+                    new AuditCriteria.Audit(event.eventId(), AUDIT_CONSUMER_GROUP, event.toString(), event.getClass().getName(),
+                            event.createdAt()));
         }
         acknowledgment.acknowledge();
     }
@@ -87,7 +95,9 @@ public class AuditKafkaListener {
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
             CacheEvent.ProductEvict event = objectMapper.readValue(message.value(), CacheEvent.ProductEvict.class);
-            auditService.save(new AuditCommand.Audit(event.eventId(), event.getClass().getName(), event.toString()));
+            auditFacade.audit(
+                    new AuditCriteria.Audit(event.eventId(), AUDIT_CONSUMER_GROUP, event.toString(), event.getClass().getName(),
+                            event.createdAt()));
         }
         acknowledgment.acknowledge();
     }

@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.ZonedDateTime;
@@ -30,6 +31,9 @@ public class HandledEvent {
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;
 
+    @Column(name = "received_at", nullable = false)
+    private ZonedDateTime receivedAt;
+
     protected HandledEvent() {
     }
 
@@ -40,4 +44,8 @@ public class HandledEvent {
         this.createdAt = createdAt;
     }
 
+    @PrePersist
+    public void prePersist() {
+        this.receivedAt = ZonedDateTime.now();
+    }
 }
