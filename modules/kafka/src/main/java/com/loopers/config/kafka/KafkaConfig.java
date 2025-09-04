@@ -1,20 +1,26 @@
 package com.loopers.config.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.parallelconsumer.ParallelConsumerOptions;
+import io.confluent.parallelconsumer.ParallelConsumerOptions.ProcessingOrder;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.*;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.BatchMessagingMessageConverter;
 import org.springframework.kafka.support.converter.ByteArrayJsonMessageConverter;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @EnableKafka
 @Configuration
@@ -71,5 +77,22 @@ public class KafkaConfig {
         factory.setConcurrency(3);
         factory.setBatchListener(true);
         return factory;
+    }
+
+    @Bean
+    public KafkaConsumer<Object, Object> auditKafkaConsumer(KafkaProperties kafkaProperties) {
+        Map<String, Object> consumerConfig = new HashMap<>(kafkaProperties.buildConsumerProperties());
+        consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "audit-consumer");
+        consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        return new KafkaConsumer<>(consumerConfig);
+    }
+
+    @Bean
+    public ParallelConsumerOptions<Object, Object> parallelConsumerOptions(KafkaConsumer<Object, Object> auditKafkaConsumer) {
+        return ParallelConsumerOptions.<Object, Object>builder()
+                .ordering(ProcessingOrder.UNORDERED)
+                .consumer(auditKafkaConsumer)
+                .maxConcurrency(10)
+                .build();
     }
 }
