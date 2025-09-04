@@ -6,6 +6,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.like.LikeEvent;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +35,7 @@ class UserActivityEventListenerTest {
     @DisplayName("UserActivityEvent의 구현체에 해당하는 이벤트가 발행 됐을 때, 로그를 남긴다.")
     void handle_userActivityEvent() {
         TransactionStatus transaction = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        eventPublisher.publishEvent(new LikeEvent.Liked(UUID.randomUUID(), 1L, 1L));
+        eventPublisher.publishEvent(new LikeEvent.Liked(UUID.randomUUID(), 1L, 1L, ZonedDateTime.now()));
         transactionManager.commit(transaction);
 
         await()
