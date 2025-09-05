@@ -19,8 +19,11 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.converter.BatchMessagingMessageConverter;
 import org.springframework.kafka.support.converter.ByteArrayJsonMessageConverter;
+import org.springframework.util.backoff.FixedBackOff;
 
 @EnableKafka
 @Configuration
@@ -60,7 +63,8 @@ public class KafkaConfig {
     @Bean(name = BATCH_LISTENER)
     public ConcurrentKafkaListenerContainerFactory<Object, Object> defaultBatchListenerContainerFactory(
             KafkaProperties kafkaProperties,
-            ByteArrayJsonMessageConverter converter
+            ByteArrayJsonMessageConverter converter,
+            DefaultErrorHandler errorHandler
     ) {
         Map<String, Object> consumerConfig = new HashMap<>(kafkaProperties.buildConsumerProperties());
         consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLLING_SIZE);
@@ -74,6 +78,7 @@ public class KafkaConfig {
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(consumerConfig));
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL); // 수동 커밋
         factory.setBatchMessageConverter(new BatchMessagingMessageConverter(converter));
+        factory.setCommonErrorHandler(errorHandler);
         factory.setConcurrency(3);
         factory.setBatchListener(true);
         return factory;
@@ -94,5 +99,12 @@ public class KafkaConfig {
                 .consumer(auditKafkaConsumer)
                 .maxConcurrency(10)
                 .build();
+    }
+
+    @Bean
+    public DefaultErrorHandler errorHandler(KafkaTemplate<Object, Object> kafkaTemplate) {
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
+        FixedBackOff backOff = new FixedBackOff(1000L, 2L);
+        return new DefaultErrorHandler(recoverer, backOff);
     }
 }
