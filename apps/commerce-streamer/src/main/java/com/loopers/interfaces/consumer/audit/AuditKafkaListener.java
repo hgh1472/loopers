@@ -1,15 +1,17 @@
 package com.loopers.interfaces.consumer.audit;
 
+import com.loopers.application.audit.AuditCriteria;
 import com.loopers.application.audit.AuditFacade;
-import com.loopers.support.error.CoreException;
 import io.confluent.parallelconsumer.ParallelConsumerOptions;
 import io.confluent.parallelconsumer.ParallelStreamProcessor;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -22,6 +24,7 @@ public class AuditKafkaListener {
 
     @Bean(destroyMethod = "close")
     public ParallelStreamProcessor<Object, Object> auditProcessor(ParallelConsumerOptions<Object, Object> options,
+                                                                  KafkaTemplate<Object, Object> kafkaTemplate,
                                                                   @Value("${kafka.topics.liked}") String likedTopic,
                                                                   @Value("${kafka.topics.like-canceled}") String likeCanceledTopic,
                                                                   @Value("${kafka.topics.order-paid}") String orderPaidTopic,
@@ -30,18 +33,19 @@ public class AuditKafkaListener {
     ) {
         ParallelStreamProcessor<Object, Object> processor = ParallelStreamProcessor.createEosStreamProcessor(options);
 
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
+
         processor.subscribe(List.of(likedTopic, likeCanceledTopic, orderPaidTopic, viewedTopic, evictTopic));
         processor.poll(record -> {
-            record.stream()
-                    .map(r -> {
-                        try {
-                            return eventMapper.map(r.topic(), r.value(), AUDIT_CONSUMER_GROUP);
-                        } catch (CoreException e) {
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .forEach(auditFacade::audit);
+            ConsumerRecord<Object, Object> consumerRecord = record.getSingleRecord().getConsumerRecord();
+            try {
+                // Parallel Consumer의 Batch Option이 없을 때 가능
+                AuditCriteria.Audit cri = eventMapper.map(consumerRecord.topic(), consumerRecord.value(), AUDIT_CONSUMER_GROUP);
+                auditFacade.audit(cri);
+            } catch (RuntimeException e) {
+                log.error("Error processing record batch, sending to DLQ", e);
+                recoverer.accept(consumerRecord, e);
+            }
         });
         return processor;
     }
