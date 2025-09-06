@@ -1,6 +1,7 @@
 package com.loopers.application.order;
 
 import com.loopers.support.event.UserActivityEvent;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,8 +32,19 @@ public class OrderApplicationEvent {
     }
 
     public record Paid(
+            String eventId,
             UUID orderId,
-            String transactionKey
+            Long userId,
+            Long couponId,
+            String transactionKey,
+            List<Line> lines,
+            ZonedDateTime createdAt
+    ) {
+    }
+
+    public record Line(
+            Long productId,
+            Long quantity
     ) {
     }
 }

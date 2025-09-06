@@ -22,6 +22,7 @@ spring:
       - jpa.yml
       - redis.yml
       - feign.yml
+      - kafka.yml
       - resilience.yml
       - logging.yml
       - monitoring.yml
