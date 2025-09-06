@@ -73,18 +73,19 @@ public class MetricKafkaConsumer {
             KafkaMessage<OrderEvent.Paid> event = objectMapper.readValue(message.value(), new TypeReference<>() {
             });
 
-            for (OrderEvent.Line line : event.getPayload().lines()) {
-                MetricCriteria.IncrementSales cri = new MetricCriteria.IncrementSales(
-                        event.getEventId(),
-                        CONSUMER_GROUP,
-                        event.getPayload().toString(),
-                        line.productId(),
-                        line.quantity(),
-                        event.getTimestamp()
-                );
-                metricsFacade.incrementSalesCount(cri);
-            }
+            List<MetricCriteria.SaleLine> saleLines = event.getPayload().lines().stream()
+                    .map(l -> new MetricCriteria.SaleLine(l.productId(), l.quantity()))
+                    .toList();
 
+            MetricCriteria.IncrementSales cri = new MetricCriteria.IncrementSales(
+                    event.getEventId(),
+                    CONSUMER_GROUP,
+                    event.getPayload().toString(),
+                    saleLines,
+                    event.getTimestamp()
+            );
+
+            metricsFacade.incrementSalesCount(cri);
         }
         acknowledgment.acknowledge();
     }

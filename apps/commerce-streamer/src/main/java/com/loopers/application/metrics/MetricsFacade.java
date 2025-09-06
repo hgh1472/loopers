@@ -5,6 +5,7 @@ import com.loopers.domain.event.EventCommand;
 import com.loopers.domain.event.EventService;
 import com.loopers.domain.metrics.MetricCommand;
 import com.loopers.domain.metrics.MetricsService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +39,11 @@ public class MetricsFacade {
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        metricsService.incrementSalesCount(new MetricCommand.IncrementSales(cri.productId(), cri.quantity(), cri.createdAt().toLocalDate()));
+        List<MetricCommand.SaleLine> saleLines = cri.lines().stream()
+                .map(line -> new MetricCommand.SaleLine(line.productId(), line.quantity()))
+                .toList();
+
+        metricsService.incrementSalesCount(new MetricCommand.IncrementSales(saleLines, cri.createdAt().toLocalDate()));
     }
 
     public void incrementViewCount(MetricCriteria.IncrementView cri) {

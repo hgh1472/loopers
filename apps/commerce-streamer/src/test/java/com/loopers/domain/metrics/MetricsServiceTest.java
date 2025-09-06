@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -106,8 +107,9 @@ class MetricsServiceTest {
             given(productMetricsRepository.findByDailyMetrics(1L, now)).willReturn(Optional.empty());
             given(productMetricsRepository.save(any()))
                     .willReturn(new ProductMetrics(1L, LocalDate.now()));
+            List<MetricCommand.SaleLine> lines = List.of(new MetricCommand.SaleLine(1L, 3L));
 
-            metricsService.incrementSalesCount(new MetricCommand.IncrementSales(1L, 3L, now));
+            metricsService.incrementSalesCount(new MetricCommand.IncrementSales(lines, now));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getSalesCount().equals(3L)));
@@ -123,8 +125,9 @@ class MetricsServiceTest {
                     .willReturn(Optional.of(existMetrics));
             given(productMetricsRepository.save(any()))
                     .willReturn(existMetrics);
+            List<MetricCommand.SaleLine> lines = List.of(new MetricCommand.SaleLine(1L, 3L));
 
-            metricsService.incrementSalesCount(new MetricCommand.IncrementSales(1L, 3L, now));
+            metricsService.incrementSalesCount(new MetricCommand.IncrementSales(lines, now));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getSalesCount().equals(5L)));

@@ -9,6 +9,7 @@ import com.loopers.domain.event.HandledEventRepository;
 import com.loopers.domain.metrics.MetricsService;
 import com.loopers.utils.DatabaseCleanUp;
 import java.time.ZonedDateTime;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,7 +46,8 @@ class MetricsFacadeIntegrationTest {
             ZonedDateTime now = ZonedDateTime.now();
             HandledEvent handledEvent = new HandledEvent(eventId, consumerGroup, payload, now);
             handledEventRepository.save(handledEvent);
-            MetricCriteria.IncrementSales cri = new MetricCriteria.IncrementSales(eventId, consumerGroup, payload, 1L, 2L, now);
+            List<MetricCriteria.SaleLine> lines = List.of(new MetricCriteria.SaleLine(1L, 2L));
+            MetricCriteria.IncrementSales cri = new MetricCriteria.IncrementSales(eventId, consumerGroup, payload, lines, now);
 
             metricsFacade.incrementSalesCount(cri);
 

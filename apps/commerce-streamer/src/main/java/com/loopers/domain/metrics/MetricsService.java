@@ -1,5 +1,7 @@
 package com.loopers.domain.metrics;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +28,15 @@ public class MetricsService {
     }
 
     @Transactional
-    public ProductMetricsInfo incrementSalesCount(MetricCommand.IncrementSales cmd) {
-        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
-                .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
-        productMetrics.incrementSalesCount(cmd.quantity());
-        return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
+    public List<ProductMetricsInfo> incrementSalesCount(MetricCommand.IncrementSales cmd) {
+        List<ProductMetricsInfo> infos = new ArrayList<>();
+        for (MetricCommand.SaleLine saleLine : cmd.saleLines()) {
+            ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(saleLine.productId(), cmd.createdAt())
+                    .orElseGet(() -> new ProductMetrics(saleLine.productId(), cmd.createdAt()));
+            productMetrics.incrementSalesCount(saleLine.quantity());
+            infos.add(ProductMetricsInfo.from(productMetricsRepository.save(productMetrics)));
+        }
+        return infos;
     }
 
     @Transactional
