@@ -25,8 +25,7 @@ public class AuditKafkaListener {
     @Bean(destroyMethod = "close")
     public ParallelStreamProcessor<Object, Object> auditProcessor(ParallelConsumerOptions<Object, Object> options,
                                                                   KafkaTemplate<Object, Object> kafkaTemplate,
-                                                                  @Value("${kafka.topics.liked}") String likedTopic,
-                                                                  @Value("${kafka.topics.like-canceled}") String likeCanceledTopic,
+                                                                  @Value("${kafka.topics.like}") String likeTopic,
                                                                   @Value("${kafka.topics.order-paid}") String orderPaidTopic,
                                                                   @Value("${kafka.topics.product-viewed}") String viewedTopic,
                                                                   @Value("${kafka.topics.cache-evict-command}") String evictTopic
@@ -35,7 +34,7 @@ public class AuditKafkaListener {
 
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
 
-        processor.subscribe(List.of(likedTopic, likeCanceledTopic, orderPaidTopic, viewedTopic, evictTopic));
+        processor.subscribe(List.of(likeTopic, orderPaidTopic, viewedTopic, evictTopic));
         processor.poll(record -> {
             ConsumerRecord<Object, Object> consumerRecord = record.getSingleRecord().getConsumerRecord();
             try {

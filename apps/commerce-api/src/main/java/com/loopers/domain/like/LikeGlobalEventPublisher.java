@@ -1,7 +1,7 @@
 package com.loopers.domain.like;
 
-public interface LikeGlobalEventPublisher {
-    void publish(LikeEvent.Liked event);
+import com.loopers.infrastructure.like.LikeGlobalEvent;
 
-    void publish(LikeEvent.LikeCanceled event);
+public interface LikeGlobalEventPublisher {
+    void publish(LikeGlobalEvent.Like event);
 }

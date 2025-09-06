@@ -25,38 +25,36 @@ public class MetricKafkaConsumer {
     private final MetricsFacade metricsFacade;
     private final ObjectMapper objectMapper;
 
+
     @KafkaListener(
-            topics = "${kafka.topics.liked}",
+            topics = "${kafka.topics.like}",
             containerFactory = KafkaConfig.BATCH_LISTENER,
             groupId = CONSUMER_GROUP
     )
-    public void consumeLikedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
+    public void consumeLikeEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
-            LikeEvent.Liked event = objectMapper.readValue(message.value(), LikeEvent.Liked.class);
+            LikeEvent.Like event = objectMapper.readValue(message.value(), LikeEvent.Like.class);
 
-            MetricCriteria.IncrementLike cri =
-                    new MetricCriteria.IncrementLike(event.eventId(), CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
-
-            metricsFacade.incrementLikeCount(cri);
-        }
-        acknowledgment.acknowledge();
-    }
-
-    @KafkaListener(
-            topics = "${kafka.topics.like-canceled}",
-            containerFactory = KafkaConfig.BATCH_LISTENER,
-            groupId = CONSUMER_GROUP
-    )
-    public void consumeLikeCanceledEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
-            throws IOException {
-        for (ConsumerRecord<String, byte[]> message : messages) {
-            LikeEvent.Canceled event = objectMapper.readValue(message.value(), LikeEvent.Canceled.class);
-
-            MetricCriteria.DecrementLike cri =
-                    new MetricCriteria.DecrementLike(event.eventId(), CONSUMER_GROUP, event.toString(), event.productId(), event.createdAt());
-
-            metricsFacade.decrementLikeCount(cri);
+            if (event.liked()) {
+                MetricCriteria.IncrementLike cri = new MetricCriteria.IncrementLike(
+                        event.eventId(),
+                        CONSUMER_GROUP,
+                        event.toString(),
+                        event.productId(),
+                        event.createdAt()
+                );
+                metricsFacade.incrementLikeCount(cri);
+            } else {
+                MetricCriteria.DecrementLike cri = new MetricCriteria.DecrementLike(
+                        event.eventId(),
+                        CONSUMER_GROUP,
+                        event.toString(),
+                        event.productId(),
+                        event.createdAt()
+                );
+                metricsFacade.decrementLikeCount(cri);
+            }
         }
         acknowledgment.acknowledge();
     }
@@ -97,12 +95,12 @@ public class MetricKafkaConsumer {
         for (ConsumerRecord<String, byte[]> message : messages) {
             ProductEvent.Viewed event = objectMapper.readValue(message.value(), ProductEvent.Viewed.class);
 
-            MetricCriteria.IncrementView cri =
-                    new MetricCriteria.IncrementView(event.eventId(),
-                            CONSUMER_GROUP,
-                            event.toString(),
-                            event.productId(),
-                            event.createdAt());
+            MetricCriteria.IncrementView cri = new MetricCriteria.IncrementView(
+                    event.eventId(),
+                    CONSUMER_GROUP,
+                    event.toString(),
+                    event.productId(),
+                    event.createdAt());
 
             metricsFacade.incrementViewCount(cri);
         }

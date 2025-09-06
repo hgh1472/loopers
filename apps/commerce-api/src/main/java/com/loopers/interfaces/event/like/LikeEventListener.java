@@ -4,6 +4,7 @@ import com.loopers.domain.cache.CacheGlobalEvent;
 import com.loopers.domain.cache.CacheGlobalEventPublisher;
 import com.loopers.domain.like.LikeEvent;
 import com.loopers.domain.like.LikeGlobalEventPublisher;
+import com.loopers.infrastructure.like.LikeGlobalEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -17,14 +18,18 @@ public class LikeEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(LikeEvent.Liked event) {
-        likeGlobalEventPublisher.publish(event);
+        LikeGlobalEvent.Like globalEvent =
+                new LikeGlobalEvent.Like(event.eventId().toString(), event.userId(), event.productId(), true, event.createdAt());
+        likeGlobalEventPublisher.publish(globalEvent);
         cacheGlobalEventPublisher.publish(
                 new CacheGlobalEvent.ProductEvict(event.eventId().toString(), event.productId(), event.createdAt()));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(LikeEvent.LikeCanceled event) {
-        likeGlobalEventPublisher.publish(event);
+        LikeGlobalEvent.Like globalEvent =
+                new LikeGlobalEvent.Like(event.eventId().toString(), event.userId(), event.productId(), false, event.createdAt());
+        likeGlobalEventPublisher.publish(globalEvent);
         cacheGlobalEventPublisher.publish(
                 new CacheGlobalEvent.ProductEvict(event.eventId().toString(), event.productId(), event.createdAt()));
     }

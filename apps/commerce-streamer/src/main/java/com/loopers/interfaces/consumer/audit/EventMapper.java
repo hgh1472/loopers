@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.audit.AuditCriteria;
 import com.loopers.interfaces.consumer.events.CacheEvent;
 import com.loopers.interfaces.consumer.events.LikeEvent;
-import com.loopers.interfaces.consumer.events.LikeEvent.Liked;
 import com.loopers.interfaces.consumer.events.OrderEvent;
 import com.loopers.interfaces.consumer.events.ProductEvent;
 import com.loopers.support.error.CoreException;
@@ -20,10 +19,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EventMapper {
     private final ObjectMapper objectMapper;
-    @Value("${kafka.topics.liked}")
-    private String likedTopic;
-    @Value("${kafka.topics.like-canceled}")
-    private String likeCanceledTopic;
+    @Value("${kafka.topics.like}")
+    private String likeTopic;
     @Value("${kafka.topics.order-paid}")
     private String paidTopic;
     @Value("${kafka.topics.product-viewed}")
@@ -33,12 +30,8 @@ public class EventMapper {
 
     public AuditCriteria.Audit map(String topic, Object object, String group) {
         try {
-            if (topic.equals(likedTopic)) {
-                LikeEvent.Liked e = objectMapper.readValue((byte[]) object, Liked.class);
-                return new AuditCriteria.Audit(e.eventId(), group, e.toString(), e.getClass().getName(), e.createdAt());
-            }
-            if (topic.equals(likeCanceledTopic)) {
-                LikeEvent.Canceled e = objectMapper.readValue((byte[]) object, LikeEvent.Canceled.class);
+            if (topic.equals(likeTopic)) {
+                LikeEvent.Like e = objectMapper.readValue((byte[]) object, LikeEvent.Like.class);
                 return new AuditCriteria.Audit(e.eventId(), group, e.toString(), e.getClass().getName(), e.createdAt());
             }
             if (topic.equals(paidTopic)) {
