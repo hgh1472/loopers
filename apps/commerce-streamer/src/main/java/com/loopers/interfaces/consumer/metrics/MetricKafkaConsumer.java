@@ -1,5 +1,6 @@
 package com.loopers.interfaces.consumer.metrics;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.metrics.MetricCriteria;
 import com.loopers.application.metrics.MetricsFacade;
@@ -7,6 +8,7 @@ import com.loopers.config.kafka.KafkaConfig;
 import com.loopers.interfaces.consumer.events.LikeEvent;
 import com.loopers.interfaces.consumer.events.OrderEvent;
 import com.loopers.interfaces.consumer.events.ProductEvent;
+import com.loopers.message.KafkaMessage;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,24 +36,25 @@ public class MetricKafkaConsumer {
     public void consumeLikeEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
-            LikeEvent.Like event = objectMapper.readValue(message.value(), LikeEvent.Like.class);
+            KafkaMessage<LikeEvent.Like> event = objectMapper.readValue(message.value(), new TypeReference<>() {
+            });
 
-            if (event.liked()) {
+            if (event.getPayload().liked()) {
                 MetricCriteria.IncrementLike cri = new MetricCriteria.IncrementLike(
-                        event.eventId(),
+                        event.getEventId(),
                         CONSUMER_GROUP,
-                        event.toString(),
-                        event.productId(),
-                        event.createdAt()
+                        event.getPayload().toString(),
+                        Long.parseLong(event.getAggregateId()),
+                        event.getTimestamp()
                 );
                 metricsFacade.incrementLikeCount(cri);
             } else {
                 MetricCriteria.DecrementLike cri = new MetricCriteria.DecrementLike(
-                        event.eventId(),
+                        event.getEventId(),
                         CONSUMER_GROUP,
-                        event.toString(),
-                        event.productId(),
-                        event.createdAt()
+                        event.getPayload().toString(),
+                        Long.parseLong(event.getAggregateId()),
+                        event.getTimestamp()
                 );
                 metricsFacade.decrementLikeCount(cri);
             }
@@ -67,16 +70,17 @@ public class MetricKafkaConsumer {
     public void consumeOrderPaidEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
         for (ConsumerRecord<String, byte[]> message : messages) {
-            OrderEvent.Paid event = objectMapper.readValue(message.value(), OrderEvent.Paid.class);
+            KafkaMessage<OrderEvent.Paid> event = objectMapper.readValue(message.value(), new TypeReference<>() {
+            });
 
-            for (OrderEvent.Line line : event.lines()) {
+            for (OrderEvent.Line line : event.getPayload().lines()) {
                 MetricCriteria.IncrementSales cri = new MetricCriteria.IncrementSales(
-                        event.eventId(),
+                        event.getEventId(),
                         CONSUMER_GROUP,
-                        event.toString(),
+                        event.getPayload().toString(),
                         line.productId(),
                         line.quantity(),
-                        event.createdAt()
+                        event.getTimestamp()
                 );
                 metricsFacade.incrementSalesCount(cri);
             }

@@ -24,8 +24,8 @@ public class FailEvent {
     @Column(name = "event_topic", nullable = false)
     private String topic;
 
-    @Column(name = "event_key")
-    private String eventKey;
+    @Column(name = "aggregate_id", nullable = false)
+    private String aggregateId;
 
     @Column(name = "payload", columnDefinition = "TEXT")
     private String payload;
@@ -39,10 +39,10 @@ public class FailEvent {
     protected FailEvent() {
     }
 
-    public FailEvent(String eventId, String topic, String eventKey, String payload, ZonedDateTime createdAt) {
+    public FailEvent(String eventId, String topic, String aggregateId, String payload, ZonedDateTime createdAt) {
         this.eventId = eventId;
         this.topic = topic;
-        this.eventKey = eventKey;
+        this.aggregateId = aggregateId;
         this.payload = payload;
         this.status = Status.FAILED;
         this.createdAt = createdAt;

@@ -1,9 +1,11 @@
 package com.loopers.interfaces.consumer.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.domain.cache.CacheCommand;
 import com.loopers.domain.cache.CacheService;
 import com.loopers.interfaces.consumer.events.CacheEvent;
+import com.loopers.message.KafkaMessage;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -22,8 +24,9 @@ public class CacheKafkaListener {
             groupId = "cache-evict-consumer"
     )
     public void consumeEvict(ConsumerRecord<String, byte[]> message, Acknowledgment acknowledgment) throws IOException {
-        CacheEvent.ProductEvict event = objectMapper.readValue(message.value(), CacheEvent.ProductEvict.class);
-        cacheService.evictProductCache(new CacheCommand.EvictProduct(event.productId()));
+        KafkaMessage<CacheEvent.ProductEvict> event = objectMapper.readValue(message.value(), new TypeReference<>() {
+        });
+        cacheService.evictProductCache(new CacheCommand.EvictProduct(Long.parseLong(event.getAggregateId())));
         acknowledgment.acknowledge();
     }
 }

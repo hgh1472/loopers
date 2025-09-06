@@ -4,6 +4,7 @@ import com.loopers.application.audit.AuditCriteria;
 import com.loopers.application.audit.AuditFacade;
 import io.confluent.parallelconsumer.ParallelConsumerOptions;
 import io.confluent.parallelconsumer.ParallelStreamProcessor;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,11 @@ public class AuditKafkaListener {
                 AuditCriteria.Audit cri = eventMapper.map(consumerRecord.topic(), consumerRecord.value(), AUDIT_CONSUMER_GROUP);
                 auditFacade.audit(cri);
             } catch (RuntimeException e) {
-                log.error("Error processing record batch, sending to DLQ", e);
+                log.error("메세지 처리 중 문제가 발생했습니다. topic: {}, value : {},  e: {}",
+                        consumerRecord.topic(), consumerRecord.value(), e.getMessage());
                 recoverer.accept(consumerRecord, e);
+            } catch (IOException e) {
+                log.error("지원하지 않는 메시지 형식입니다. value: {}, topic: {}", consumerRecord.value(), consumerRecord.topic());
             }
         });
         return processor;

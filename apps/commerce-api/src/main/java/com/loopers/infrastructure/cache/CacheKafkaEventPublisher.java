@@ -5,6 +5,7 @@ import com.loopers.domain.cache.CacheGlobalEvent.TOPIC;
 import com.loopers.domain.cache.CacheGlobalEventPublisher;
 import com.loopers.domain.event.FailEvent;
 import com.loopers.infrastructure.event.FailEventJpaRepository;
+import com.loopers.message.KafkaMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -17,11 +18,20 @@ public class CacheKafkaEventPublisher implements CacheGlobalEventPublisher {
 
     @Override
     public void publish(CacheGlobalEvent.ProductEvict event) {
-        kafkaTemplate.send(CacheGlobalEvent.TOPIC.PRODUCT_EVICT, event.productId(), event)
+        KafkaMessage<CacheGlobalEvent.ProductEvict> message =
+                KafkaMessage.of(event.productId().toString(), CacheGlobalEvent.TOPIC.PRODUCT_EVICT, event);
+
+        kafkaTemplate.send(message.getTopic(), message.getAggregateId(), message)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
-                        FailEvent failEvent = new FailEvent(event.eventId(), TOPIC.PRODUCT_EVICT, event.productId().toString(),
-                                event.toString(), event.createdAt());
+                        FailEvent failEvent = new FailEvent(
+                                message.getEventId(),
+                                message.getTopic(),
+                                message.getAggregateId(),
+                                message.getPayload().toString(),
+                                message.getTimestamp()
+                        );
+
                         failEventJpaRepository.save(failEvent);
                     }
                 });
