@@ -27,14 +27,14 @@ public class ProductFacade {
     private final ProductService productService;
     private final ProductLikeService productLikeService;
     private final UserService userService;
-    private final ProductGlobalEventPublisher productGlobalEventPublisher;
+    private final ProductApplicationEventPublisher publisher;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProductResult getProduct(ProductCriteria.Get criteria) {
         ProductResult.ProductDetail detail = productDetailProcessor.getProductDetail(criteria.productId());
         ProductResult.ProductUserDetail userDetail = productUserDetailProcessor.getProductUserDetail(criteria);
-        productGlobalEventPublisher.publish(
-                new ProductGlobalEvent.Viewed(UUID.randomUUID().toString(), detail.id(), criteria.userId(), ZonedDateTime.now()));
+        publisher.publish(new ProductApplicationEvent.Viewed(UUID.randomUUID().toString(), detail.id(),
+                criteria.userId(), ZonedDateTime.now()));
         return ProductResult.from(detail, userDetail);
     }
 

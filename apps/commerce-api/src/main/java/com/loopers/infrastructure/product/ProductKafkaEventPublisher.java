@@ -2,8 +2,8 @@ package com.loopers.infrastructure.product;
 
 import com.loopers.application.product.ProductGlobalEvent;
 import com.loopers.application.product.ProductGlobalEventPublisher;
-import com.loopers.domain.event.FailEvent;
-import com.loopers.infrastructure.event.FailEventJpaRepository;
+import com.loopers.domain.event.OutboxFailProcessor;
+import com.loopers.domain.event.OutboxSuccessProcessor;
 import com.loopers.message.KafkaMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProductKafkaEventPublisher implements ProductGlobalEventPublisher {
     private final KafkaTemplate<Object, Object> kafkaTemplate;
-    private final FailEventJpaRepository failEventJpaRepository;
+    private final OutboxFailProcessor outboxFailProcessor;
+    private final OutboxSuccessProcessor outboxSuccessProcessor;
 
     @Override
     public void publish(ProductGlobalEvent.Viewed event) {
@@ -23,16 +24,10 @@ public class ProductKafkaEventPublisher implements ProductGlobalEventPublisher {
         kafkaTemplate.send(ProductGlobalEvent.TOPIC.VIEWED, message.getAggregateId(), message)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
-                        FailEvent failEvent = new FailEvent(
-                                message.getEventId(),
-                                ProductGlobalEvent.TOPIC.VIEWED,
-                                message.getAggregateId(),
-                                message.getPayload().toString(),
-                                message.getTimestamp()
-                        );
-
-                        failEventJpaRepository.save(failEvent);
+                        outboxFailProcessor.process(event.eventId(), ex.getMessage());
+                        return;
                     }
+                    outboxSuccessProcessor.process(event.eventId());
                 });
     }
 }

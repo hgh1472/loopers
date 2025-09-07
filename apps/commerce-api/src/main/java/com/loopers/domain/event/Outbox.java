@@ -10,10 +10,10 @@ import jakarta.persistence.Table;
 import java.time.ZonedDateTime;
 import lombok.Getter;
 
-@Entity
 @Getter
-@Table(name = "fail_event")
-public class FailEvent {
+@Entity
+@Table(name = "outbox")
+public class Outbox {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,20 +36,29 @@ public class FailEvent {
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;
 
-    protected FailEvent() {
+    protected Outbox() {
     }
 
-    public FailEvent(String eventId, String topic, String aggregateId, String payload, ZonedDateTime createdAt) {
+    public Outbox(String eventId, String topic, String aggregateId, String payload, ZonedDateTime createdAt) {
         this.eventId = eventId;
         this.topic = topic;
         this.aggregateId = aggregateId;
         this.payload = payload;
-        this.status = Status.FAILED;
+        this.status = Status.PENDING;
         this.createdAt = createdAt;
     }
 
+    public void fail() {
+        this.status = Status.FAILED;
+    }
+
+    public void success() {
+        this.status = Status.SUCCESS;
+    }
+
     public enum Status {
-        FAILED,
-        SUCCESS
+        PENDING,
+        SUCCESS,
+        FAILED
     }
 }
