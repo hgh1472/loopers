@@ -9,8 +9,10 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserInfo;
 import com.loopers.domain.user.UserService;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,11 +27,14 @@ public class ProductFacade {
     private final ProductService productService;
     private final ProductLikeService productLikeService;
     private final UserService userService;
+    private final ProductApplicationEventPublisher publisher;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProductResult getProduct(ProductCriteria.Get criteria) {
         ProductResult.ProductDetail detail = productDetailProcessor.getProductDetail(criteria.productId());
         ProductResult.ProductUserDetail userDetail = productUserDetailProcessor.getProductUserDetail(criteria);
+        publisher.publish(new ProductApplicationEvent.Viewed(UUID.randomUUID().toString(), detail.id(),
+                criteria.userId(), ZonedDateTime.now()));
         return ProductResult.from(detail, userDetail);
     }
 
