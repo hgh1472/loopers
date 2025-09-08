@@ -10,6 +10,7 @@ import com.loopers.interfaces.consumer.events.OrderEvent;
 import com.loopers.interfaces.consumer.events.ProductEvent;
 import com.loopers.message.KafkaMessage;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +36,12 @@ public class MetricKafkaConsumer {
     )
     public void consumeLikeEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
+        List<MetricCriteria.IncrementLike> incrementLikes = new ArrayList<>();
+        List<MetricCriteria.DecrementLike> decrementLikes = new ArrayList<>();
+
         for (ConsumerRecord<String, byte[]> message : messages) {
             KafkaMessage<LikeEvent.Like> event = objectMapper.readValue(message.value(), new TypeReference<>() {
             });
-
             if (event.getPayload().liked()) {
                 MetricCriteria.IncrementLike cri = new MetricCriteria.IncrementLike(
                         event.getEventId(),
@@ -47,7 +50,7 @@ public class MetricKafkaConsumer {
                         Long.parseLong(event.getAggregateId()),
                         event.getTimestamp()
                 );
-                metricsFacade.incrementLikeCount(cri);
+                incrementLikes.add(cri);
             } else {
                 MetricCriteria.DecrementLike cri = new MetricCriteria.DecrementLike(
                         event.getEventId(),
@@ -56,9 +59,17 @@ public class MetricKafkaConsumer {
                         Long.parseLong(event.getAggregateId()),
                         event.getTimestamp()
                 );
-                metricsFacade.decrementLikeCount(cri);
+                decrementLikes.add(cri);
             }
         }
+
+        if (!incrementLikes.isEmpty()) {
+            metricsFacade.incrementLikeCounts(incrementLikes);
+        }
+        if (!decrementLikes.isEmpty()) {
+            metricsFacade.decrementLikeCounts(decrementLikes);
+        }
+
         acknowledgment.acknowledge();
     }
 

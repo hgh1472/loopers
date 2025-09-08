@@ -39,10 +39,10 @@ class MetricsServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(new ProductMetrics(1L, LocalDate.now()));
 
-            metricsService.incrementLikeCount(new MetricCommand.IncrementLike(1L, now));
+            metricsService.incrementLikeCount(new MetricCommand.IncrementLikes(1L, 2L, now));
 
             verify(productMetricsRepository, times(1))
-                    .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(1L)));
+                    .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(2L)));
         }
 
         @Test
@@ -56,10 +56,10 @@ class MetricsServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(existMetrics);
 
-            metricsService.incrementLikeCount(new MetricCommand.IncrementLike(1L, now));
+            metricsService.incrementLikeCount(new MetricCommand.IncrementLikes(1L, 2L, now));
 
             verify(productMetricsRepository, times(1))
-                    .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(2L)));
+                    .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(3L)));
         }
     }
 
@@ -72,7 +72,7 @@ class MetricsServiceTest {
             LocalDate now = LocalDate.now();
             given(productMetricsRepository.findByDailyMetrics(1L, now)).willReturn(Optional.empty());
 
-            CoreException exception = assertThrows(CoreException.class, () -> metricsService.decrementLikeCount(new MetricCommand.DecrementLike(1L, now)));
+            CoreException exception = assertThrows(CoreException.class, () -> metricsService.decrementLikeCount(new MetricCommand.DecrementLikes(1L, 2L, now)));
 
             assertThat(exception)
                     .usingRecursiveComparison()
@@ -84,13 +84,13 @@ class MetricsServiceTest {
         void updateProductMetrics_whenExist() {
             LocalDate now = LocalDate.now();
             ProductMetrics existMetrics = new ProductMetrics(1L, now);
-            existMetrics.incrementLikeCount();
+            existMetrics.incrementLikeCount(2L);
             given(productMetricsRepository.findByDailyMetrics(1L, now))
                     .willReturn(Optional.of(existMetrics));
             given(productMetricsRepository.save(any()))
                     .willReturn(existMetrics);
 
-            metricsService.decrementLikeCount(new MetricCommand.DecrementLike(1L, now));
+            metricsService.decrementLikeCount(new MetricCommand.DecrementLikes(1L, 2L, now));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getLikeCount().equals(0L)));

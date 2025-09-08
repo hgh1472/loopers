@@ -1,5 +1,7 @@
 package com.loopers.application.metrics;
 
+import static java.util.stream.Collectors.groupingBy;
+
 import com.loopers.domain.event.DuplicatedEventException;
 import com.loopers.domain.event.EventCommand;
 import com.loopers.domain.event.EventService;
@@ -15,22 +17,48 @@ public class MetricsFacade {
     private final MetricsService metricsService;
     private final EventService eventService;
 
-    public void incrementLikeCount(MetricCriteria.IncrementLike cri) {
+    public void incrementLikeCounts(List<MetricCriteria.IncrementLike> cri) {
         try {
-            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
+            List<EventCommand.Save> commands = cri.stream()
+                    .map(c -> new EventCommand.Save(c.eventId(), c.consumerGroup(), c.payload(), c.createdAt()))
+                    .toList();
+            eventService.saveAll(commands);
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        metricsService.incrementLikeCount(new MetricCommand.IncrementLike(cri.productId(), cri.createdAt().toLocalDate()));
+        List<MetricCommand.IncrementLikes> commands = cri.stream()
+                .collect(groupingBy(MetricCriteria.IncrementLike::productId))
+                .entrySet().stream()
+                .map(entry -> new MetricCommand.IncrementLikes(
+                        entry.getKey(),
+                        (long) entry.getValue().size(),
+                        entry.getValue().getFirst().createdAt().toLocalDate()
+                ))
+                .toList();
+
+        metricsService.incrementLikeCounts(commands);
     }
 
-    public void decrementLikeCount(MetricCriteria.DecrementLike cri) {
+    public void decrementLikeCounts(List<MetricCriteria.DecrementLike> cri) {
         try {
-            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
+            List<EventCommand.Save> commands = cri.stream()
+                    .map(c -> new EventCommand.Save(c.eventId(), c.consumerGroup(), c.payload(), c.createdAt()))
+                    .toList();
+            eventService.saveAll(commands);
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        metricsService.decrementLikeCount(new MetricCommand.DecrementLike(cri.productId(), cri.createdAt().toLocalDate()));
+        List<MetricCommand.DecrementLikes> commands = cri.stream()
+                .collect(groupingBy(MetricCriteria.DecrementLike::productId))
+                .entrySet().stream()
+                .map(entry -> new MetricCommand.DecrementLikes(
+                        entry.getKey(),
+                        (long) entry.getValue().size(),
+                        entry.getValue().getFirst().createdAt().toLocalDate()
+                ))
+                .toList();
+
+        metricsService.decrementLikeCounts(commands);
     }
 
     public void incrementSalesCount(MetricCriteria.IncrementSales cri) {

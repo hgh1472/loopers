@@ -4,14 +4,16 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class MetricCommand {
-    public record IncrementLike(
+    public record IncrementLikes(
             Long productId,
+            Long count,
             LocalDate createdAt
     ) {
     }
 
-    public record DecrementLike(
+    public record DecrementLikes(
             Long productId,
+            Long count,
             LocalDate createdAt
     ) {
     }

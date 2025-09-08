@@ -12,19 +12,33 @@ public class MetricsService {
     private final ProductMetricsRepository productMetricsRepository;
 
     @Transactional
-    public ProductMetricsInfo incrementLikeCount(MetricCommand.IncrementLike cmd) {
+    public ProductMetricsInfo incrementLikeCount(MetricCommand.IncrementLikes cmd) {
         ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
-        productMetrics.incrementLikeCount();
+        productMetrics.incrementLikeCount(cmd.count());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
     }
 
     @Transactional
-    public ProductMetricsInfo decrementLikeCount(MetricCommand.DecrementLike cmd) {
+    public List<ProductMetricsInfo> incrementLikeCounts(List<MetricCommand.IncrementLikes> cmds) {
+        return cmds.stream()
+                .map(this::incrementLikeCount)
+                .toList();
+    }
+
+    @Transactional
+    public ProductMetricsInfo decrementLikeCount(MetricCommand.DecrementLikes cmd) {
         ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
-        productMetrics.decrementLikeCount();
+        productMetrics.decrementLikeCount(cmd.count());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
+    }
+
+    @Transactional
+    public List<ProductMetricsInfo> decrementLikeCounts(List<MetricCommand.DecrementLikes> cmds) {
+        return cmds.stream()
+                .map(this::decrementLikeCount)
+                .toList();
     }
 
     @Transactional
