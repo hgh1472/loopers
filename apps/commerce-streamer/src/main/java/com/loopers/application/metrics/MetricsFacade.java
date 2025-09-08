@@ -2,6 +2,7 @@ package com.loopers.application.metrics;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import com.loopers.application.metrics.MetricsApplicationEvent.Type;
 import com.loopers.domain.event.DuplicatedEventException;
 import com.loopers.domain.event.EventCommand;
 import com.loopers.domain.event.EventService;
@@ -17,8 +18,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MetricsFacade {
-    private final MetricsService metricsService;
     private final EventService eventService;
+    private final MetricsService metricsService;
+    private final MetricsApplicationEventPublisher eventPublisher;
 
     public void incrementLikeCounts(List<MetricCriteria.IncrementLike> cri) {
         try {
@@ -29,6 +31,7 @@ public class MetricsFacade {
         } catch (DuplicatedEventException ignored) {
             return;
         }
+
         List<MetricCommand.IncrementLikes> commands = cri.stream()
                 .collect(groupingBy(MetricCriteria.IncrementLike::productId))
                 .entrySet().stream()
@@ -38,8 +41,12 @@ public class MetricsFacade {
                         entry.getValue().getFirst().createdAt().toLocalDate()
                 ))
                 .toList();
-
         metricsService.incrementLikeCounts(commands);
+
+        List<MetricsApplicationEvent.Updated> events = commands.stream()
+                .map(c -> new MetricsApplicationEvent.Updated(c.productId(), c.count(), Type.LIKE, c.createdAt()))
+                .toList();
+        eventPublisher.publish(events);
     }
 
     public void decrementLikeCounts(List<MetricCriteria.DecrementLike> cri) {
@@ -51,6 +58,7 @@ public class MetricsFacade {
         } catch (DuplicatedEventException ignored) {
             return;
         }
+
         List<MetricCommand.DecrementLikes> commands = cri.stream()
                 .collect(groupingBy(MetricCriteria.DecrementLike::productId))
                 .entrySet().stream()
@@ -60,8 +68,12 @@ public class MetricsFacade {
                         entry.getValue().getFirst().createdAt().toLocalDate()
                 ))
                 .toList();
-
         metricsService.decrementLikeCounts(commands);
+
+        List<MetricsApplicationEvent.Updated> events = commands.stream()
+                .map(c -> new MetricsApplicationEvent.Updated(c.productId(), -c.count(), Type.LIKE, c.createdAt()))
+                .toList();
+        eventPublisher.publish(events);
     }
 
     public void incrementSalesCounts(List<MetricCriteria.IncrementSales> cri) {
@@ -87,8 +99,12 @@ public class MetricsFacade {
         List<MetricCommand.IncrementSales> commands = quantityByProduct.entrySet().stream()
                 .map(e -> new MetricCommand.IncrementSales(e.getKey(), e.getValue(), createdAt))
                 .toList();
-
         metricsService.incrementSalesCounts(commands);
+
+        List<MetricsApplicationEvent.Updated> events = commands.stream()
+                .map(c -> new MetricsApplicationEvent.Updated(c.productId(), c.quantity(), Type.SALES, c.createdAt()))
+                .toList();
+        eventPublisher.publish(events);
     }
 
     public void incrementViewCounts(List<MetricCriteria.IncrementView> cri) {
@@ -110,7 +126,11 @@ public class MetricsFacade {
                         entry.getValue().getFirst().createdAt().toLocalDate()
                 ))
                 .toList();
-
         metricsService.incrementViewCounts(commands);
+
+        List<MetricsApplicationEvent.Updated> events = commands.stream()
+                .map(c -> new MetricsApplicationEvent.Updated(c.productId(), c.count(), Type.VIEW, c.createdAt()))
+                .toList();
+        eventPublisher.publish(events);
     }
 }
