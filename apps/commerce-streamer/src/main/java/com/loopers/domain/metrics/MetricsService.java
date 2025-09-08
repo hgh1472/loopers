@@ -42,15 +42,19 @@ public class MetricsService {
     }
 
     @Transactional
-    public List<ProductMetricsInfo> incrementSalesCount(MetricCommand.IncrementSales cmd) {
+    public ProductMetricsInfo incrementSalesCount(MetricCommand.IncrementSales cmd) {
         List<ProductMetricsInfo> infos = new ArrayList<>();
-        for (MetricCommand.SaleLine saleLine : cmd.saleLines()) {
-            ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(saleLine.productId(), cmd.createdAt())
-                    .orElseGet(() -> new ProductMetrics(saleLine.productId(), cmd.createdAt()));
-            productMetrics.incrementSalesCount(saleLine.quantity());
-            infos.add(ProductMetricsInfo.from(productMetricsRepository.save(productMetrics)));
-        }
-        return infos;
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+                .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
+        productMetrics.incrementSalesCount(cmd.quantity());
+        return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
+    }
+
+    @Transactional
+    public List<ProductMetricsInfo> incrementSalesCounts(List<MetricCommand.IncrementSales> cmds) {
+        return cmds.stream()
+                .map(this::incrementSalesCount)
+                .toList();
     }
 
     @Transactional

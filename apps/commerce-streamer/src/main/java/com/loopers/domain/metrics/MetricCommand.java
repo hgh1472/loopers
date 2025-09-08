@@ -1,7 +1,6 @@
 package com.loopers.domain.metrics;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public class MetricCommand {
     public record IncrementLikes(
@@ -19,14 +18,9 @@ public class MetricCommand {
     }
 
     public record IncrementSales(
-            List<SaleLine> saleLines,
-            LocalDate createdAt
-    ) {
-    }
-
-    public record SaleLine(
             Long productId,
-            Long quantity
+            Long quantity,
+            LocalDate createdAt
     ) {
     }
 

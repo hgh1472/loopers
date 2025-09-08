@@ -7,7 +7,10 @@ import com.loopers.domain.event.EventCommand;
 import com.loopers.domain.event.EventService;
 import com.loopers.domain.metrics.MetricCommand;
 import com.loopers.domain.metrics.MetricsService;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -61,17 +64,31 @@ public class MetricsFacade {
         metricsService.decrementLikeCounts(commands);
     }
 
-    public void incrementSalesCount(MetricCriteria.IncrementSales cri) {
+    public void incrementSalesCounts(List<MetricCriteria.IncrementSales> cri) {
         try {
-            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
+            List<EventCommand.Save> commands = cri.stream()
+                    .map(c -> new EventCommand.Save(c.eventId(), c.consumerGroup(), c.payload(), c.createdAt()))
+                    .toList();
+            eventService.saveAll(commands);
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        List<MetricCommand.SaleLine> saleLines = cri.lines().stream()
-                .map(line -> new MetricCommand.SaleLine(line.productId(), line.quantity()))
+
+        Map<Long, Long> quantityByProduct = cri.stream()
+                .flatMap(criteria -> criteria.lines().stream())
+                .collect(Collectors.toMap(
+                        MetricCriteria.SaleLine::productId,
+                        MetricCriteria.SaleLine::quantity,
+                        Long::sum
+                ));
+
+        LocalDate createdAt = cri.isEmpty() ? LocalDate.now() : cri.getFirst().createdAt().toLocalDate();
+
+        List<MetricCommand.IncrementSales> commands = quantityByProduct.entrySet().stream()
+                .map(e -> new MetricCommand.IncrementSales(e.getKey(), e.getValue(), createdAt))
                 .toList();
 
-        metricsService.incrementSalesCount(new MetricCommand.IncrementSales(saleLines, cri.createdAt().toLocalDate()));
+        metricsService.incrementSalesCounts(commands);
     }
 
     public void incrementViewCount(MetricCriteria.IncrementView cri) {

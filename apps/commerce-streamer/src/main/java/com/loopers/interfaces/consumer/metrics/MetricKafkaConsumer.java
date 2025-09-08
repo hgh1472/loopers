@@ -80,6 +80,7 @@ public class MetricKafkaConsumer {
     )
     public void consumeOrderPaidEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
+        List<MetricCriteria.IncrementSales> incrementSales = new ArrayList<>();
         for (ConsumerRecord<String, byte[]> message : messages) {
             KafkaMessage<OrderEvent.Paid> event = objectMapper.readValue(message.value(), new TypeReference<>() {
             });
@@ -96,7 +97,11 @@ public class MetricKafkaConsumer {
                     event.getTimestamp()
             );
 
-            metricsFacade.incrementSalesCount(cri);
+            incrementSales.add(cri);
+        }
+
+        if (!incrementSales.isEmpty()) {
+            metricsFacade.incrementSalesCounts(incrementSales);
         }
         acknowledgment.acknowledge();
     }
