@@ -23,4 +23,9 @@ public class RankingCommand {
             LocalDate date
     ) {
     }
+
+    public record UpdateDailyRanking(
+            LocalDate date
+    ) {
+    }
 }

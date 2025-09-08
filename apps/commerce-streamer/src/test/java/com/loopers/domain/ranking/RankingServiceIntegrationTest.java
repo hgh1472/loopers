@@ -1,5 +1,6 @@
 package com.loopers.domain.ranking;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
@@ -23,6 +24,8 @@ class RankingServiceIntegrationTest {
     private RankingService rankingService;
     @Autowired
     private RedisTemplate<String, String> masterRedisTemplate;
+    @Autowired
+    private DailyRankingRepository dailyRankingRepository;
     @Autowired
     private RedisCleanUp redisCleanUp;
 
@@ -104,6 +107,50 @@ class RankingServiceIntegrationTest {
                     () -> assertThat(masterRedisTemplate.opsForZSet().score(MetricsKeys.PRODUCT_SCORE.getKey(now), "2")).isEqualTo(14.0),
                     () -> assertThat(masterRedisTemplate.opsForZSet().score(MetricsKeys.PRODUCT_SCORE.getKey(now), "3")).isEqualTo(21.0)
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("일별 랭킹 업데이트 시,")
+    class UpdateDailyRankings {
+        @Test
+        @DisplayName("오늘 점수의 10%가 내일 랭킹에 반영된다.")
+        void carryOverScores() {
+            LocalDate today = LocalDate.now();
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "1", 100);
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "2", 200);
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "3", 300);
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "4", 400);
+
+            rankingService.updateDailyRankings(new RankingCommand.UpdateDailyRanking(today));
+
+            assertThat(masterRedisTemplate.opsForZSet().score(MetricsKeys.PRODUCT_SCORE.getKey(today.plusDays(1)), "1")).isEqualTo(10.0);
+            assertThat(masterRedisTemplate.opsForZSet().score(MetricsKeys.PRODUCT_SCORE.getKey(today.plusDays(1)), "2")).isEqualTo(20.0);
+            assertThat(masterRedisTemplate.opsForZSet().score(MetricsKeys.PRODUCT_SCORE.getKey(today.plusDays(1)), "3")).isEqualTo(30.0);
+            assertThat(masterRedisTemplate.opsForZSet().score(MetricsKeys.PRODUCT_SCORE.getKey(today.plusDays(1)), "4")).isEqualTo(40.0);
+        }
+
+        @Test
+        @DisplayName("오늘 랭킹의 상위 20개의 상품이 저장된다.")
+        void saveDailyRankings() {
+            LocalDate today = LocalDate.now();
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "1", 100);
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "2", 200);
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "3", 300);
+            masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "4", 400);
+
+            rankingService.updateDailyRankings(new RankingCommand.UpdateDailyRanking(today));
+
+            List<DailyRanking> dailyRankings = dailyRankingRepository.findDailyRankings(today);
+            assertThat(dailyRankings).hasSize(4);
+            assertThat(dailyRankings)
+                    .extracting("productId", "rank")
+                    .containsExactlyInAnyOrder(
+                            tuple(4L, 1),
+                            tuple(3L, 2),
+                            tuple(2L, 3),
+                            tuple(1L, 4)
+                    );
         }
     }
 }
