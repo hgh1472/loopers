@@ -80,7 +80,10 @@ public class ProductMetrics {
         this.salesCount += quantity;
     }
 
-    public void incrementViewCount() {
-        this.viewCount++;
+    public void incrementViewCount(Long quantity) {
+        if (quantity <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "조회 수는 0보다 커야 합니다.");
+        }
+        this.viewCount += quantity;
     }
 }

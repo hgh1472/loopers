@@ -61,7 +61,14 @@ public class MetricsService {
     public ProductMetricsInfo incrementViewCount(MetricCommand.IncrementView cmd) {
         ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
-        productMetrics.incrementViewCount();
+        productMetrics.incrementViewCount(cmd.count());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
+    }
+
+    @Transactional
+    public List<ProductMetricsInfo> incrementViewCounts(List<MetricCommand.IncrementView> cmd) {
+        return cmd.stream()
+                .map(this::incrementViewCount)
+                .toList();
     }
 }

@@ -115,10 +115,27 @@ class MetricsFacadeIntegrationTest {
             handledEventRepository.save(handledEvent);
             MetricCriteria.IncrementView cri = new MetricCriteria.IncrementView(eventId, consumerGroup, payload, 1L, now);
 
-            metricsFacade.incrementViewCount(cri);
+            metricsFacade.incrementViewCounts(List.of(cri));
 
             verify(metricsService, never())
                     .incrementViewCount(any());
+        }
+
+        @Test
+        @DisplayName("같은 상품에 대한 조회수 증가 이벤트가 여러 건 존재하면, 상품 별로 합산하여 조회수를 증가시킨다.")
+        void incrementViewCounts_withSum() {
+            String consumerGroup = "consumer-group";
+            String payload = "{}";
+            ZonedDateTime now = ZonedDateTime.now();
+            MetricCriteria.IncrementView cri1 = new MetricCriteria.IncrementView("event-id-1", consumerGroup, payload, 1L, now);
+            MetricCriteria.IncrementView cri2 = new MetricCriteria.IncrementView("event-id-2", consumerGroup, payload, 1L, now);
+
+            metricsFacade.incrementViewCounts(List.of(cri1, cri2));
+
+            ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(1L, now.toLocalDate())
+                    .orElseThrow();
+
+            assertThat(productMetrics.getViewCount()).isEqualTo(2L);
         }
     }
 }

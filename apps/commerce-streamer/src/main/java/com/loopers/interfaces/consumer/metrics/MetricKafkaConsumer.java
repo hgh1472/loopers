@@ -113,6 +113,7 @@ public class MetricKafkaConsumer {
     )
     void consumeProductViewedEvent(List<ConsumerRecord<String, byte[]>> messages, Acknowledgment acknowledgment)
             throws IOException {
+        List<MetricCriteria.IncrementView> incrementViews = new ArrayList<>();
         for (ConsumerRecord<String, byte[]> message : messages) {
             ProductEvent.Viewed event = objectMapper.readValue(message.value(), ProductEvent.Viewed.class);
 
@@ -123,8 +124,13 @@ public class MetricKafkaConsumer {
                     event.productId(),
                     event.createdAt());
 
-            metricsFacade.incrementViewCount(cri);
+            incrementViews.add(cri);
         }
+
+        if (!incrementViews.isEmpty()) {
+            metricsFacade.incrementViewCounts(incrementViews);
+        }
+
         acknowledgment.acknowledge();
     }
 }

@@ -91,12 +91,26 @@ public class MetricsFacade {
         metricsService.incrementSalesCounts(commands);
     }
 
-    public void incrementViewCount(MetricCriteria.IncrementView cri) {
+    public void incrementViewCounts(List<MetricCriteria.IncrementView> cri) {
         try {
-            eventService.save(new EventCommand.Save(cri.eventId(), cri.consumerGroup(), cri.payload(), cri.createdAt()));
+            List<EventCommand.Save> commands = cri.stream()
+                    .map(c -> new EventCommand.Save(c.eventId(), c.consumerGroup(), c.payload(), c.createdAt()))
+                    .toList();
+            eventService.saveAll(commands);
         } catch (DuplicatedEventException ignored) {
             return;
         }
-        metricsService.incrementViewCount(new MetricCommand.IncrementView(cri.productId(), cri.createdAt().toLocalDate()));
+
+        List<MetricCommand.IncrementView> commands = cri.stream()
+                .collect(groupingBy(MetricCriteria.IncrementView::productId))
+                .entrySet().stream()
+                .map(entry -> new MetricCommand.IncrementView(
+                        entry.getKey(),
+                        (long) entry.getValue().size(),
+                        entry.getValue().getFirst().createdAt().toLocalDate()
+                ))
+                .toList();
+
+        metricsService.incrementViewCounts(commands);
     }
 }

@@ -26,6 +26,7 @@ public class MetricCommand {
 
     public record IncrementView(
             Long productId,
+            Long count,
             LocalDate createdAt
     ) {
     }
