@@ -1,6 +1,7 @@
 package com.loopers.domain.ranking;
 
 import com.loopers.domain.PageResponse;
+import com.loopers.domain.ranking.RankingCommand.Rankings;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class RankingService {
     private final RankingBoard rankingBoard;
 
-    public PageResponse<RankingInfo> getRanking(RankingCommand.DailyRanking command) {
+    public PageResponse<RankingInfo> getRankings(Rankings command) {
         int page = Math.max(command.page(), 1);
         int size = Math.min(Math.max(command.size(), 5), 20);
         int offset = (page - 1) * size;
@@ -25,5 +26,10 @@ public class RankingService {
         Long totalCount = rankingBoard.getTotalCount(command.date());
         int totalPages = totalCount % size == 0 ? (int) (totalCount / size) : (int) (totalCount / size) + 1;
         return new PageResponse<>(rankingInfos, page, size, totalCount, totalPages);
+    }
+
+    public RankingInfo getProductRank(RankingCommand.Ranking command) {
+        Long rank = rankingBoard.getProductRank(command.productId(), command.date());
+        return new RankingInfo(command.productId(), rank);
     }
 }

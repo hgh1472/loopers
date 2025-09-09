@@ -7,4 +7,6 @@ public interface RankingBoard {
     List<Long> getRankedProducts(int offset, int limit, LocalDate date);
 
     Long getTotalCount(LocalDate date);
+
+    Long getProductRank(Long productId, LocalDate date);
 }

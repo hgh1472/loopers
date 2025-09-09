@@ -38,9 +38,9 @@ class RankingServiceIntegrationTest {
             for (int i = 1; i <= 10; i++) {
                 redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), String.valueOf(i), 100 - (i - 1) * 10);
             }
-            RankingCommand.DailyRanking command = new RankingCommand.DailyRanking(5, 2, today);
+            RankingCommand.Rankings command = new RankingCommand.Rankings(5, 2, today);
 
-            PageResponse<RankingInfo> result = rankingService.getRanking(command);
+            PageResponse<RankingInfo> result = rankingService.getRankings(command);
 
             assertThat(result.getContent().size()).isEqualTo(5);
             assertThat(result.getContent().get(0).productId()).isEqualTo(6L);
@@ -60,9 +60,9 @@ class RankingServiceIntegrationTest {
             for (int i = 1; i <= 3; i++) {
                 redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), String.valueOf(i), 100 - (i - 1) * 10);
             }
-            RankingCommand.DailyRanking command = new RankingCommand.DailyRanking(5, 1, today);
+            RankingCommand.Rankings command = new RankingCommand.Rankings(5, 1, today);
 
-            PageResponse<RankingInfo> result = rankingService.getRanking(command);
+            PageResponse<RankingInfo> result = rankingService.getRankings(command);
 
             assertThat(result.getContent().size()).isEqualTo(3);
             assertThat(result.getContent().get(0).productId()).isEqualTo(1L);
@@ -84,9 +84,9 @@ class RankingServiceIntegrationTest {
             for (int i = 1; i <= 10; i++) {
                 redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), String.valueOf(i), 100 - (i - 1) * 10);
             }
-            RankingCommand.DailyRanking command = new RankingCommand.DailyRanking(5, 0, today);
+            RankingCommand.Rankings command = new RankingCommand.Rankings(5, 0, today);
 
-            PageResponse<RankingInfo> result = rankingService.getRanking(command);
+            PageResponse<RankingInfo> result = rankingService.getRankings(command);
 
             assertThat(result.getContent().size()).isEqualTo(5);
             assertThat(result.getContent().get(0).productId()).isEqualTo(1L);
@@ -106,9 +106,9 @@ class RankingServiceIntegrationTest {
             for (int i = 1; i <= 10; i++) {
                 redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), String.valueOf(i), 100 - (i - 1) * 10);
             }
-            RankingCommand.DailyRanking command = new RankingCommand.DailyRanking(3, 1, today);
+            RankingCommand.Rankings command = new RankingCommand.Rankings(3, 1, today);
 
-            PageResponse<RankingInfo> result = rankingService.getRanking(command);
+            PageResponse<RankingInfo> result = rankingService.getRankings(command);
 
             assertThat(result.getContent().size()).isEqualTo(5);
             assertThat(result.getContent().get(0).productId()).isEqualTo(1L);
@@ -128,9 +128,9 @@ class RankingServiceIntegrationTest {
             for (int i = 1; i <= 30; i++) {
                 redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), String.valueOf(i), 100 - (i - 1) * 10);
             }
-            RankingCommand.DailyRanking command = new RankingCommand.DailyRanking(25, 1, today);
+            RankingCommand.Rankings command = new RankingCommand.Rankings(25, 1, today);
 
-            PageResponse<RankingInfo> result = rankingService.getRanking(command);
+            PageResponse<RankingInfo> result = rankingService.getRankings(command);
 
             assertThat(result.getContent().size()).isEqualTo(20);
             assertThat(result.getContent().get(0).productId()).isEqualTo(1L);
@@ -141,6 +141,36 @@ class RankingServiceIntegrationTest {
             assertThat(result.getTotalPages()).isEqualTo(2);
             assertThat(result.getPageNumber()).isEqualTo(1);
             assertThat(result.getPageSize()).isEqualTo(20);
+        }
+    }
+
+    @Nested
+    @DisplayName("상품 랭킹 조회 시,")
+    class ProductRank {
+        @Test
+        @DisplayName("해당 상품의 랭킹 정보가 존재하지 않으면, 상품의 rank를 null로 반환한다.")
+        void getProductRank_withNoRanking() {
+            LocalDate today = LocalDate.now();
+            RankingCommand.Ranking command = new RankingCommand.Ranking(1L, today);
+
+            RankingInfo result = rankingService.getProductRank(command);
+
+            assertThat(result.rank()).isNull();
+        }
+
+        @Test
+        @DisplayName("해당 상품의 순위를 반환한다.")
+        void getProductRank() {
+            LocalDate today = LocalDate.now();
+            for (int i = 1; i <= 10; i++) {
+                redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), String.valueOf(i), 100 - (i - 1) * 10);
+            }
+            RankingCommand.Ranking command = new RankingCommand.Ranking(3L, today);
+
+            RankingInfo result = rankingService.getProductRank(command);
+
+            assertThat(result.productId()).isEqualTo(3L);
+            assertThat(result.rank()).isEqualTo(3L);
         }
     }
 }

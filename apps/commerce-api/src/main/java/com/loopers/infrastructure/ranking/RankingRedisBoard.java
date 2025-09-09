@@ -26,4 +26,14 @@ public class RankingRedisBoard implements RankingBoard {
         String todayKey = MetricsKeys.PRODUCT_SCORE.getKey(date);
         return defaultRedisTemplate.opsForZSet().zCard(todayKey);
     }
+
+    @Override
+    public Long getProductRank(Long productId, LocalDate date) {
+        String todayKey = MetricsKeys.PRODUCT_SCORE.getKey(date);
+        Long rank = defaultRedisTemplate.opsForZSet().reverseRank(todayKey, String.valueOf(productId));
+        if (rank != null) {
+            rank += 1; // 1-based rank로 변환
+        }
+        return rank;
+    }
 }

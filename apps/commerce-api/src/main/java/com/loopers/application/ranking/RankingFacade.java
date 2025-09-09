@@ -7,7 +7,7 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
-import com.loopers.domain.ranking.RankingCommand;
+import com.loopers.domain.ranking.RankingCommand.Rankings;
 import com.loopers.domain.ranking.RankingInfo;
 import com.loopers.domain.ranking.RankingService;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,8 @@ public class RankingFacade {
     private final BrandService brandService;
 
     public PageResponse<RankingResult> getRankProducts(RankingCriteria.Search cri) {
-        PageResponse<RankingInfo> rankings = rankingService.getRanking(
-                new RankingCommand.DailyRanking(cri.size(), cri.page(), cri.date()));
+        PageResponse<RankingInfo> rankings = rankingService.getRankings(
+                new Rankings(cri.size(), cri.page(), cri.date()));
 
         return rankings.map(ranking -> {
             ProductInfo product = productService.findProduct(new ProductCommand.Find(ranking.productId()));
