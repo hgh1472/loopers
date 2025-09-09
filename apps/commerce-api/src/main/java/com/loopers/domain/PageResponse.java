@@ -18,7 +18,7 @@ public class PageResponse<T> {
     protected PageResponse() {
     }
 
-    private PageResponse(List<T> content, int pageNumber, int pageSize, long totalElements, int totalPages) {
+    public PageResponse(List<T> content, int pageNumber, int pageSize, long totalElements, int totalPages) {
         this.content = content;
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;

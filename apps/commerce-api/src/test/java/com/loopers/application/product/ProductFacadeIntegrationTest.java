@@ -1,5 +1,6 @@
 package com.loopers.application.product;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,17 +24,20 @@ import com.loopers.domain.stock.StockRepository;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserCommand;
 import com.loopers.domain.user.UserRepository;
+import com.loopers.key.MetricsKeys;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @SpringBootTest
 class ProductFacadeIntegrationTest {
@@ -54,6 +58,8 @@ class ProductFacadeIntegrationTest {
     private ProductCountRepository productCountRepository;
     @Autowired
     private ProductCacheRepository productCacheRepository;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
     @Autowired
@@ -139,6 +145,44 @@ class ProductFacadeIntegrationTest {
                     () -> assertThat(productResult.likeCount()).isEqualTo(2L),
                     () -> assertThat(productResult.isLiked()).isFalse()
             );
+        }
+
+        @Test
+        @DisplayName("상품의 rank 정보가 존재한다면, rank 정보도 함께 반환한다.")
+        void returnProductInfoWithRank_whenProductHasRank() {
+            Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
+            Product product = productRepository.findById(productRepository.save(init).getId()).get();
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
+            Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            ProductCount productCount = ProductCount.from(product.getId());
+            productCount.incrementLike();
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
+            LocalDate today = LocalDate.now();
+            redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), product.getId().toString(), 100);
+            redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "100", 90);
+            redisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "101", 110);
+
+            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
+
+            assertThat(productResult.rank()).isEqualTo(2L);
+        }
+
+        @Test
+        @DisplayName("상품의 rank 정보가 존재하지 않는다면, rank 정보는 null로 반환한다.")
+        void returnProductInfoWithoutRank_whenProductDoesNotHaveRank() {
+            Product init = Product.create(new ProductCommand.Create(1L, "제품", new BigDecimal(1000L), "ON_SALE"));
+            Product product = productRepository.findById(productRepository.save(init).getId()).get();
+            Brand brand = brandRepository.save(Brand.create(new BrandCommand.Create("브랜드", "브랜드 설명")));
+            Stock stock = stockRepository.save(Stock.create(new StockCommand.Create(product.getId(), 100L)));
+            ProductCount productCount = ProductCount.from(product.getId());
+            productCount.incrementLike();
+            productCount.incrementLike();
+            productCountRepository.save(productCount);
+
+            ProductResult productResult = productFacade.getProduct(new ProductCriteria.Get(product.getId(), null));
+
+            assertThat(productResult.rank()).isNull();
         }
     }
 
