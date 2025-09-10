@@ -1,12 +1,14 @@
 package com.loopers.domain.ranking;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import com.loopers.domain.ranking.RankingCommand.Sale;
+import com.loopers.infrastructure.ranking.WeightJpaRepository;
 import com.loopers.key.MetricsKeys;
 import com.loopers.key.WeightKeys;
+import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,11 +29,16 @@ class RankingServiceIntegrationTest {
     @Autowired
     private DailyRankingRepository dailyRankingRepository;
     @Autowired
+    private WeightJpaRepository weightJpaRepository;
+    @Autowired
     private RedisCleanUp redisCleanUp;
+    @Autowired
+    private DatabaseCleanUp databaseCleanUp;
 
     @AfterEach
     void tearDown() {
         redisCleanUp.truncateAll();
+        databaseCleanUp.truncateAllTables();
     }
 
     @Nested
@@ -40,8 +47,8 @@ class RankingServiceIntegrationTest {
         @Test
         @DisplayName("좋아요가 증가하는 경우,좋아요의 score를 증가시킨다.")
         void recordLikeCounts() {
-            masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(), WeightKeys.LIKE.getKey(), "0.2");
             LocalDate now = LocalDate.now();
+            masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(now), "likes", "0.2");
             List<RankingCommand.Like> cmd = List.of(
                     new RankingCommand.Like(1L, 10L, now),
                     new RankingCommand.Like(2L, 20L, now),
@@ -64,8 +71,8 @@ class RankingServiceIntegrationTest {
         @Test
         @DisplayName("조회수가 증가하는 경우, 증가된 조회수를 집계한다.")
         void recordViewCounts() {
-            masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(), WeightKeys.VIEW.getKey(), "0.1");
             LocalDate now = LocalDate.now();
+            masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(now), "views", "0.1");
             List<RankingCommand.View> cmd = List.of(
                     new RankingCommand.View(1L, 10L, now),
                     new RankingCommand.View(2L, 20L, now),
@@ -88,8 +95,8 @@ class RankingServiceIntegrationTest {
         @Test
         @DisplayName("판매량이 증가하는 경우, 증가된 판매량을 집계한다.")
         void recordSalesCounts() {
-            masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(), WeightKeys.SALES.getKey(), "0.7");
             LocalDate now = LocalDate.now();
+            masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(now), "sales", "0.7");
             List<Sale> cmd = List.of(
                     new Sale(1L, 10L, now),
                     new RankingCommand.Sale(2L, 20L, now),
@@ -121,6 +128,9 @@ class RankingServiceIntegrationTest {
             masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "2", 200);
             masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "3", 300);
             masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "4", 400);
+            Weight weight = new Weight(0.1, 0.2, 0.7);
+            weight.activate();
+            weightJpaRepository.save(weight);
 
             rankingService.updateDailyRankings(new RankingCommand.UpdateDailyRanking(today));
 
@@ -138,6 +148,9 @@ class RankingServiceIntegrationTest {
             masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "2", 200);
             masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "3", 300);
             masterRedisTemplate.opsForZSet().add(MetricsKeys.PRODUCT_SCORE.getKey(today), "4", 400);
+            Weight weight = new Weight(0.1, 0.2, 0.7);
+            weight.activate();
+            weightJpaRepository.save(weight);
 
             rankingService.updateDailyRankings(new RankingCommand.UpdateDailyRanking(today));
 
@@ -151,6 +164,42 @@ class RankingServiceIntegrationTest {
                             tuple(2L, 3),
                             tuple(1L, 4)
                     );
+        }
+
+        @Test
+        @DisplayName("이전 가중치는 비활성화되고, 최신 가중치가 활성화된다.")
+        void activateLatestWeight() {
+            LocalDate today = LocalDate.now();
+            Weight previousWeight = new Weight(0.1, 0.2, 0.7);
+            previousWeight.activate();
+            weightJpaRepository.save(previousWeight);
+            Weight latestWeight = new Weight(0.3, 0.3, 0.4);
+            weightJpaRepository.save(latestWeight);
+
+            rankingService.updateDailyRankings(new RankingCommand.UpdateDailyRanking(today));
+
+            Weight activate = weightJpaRepository.findByActivateTrue();
+            assertThat(activate)
+                    .extracting("likeWeight", "viewWeight", "salesWeight")
+                    .containsExactly(0.3, 0.3, 0.4);
+        }
+
+        @Test
+        @DisplayName("새 가중치가 Redis에 반영된다.")
+        void updateWeightsInRedis() {
+            LocalDate today = LocalDate.now();
+            Weight previousWeight = new Weight(0.1, 0.2, 0.7);
+            previousWeight.activate();
+            weightJpaRepository.save(previousWeight);
+            Weight latestWeight = new Weight(0.3, 0.3, 0.4);
+            weightJpaRepository.save(latestWeight);
+
+            rankingService.updateDailyRankings(new RankingCommand.UpdateDailyRanking(today));
+
+            assertThat(masterRedisTemplate.opsForHash().entries(WeightKeys.WEIGHT.getKey(today.plusDays(1))))
+                    .containsEntry("likes", "0.3")
+                    .containsEntry("views", "0.3")
+                    .containsEntry("sales", "0.4");
         }
     }
 }

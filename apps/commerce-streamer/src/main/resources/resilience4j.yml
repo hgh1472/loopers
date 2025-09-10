@@ -28,6 +28,33 @@ resilience4j:
         record-exceptions:
           - java.util.concurrent.TimeoutException
           - java.lang.IllegalStateException
+      likeWeight:
+        sliding-window-type: time_based
+        sliding-window-size: 60
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+        slow-call-duration-threshold: 800ms
+        slow-call-rate-threshold: 50
+      viewWeight:
+        sliding-window-type: time_based
+        sliding-window-size: 60
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+        slow-call-duration-threshold: 800ms
+        slow-call-rate-threshold: 50
+      salesWeight:
+        sliding-window-type: time_based
+        sliding-window-size: 60
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+        slow-call-duration-threshold: 800ms
+        slow-call-rate-threshold: 50
     circuit-breaker-aspect-order: 1
   timelimiter:
     instances:
