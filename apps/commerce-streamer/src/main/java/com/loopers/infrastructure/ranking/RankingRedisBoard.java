@@ -2,6 +2,7 @@ package com.loopers.infrastructure.ranking;
 
 import com.loopers.domain.ranking.RankingBoard;
 import com.loopers.key.MetricsKeys;
+import com.loopers.key.WeightKeys;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -45,6 +46,13 @@ public class RankingRedisBoard implements RankingBoard {
 
         masterRedisTemplate.expire(todayKey, Duration.ofDays(1));
         masterRedisTemplate.expire(tomorrowKey, Duration.ofDays(2));
+    }
+
+    @Override
+    public void updateWeights(Double likeWeight, Double viewWeight, Double salesWeight, LocalDate date) {
+        masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(date), "likes", likeWeight.toString());
+        masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(date), "views", viewWeight.toString());
+        masterRedisTemplate.opsForHash().put(WeightKeys.WEIGHT.getKey(date), "sales", salesWeight.toString());
     }
 
     @Override

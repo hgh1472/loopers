@@ -12,5 +12,7 @@ public interface RankingBoard {
 
     void carryOverScores(LocalDate date);
 
+    void updateWeights(Double likeWeight, Double viewWeight, Double salesWeight, LocalDate date);
+
     List<Long> getTopRankedProducts(LocalDate date, int topN);
 }
