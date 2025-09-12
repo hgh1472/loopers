@@ -7,4 +7,6 @@ public interface ProductMetricsRepository {
     ProductMetrics save(ProductMetrics productMetrics);
 
     Optional<ProductMetrics> findByDailyMetrics(Long productId, LocalDate date);
+
+    Optional<ProductMetrics> findByDailyMetricsWithLock(Long productId, LocalDate date);
 }

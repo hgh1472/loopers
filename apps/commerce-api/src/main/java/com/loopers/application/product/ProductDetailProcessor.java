@@ -12,11 +12,16 @@ import com.loopers.domain.count.ProductCountService;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.ranking.RankingCommand;
+import com.loopers.domain.ranking.RankingCommand.Rankings;
+import com.loopers.domain.ranking.RankingInfo;
+import com.loopers.domain.ranking.RankingService;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockInfo;
 import com.loopers.domain.stock.StockService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.time.LocalDate;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,6 +35,7 @@ public class ProductDetailProcessor {
     private final BrandService brandService;
     private final StockService stockService;
     private final ProductCountService productCountService;
+    private final RankingService rankingService;
 
     public ProductResult.ProductDetail getProductDetail(Long productId) {
         ProductInfo productInfo = productService.findProduct(new ProductCommand.Find(productId));
@@ -42,11 +48,12 @@ public class ProductDetailProcessor {
             return ProductResult.ProductDetail.from(cache.get());
         }
 
+        RankingInfo rankingInfo = rankingService.getProductRank(new RankingCommand.Ranking(productId, LocalDate.now()));
         BrandInfo brandInfo = brandService.findBy(new BrandCommand.Find(productInfo.brandId()));
         StockInfo stockInfo = stockService.findStock(new StockCommand.Find(productInfo.id()));
         ProductCountInfo countInfo = productCountService.getProductCount(new ProductCountCommand.Get(productInfo.id()));
 
-        cacheService.writeProductDetail(CacheCommand.ProductDetail.of(productInfo, brandInfo, stockInfo, countInfo));
-        return ProductResult.ProductDetail.from(productInfo, brandInfo, stockInfo, countInfo);
+        cacheService.writeProductDetail(CacheCommand.ProductDetail.of(productInfo, brandInfo, stockInfo, countInfo, rankingInfo));
+        return ProductResult.ProductDetail.from(productInfo, brandInfo, stockInfo, countInfo, rankingInfo);
     }
 }

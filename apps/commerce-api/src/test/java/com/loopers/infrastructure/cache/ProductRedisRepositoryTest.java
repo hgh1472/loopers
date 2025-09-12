@@ -44,7 +44,7 @@ class ProductRedisRepositoryTest {
     @Test
     @DisplayName("상품 상세 캐시를 저장하는 과정에서 JSON 직렬화 예외가 발생하면, 예외를 catch하고 던지지 않는다.")
     void catchJsonProcessingException_whenSerializationFails() throws JsonProcessingException {
-        ProductDetailCache productDetailCache = new ProductDetailCache(1L, "Brand", "Product", new BigDecimal("1000"), "ON_SALE", 100L, 10L);
+        ProductDetailCache productDetailCache = new ProductDetailCache(1L, "Brand", "Product", new BigDecimal("1000"), "ON_SALE", 100L, 10L, 1L);
         String key = "product:123";
         Duration ttl = Duration.ofSeconds(5L);
         doThrow(JsonProcessingException.class)
