@@ -7,13 +7,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "product_metrics")
+@Table(name = "product_metrics", indexes = {
+        @Index(name = "idx_product_id_date", columnList = "ref_product_id, date")
+})
 public class ProductMetrics {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

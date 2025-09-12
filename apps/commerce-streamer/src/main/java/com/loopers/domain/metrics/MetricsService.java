@@ -13,7 +13,7 @@ public class MetricsService {
 
     @Transactional
     public ProductMetricsInfo incrementLikeCount(MetricCommand.IncrementLikes cmd) {
-        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetricsWithLock(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
         productMetrics.incrementLikeCount(cmd.count());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
@@ -28,7 +28,7 @@ public class MetricsService {
 
     @Transactional
     public ProductMetricsInfo decrementLikeCount(MetricCommand.DecrementLikes cmd) {
-        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetricsWithLock(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
         productMetrics.decrementLikeCount(cmd.count());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
@@ -44,7 +44,7 @@ public class MetricsService {
     @Transactional
     public ProductMetricsInfo incrementSalesCount(MetricCommand.IncrementSales cmd) {
         List<ProductMetricsInfo> infos = new ArrayList<>();
-        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetricsWithLock(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
         productMetrics.incrementSalesCount(cmd.quantity());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
@@ -58,15 +58,15 @@ public class MetricsService {
     }
 
     @Transactional
-    public ProductMetricsInfo incrementViewCount(MetricCommand.IncrementView cmd) {
-        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetrics(cmd.productId(), cmd.createdAt())
+    public ProductMetricsInfo incrementViewCount(MetricCommand.IncrementViews cmd) {
+        ProductMetrics productMetrics = productMetricsRepository.findByDailyMetricsWithLock(cmd.productId(), cmd.createdAt())
                 .orElseGet(() -> new ProductMetrics(cmd.productId(), cmd.createdAt()));
         productMetrics.incrementViewCount(cmd.count());
         return ProductMetricsInfo.from(productMetricsRepository.save(productMetrics));
     }
 
     @Transactional
-    public List<ProductMetricsInfo> incrementViewCounts(List<MetricCommand.IncrementView> cmd) {
+    public List<ProductMetricsInfo> incrementViewCounts(List<MetricCommand.IncrementViews> cmd) {
         return cmd.stream()
                 .map(this::incrementViewCount)
                 .toList();

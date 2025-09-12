@@ -117,10 +117,10 @@ public class MetricsFacade {
             return;
         }
 
-        List<MetricCommand.IncrementView> commands = cri.stream()
+        List<MetricCommand.IncrementViews> commands = cri.stream()
                 .collect(groupingBy(MetricCriteria.IncrementView::productId))
                 .entrySet().stream()
-                .map(entry -> new MetricCommand.IncrementView(
+                .map(entry -> new MetricCommand.IncrementViews(
                         entry.getKey(),
                         (long) entry.getValue().size(),
                         entry.getValue().getFirst().createdAt().toLocalDate()

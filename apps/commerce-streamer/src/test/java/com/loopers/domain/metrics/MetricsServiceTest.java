@@ -142,7 +142,7 @@ class MetricsServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(new ProductMetrics(1L, LocalDate.now()));
 
-            metricsService.incrementViewCount(new MetricCommand.IncrementView(1L, 1L, now));
+            metricsService.incrementViewCount(new MetricCommand.IncrementViews(1L, 1L, now));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getViewCount().equals(1L)));
@@ -159,7 +159,7 @@ class MetricsServiceTest {
             given(productMetricsRepository.save(any()))
                     .willReturn(existMetrics);
 
-            metricsService.incrementViewCount(new MetricCommand.IncrementView(1L,3L, now));
+            metricsService.incrementViewCount(new MetricCommand.IncrementViews(1L, 3L, now));
 
             verify(productMetricsRepository, times(1))
                     .save(argThat(pm -> pm.getProductId().equals(1L) && pm.getViewCount().equals(4L)));
