@@ -3,6 +3,7 @@ package com.loopers.application.product;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,12 +21,16 @@ import com.loopers.domain.count.ProductCountService;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductInfo;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.ranking.RankingCommand;
+import com.loopers.domain.ranking.RankingInfo;
+import com.loopers.domain.ranking.RankingService;
 import com.loopers.domain.stock.StockCommand;
 import com.loopers.domain.stock.StockInfo;
 import com.loopers.domain.stock.StockService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -49,6 +54,8 @@ class ProductDetailProcessorTest {
     private BrandService brandService;
     @Mock
     private StockService stockService;
+    @Mock
+    private RankingService rankingService;
     @Mock
     private ProductCountService productCountService;
 
@@ -75,7 +82,7 @@ class ProductDetailProcessorTest {
         void getProductWithCache() {
             given(productService.findProduct(new ProductCommand.Find(1L)))
                     .willReturn(new ProductInfo(1L, 1L, "Product", new BigDecimal("100"), "ON_SALE"));
-            ProductDetailCache cache = new ProductDetailCache(1L, "Brand", "Product", new BigDecimal("100"), "ON_SALE", 100L, 10L);
+            ProductDetailCache cache = new ProductDetailCache(1L, "Brand", "Product", new BigDecimal("100"), "ON_SALE", 100L, 10L, 1L);
             given(cacheService.findProductDetail(1L))
                     .willReturn(Optional.of(cache));
 
@@ -102,6 +109,8 @@ class ProductDetailProcessorTest {
             ProductCountCommand.Get productCountCommand = new ProductCountCommand.Get(1L);
             given(productCountService.getProductCount(productCountCommand))
                     .willReturn(new ProductCountInfo(1L, 10L));
+            given(rankingService.getProductRank(any()))
+                    .willReturn(new RankingInfo(1L, 1L));
 
             productDetailProcessor.getProductDetail(1L);
 
@@ -109,8 +118,9 @@ class ProductDetailProcessorTest {
             verify(brandService, times(1)).findBy(brandCommand);
             verify(stockService, times(1)).findStock(stockCommand);
             verify(cacheService, times(1)).writeProductDetail(new CacheCommand.ProductDetail(
-                    1L, "Brand", "Product", new BigDecimal("100"), "ON_SALE", 100L, 10L
+                    1L, "Brand", "Product", new BigDecimal("100"), "ON_SALE", 100L, 10L, 1L
             ));
+            verify(rankingService, times(1)).getProductRank(any());
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.loopers.domain.metrics;
 
-import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
@@ -8,13 +7,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "product_metrics")
+@Table(name = "product_metrics", indexes = {
+        @Index(name = "idx_product_id_date", columnList = "ref_product_id, date")
+})
 public class ProductMetrics {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,11 +52,28 @@ public class ProductMetrics {
         this.likeCount++;
     }
 
+    public void incrementLikeCount(Long count) {
+        if (count <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "증가 수는 0보다 커야 합니다.");
+        }
+        this.likeCount += count;
+    }
+
     public void decrementLikeCount() {
         if (this.likeCount <= 0) {
             throw new CoreException(ErrorType.CONFLICT, "좋아요 수는 0보다 작을 수 없습니다.");
         }
         this.likeCount--;
+    }
+
+    public void decrementLikeCount(Long count) {
+        if (count <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "감소 수는 0보다 커야 합니다.");
+        }
+        if (this.likeCount - count < 0) {
+            throw new CoreException(ErrorType.CONFLICT, "좋아요 수는 0보다 작을 수 없습니다.");
+        }
+        this.likeCount -= count;
     }
 
     public void incrementSalesCount(Long quantity) {
@@ -64,7 +83,10 @@ public class ProductMetrics {
         this.salesCount += quantity;
     }
 
-    public void incrementViewCount() {
-        this.viewCount++;
+    public void incrementViewCount(Long quantity) {
+        if (quantity <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "조회 수는 0보다 커야 합니다.");
+        }
+        this.viewCount += quantity;
     }
 }

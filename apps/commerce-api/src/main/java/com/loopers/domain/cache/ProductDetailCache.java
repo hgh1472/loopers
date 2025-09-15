@@ -9,7 +9,8 @@ public record ProductDetailCache(
         BigDecimal price,
         String status,
         Long quantity,
-        Long likeCount
+        Long likeCount,
+        Long rank
 ) {
     public static ProductDetailCache from(CacheCommand.ProductDetail command) {
         return new ProductDetailCache(
@@ -19,6 +20,7 @@ public record ProductDetailCache(
                 command.price(),
                 command.status(),
                 command.quantity(),
+                command.rank(),
                 command.likeCount()
         );
     }

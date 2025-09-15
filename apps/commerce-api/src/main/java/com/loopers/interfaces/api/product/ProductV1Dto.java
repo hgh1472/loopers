@@ -13,6 +13,7 @@ public class ProductV1Dto {
             String status,
             Long quantity,
             Long likeCount,
+            Long rank,
             boolean isLiked
     ) {
         public static ProductResponse from(ProductResult productResult) {
@@ -24,6 +25,7 @@ public class ProductV1Dto {
                     productResult.status(),
                     productResult.quantity(),
                     productResult.likeCount(),
+                    productResult.rank(),
                     productResult.isLiked()
             );
         }

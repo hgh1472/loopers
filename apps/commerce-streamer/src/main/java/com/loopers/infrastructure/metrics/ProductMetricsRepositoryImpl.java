@@ -21,4 +21,9 @@ public class ProductMetricsRepositoryImpl implements ProductMetricsRepository {
     public Optional<ProductMetrics> findByDailyMetrics(Long productId, LocalDate date) {
         return productMetricsJpaRepository.findByProductIdAndDate(productId, date);
     }
+
+    @Override
+    public Optional<ProductMetrics> findByDailyMetricsWithLock(Long productId, LocalDate date) {
+        return productMetricsJpaRepository.findByProductIdAndDateWithLock(productId, date);
+    }
 }
