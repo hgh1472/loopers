@@ -15,7 +15,7 @@ spring:
   main:
     web-application-type: servlet
   application:
-    name: commerce-streamer
+    name: commerce-batch
   profiles:
     active: local
   config:
@@ -24,6 +24,10 @@ spring:
       - redis.yml
       - logging.yml
       - monitoring.yml
+
+  batch:
+    jdbc:
+      initialize-schema: always
 
 ---
 spring:

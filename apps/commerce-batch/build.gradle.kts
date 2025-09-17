@@ -22,4 +22,5 @@ dependencies {
     // test-fixtures
     testImplementation(testFixtures(project(":modules:jpa")))
     testImplementation(testFixtures(project(":modules:redis")))
+    testImplementation("org.springframework.batch:spring-batch-test")
 }
