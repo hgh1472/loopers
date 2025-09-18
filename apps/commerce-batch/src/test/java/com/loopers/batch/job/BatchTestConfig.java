@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 public class BatchTestConfig {
 
     @Bean
-    public JobLauncherTestUtils weeklyRankingJobTest(@Qualifier("weeklyRankingJob")Job job) {
+    public JobLauncherTestUtils rankingJobTest(@Qualifier("rankingJob") Job job) {
         JobLauncherTestUtils jobLauncherTestUtils = new JobLauncherTestUtils();
         jobLauncherTestUtils.setJob(job);
         return jobLauncherTestUtils;

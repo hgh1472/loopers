@@ -1,5 +1,6 @@
 package com.loopers.application.ranking;
 
+import com.loopers.domain.ranking.MonthlyRankingScore;
 import com.loopers.domain.ranking.WeeklyProductRankMv;
 import com.loopers.domain.ranking.WeeklyRankingMetric;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,20 @@ public class WeeklyRankingStepConfig {
                                   WeeklyRankingWriter writer) {
         return new StepBuilder("weeklyRankingStep", jobRepository)
                 .<WeeklyRankingMetric, WeeklyProductRankMv>chunk(300, tm)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .build();
+    }
+
+    @Bean
+    public Step monthlyRankingStep(JobRepository jobRepository,
+                                  PlatformTransactionManager tm,
+                                  MonthlyRankingReader reader,
+                                  MonthlyRankingProcessor processor,
+                                  MonthlyRankingWriter writer) {
+        return new StepBuilder("monthlyRankingStep", jobRepository)
+                .<WeeklyProductRankMv, MonthlyRankingScore>chunk(300, tm)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

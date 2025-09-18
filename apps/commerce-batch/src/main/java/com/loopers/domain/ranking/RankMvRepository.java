@@ -5,9 +5,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RankMvRepository {
-    void saveAll(Iterable<WeeklyProductRankMv> entities);
+    void saveWeeklyRankingMvs(Iterable<WeeklyProductRankMv> entities);
+
+    void saveMonthlyRankingMvs(Iterable<MonthlyProductRankMv> entities);
 
     List<WeeklyProductRankMv> findWeeklyRankMv(LocalDate date);
 
-    Optional<WeeklyProductRankMv> findByProductAndDate(Long productId, LocalDate date);
+    List<MonthlyProductRankMv> findMonthlyRankMv(LocalDate date);
+
+    Optional<MonthlyProductRankMv> findMonthlyRankMvByProductId(LocalDate date, Long productId);
 }
