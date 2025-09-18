@@ -32,13 +32,10 @@ public class WeeklyProductRankMv {
     protected WeeklyProductRankMv() {
     }
 
-    public WeeklyProductRankMv(Long productId, Double score, LocalDate date) {
+    public WeeklyProductRankMv(Long productId, Integer rank, Double score, LocalDate date) {
         this.productId = productId;
+        this.rank = rank;
         this.score = score;
         this.date = date;
-    }
-
-    public void setRank(Integer rank) {
-        this.rank = rank;
     }
 }

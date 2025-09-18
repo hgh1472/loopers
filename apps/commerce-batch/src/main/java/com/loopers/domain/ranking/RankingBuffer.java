@@ -3,13 +3,15 @@ package com.loopers.domain.ranking;
 import java.util.List;
 
 public interface RankingBuffer {
-    void recordWeekly(WeeklyRankingMetric metric);
+    void recordWeekly(WeeklyRankingScore metric);
 
-    Integer getWeeklyRank(Long productId);
+    List<RankingBoardInfo> getWeeklyRankings(int limit);
 
     void record(MonthlyRankingScore score);
 
     List<RankingBoardInfo> getMonthlyRankings(int limit);
 
     void clearMonthlyBuffer();
+
+    void clearWeeklyBuffer();
 }

@@ -1,8 +1,9 @@
 package com.loopers.application.ranking;
 
+import com.loopers.domain.ranking.DailyMetric;
 import com.loopers.domain.ranking.MonthlyRankingScore;
 import com.loopers.domain.ranking.WeeklyProductRankMv;
-import com.loopers.domain.ranking.WeeklyRankingMetric;
+import com.loopers.domain.ranking.WeeklyRankingScore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.repository.JobRepository;
@@ -20,23 +21,25 @@ public class WeeklyRankingStepConfig {
                                   PlatformTransactionManager tm,
                                   WeeklyRankingReader reader,
                                   WeeklyRankingProcessor processor,
-                                  WeeklyRankingWriter writer) {
+                                  WeeklyRankingWriter writer,
+                                  WeeklyRankingStepListener listener) {
         return new StepBuilder("weeklyRankingStep", jobRepository)
-                .<WeeklyRankingMetric, WeeklyProductRankMv>chunk(300, tm)
+                .<DailyMetric, WeeklyRankingScore>chunk(500, tm)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .listener(listener)
                 .build();
     }
 
     @Bean
     public Step monthlyRankingStep(JobRepository jobRepository,
-                                  PlatformTransactionManager tm,
-                                  MonthlyRankingReader reader,
-                                  MonthlyRankingProcessor processor,
-                                  MonthlyRankingWriter writer) {
+                                   PlatformTransactionManager tm,
+                                   MonthlyRankingReader reader,
+                                   MonthlyRankingProcessor processor,
+                                   MonthlyRankingWriter writer) {
         return new StepBuilder("monthlyRankingStep", jobRepository)
-                .<WeeklyProductRankMv, MonthlyRankingScore>chunk(300, tm)
+                .<WeeklyProductRankMv, MonthlyRankingScore>chunk(500, tm)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

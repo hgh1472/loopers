@@ -99,8 +99,7 @@ class RankingJobTest {
             LocalDate date = LocalDate.of(2025, 9, 18);
             List<WeeklyProductRankMv> weeklyMvs = new ArrayList<>();
             for (long i = 1; i <= 350; i++) {
-                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, 1 * (double) i, date);
-                mv.setRank((int) (351 - i));
+                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, (int) (351 - i), 1 * (double) i, date);
                 weeklyMvs.add(mv);
             }
             rankMvRepository.saveWeeklyRankingMvs(weeklyMvs);
@@ -125,8 +124,7 @@ class RankingJobTest {
             LocalDate date = LocalDate.of(2025, 9, 18);
             List<WeeklyProductRankMv> weeklyMvs = new ArrayList<>();
             for (long i = 1; i <= 10; i++) {
-                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, 1 * (double) i, date);
-                mv.setRank((int) (11 - i));
+                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, (int) (11 - i), 1 * (double) i, date);
                 weeklyMvs.add(mv);
             }
             rankMvRepository.saveWeeklyRankingMvs(weeklyMvs);

@@ -44,4 +44,8 @@ public class DailyMetric {
         this.viewCount = viewCount;
         this.date = date;
     }
+
+    public Double calculateScore() {
+        return likeCount * 0.2 + salesCount * 1.0 + viewCount * 0.1;
+    }
 }

@@ -1,6 +1,6 @@
 package com.loopers.application.ranking;
 
-import com.loopers.domain.ranking.WeeklyRankingMetric;
+import com.loopers.domain.ranking.DailyMetric;
 import jakarta.persistence.EntityManagerFactory;
 import java.time.LocalDate;
 import java.util.Map;
@@ -13,22 +13,17 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @StepScope
-public class WeeklyRankingReader extends JpaPagingItemReader<WeeklyRankingMetric> {
+public class WeeklyRankingReader extends JpaPagingItemReader<DailyMetric> {
 
     public WeeklyRankingReader(EntityManagerFactory emf,
                                @Value("#{jobParameters['date']}") String date) {
-        log.info("WeeklyRankingReader initialized with date: {}", date);
         setEntityManagerFactory(emf);
         setQueryString(
-                "SELECT new com.loopers.domain.ranking.WeeklyRankingMetric(d.productId, " +
-                        "SUM(d.viewCount * 0.1 + d.likeCount * 0.2 + d.salesCount * 0.7)) " +
+                "SELECT d " +
                         "FROM DailyMetric d " +
-                        "WHERE d.date >= :startDate " +
-                        "GROUP BY d.productId " +
-                        "ORDER BY SUM(d.viewCount * 0.1 + d.likeCount * 0.2 + d.salesCount * 0.7) DESC"
+                        "WHERE d.date >= :startDate"
         );
         setParameterValues(Map.of("startDate", LocalDate.parse(date).minusDays(6)));
-        setPageSize(300);
-        setMaxItemCount(300);
+        setPageSize(500);
     }
 }

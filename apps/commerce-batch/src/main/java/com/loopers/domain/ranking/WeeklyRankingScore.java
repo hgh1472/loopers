@@ -1,8 +1,6 @@
 package com.loopers.domain.ranking;
 
-import java.time.LocalDate;
-
-public record WeeklyRankingMetric(
+public record WeeklyRankingScore(
         Long productId,
         Double score
 ) {
