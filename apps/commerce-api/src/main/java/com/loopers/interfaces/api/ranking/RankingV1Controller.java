@@ -37,4 +37,14 @@ public class RankingV1Controller implements RankingV1ApiSpec {
         PageResponse<RankingResult> result = rankingFacade.getWeeklyRankProduct(new RankingCriteria.Search(page, size, date));
         return ApiResponse.success(result.map(RankingV1Dto.RankingResponse::from));
     }
+
+    @Override
+    public ApiResponse<PageResponse<RankingV1Dto.RankingResponse>> getMonthlyRanking(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) LocalDate date) {
+        date = date == null ? LocalDate.now() : date;
+        PageResponse<RankingResult> result = rankingFacade.getMonthlyRankProduct(new RankingCriteria.Search(page, size, date));
+        return ApiResponse.success(result.map(RankingV1Dto.RankingResponse::from));
+    }
 }

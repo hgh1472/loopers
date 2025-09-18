@@ -55,4 +55,22 @@ public class RankingFacade {
             );
         });
     }
+
+    public PageResponse<RankingResult> getMonthlyRankProduct(RankingCriteria.Search cri) {
+        PageResponse<RankingInfo> infos =
+                rankingService.getMonthlyRankings(new RankingCommand.Rankings(cri.size(), cri.page(), cri.date()));
+
+        return infos.map(ranking -> {
+            ProductInfo product = productService.findProduct(new ProductCommand.Find(ranking.productId()));
+            BrandInfo brand = brandService.findBy(new BrandCommand.Find(product.brandId()));
+            return new RankingResult(
+                    product.id(),
+                    brand.name(),
+                    product.name(),
+                    product.price(),
+                    product.status(),
+                    ranking.rank()
+            );
+        });
+    }
 }

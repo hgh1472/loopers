@@ -19,4 +19,10 @@ public interface RankingV1ApiSpec {
             description = "주간 랭킹 정보를 조회합니다."
     )
     ApiResponse<PageResponse<RankingV1Dto.RankingResponse>> getWeeklyRanking(int page, int size, LocalDate date);
+
+    @Operation(
+            summary = "월간 랭킹 조회",
+            description = "월간 랭킹 정보를 조회합니다."
+    )
+    ApiResponse<PageResponse<RankingV1Dto.RankingResponse>> getMonthlyRanking(int page, int size, LocalDate date);
 }

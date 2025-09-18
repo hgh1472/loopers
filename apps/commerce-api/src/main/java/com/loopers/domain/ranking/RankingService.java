@@ -39,6 +39,16 @@ public class RankingService {
                 .map(product -> new RankingInfo(product.getProductId(), product.getRank().longValue()));
     }
 
+    public PageResponse<RankingInfo> getMonthlyRankings(RankingCommand.Rankings command) {
+        int page = Math.max(command.page(), 1);
+        int size = Math.min(Math.max(command.size(), 5), 20);
+
+        Page<MonthlyRankingProductMv> products = rankingMvRepository.findMonthlyRankingProducts(page, size, command.date());
+
+        return PageResponse.from(products)
+                .map(product -> new RankingInfo(product.getProductId(), product.getRank().longValue()));
+    }
+
     public RankingInfo getProductRank(RankingCommand.Ranking command) {
         Long rank = rankingBoard.getProductRank(command.productId(), command.date());
         return new RankingInfo(command.productId(), rank);

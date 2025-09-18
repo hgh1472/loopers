@@ -239,6 +239,94 @@ class RankingServiceIntegrationTest {
     }
 
     @Nested
+    @DisplayName("월간 랭킹 조회 시,")
+    class MonthlyRanking {
+        @Test
+        @DisplayName("해당 페이지의 월간 랭킹 정보를 반환한다.")
+        void getMonthlyRanking() {
+            for (int i = 1; i <= 20; i++) {
+                MonthlyRankingProductMv mv = new MonthlyRankingProductMv((long) i, i, 100 - (i - 1) * 5.0, LocalDate.now());
+                rankingMvRepository.save(mv);
+            }
+
+            PageResponse<RankingInfo> infos = rankingService.getMonthlyRankings(new RankingCommand.Rankings(10, 2, LocalDate.now()));
+
+            assertThat(infos.getTotalElements()).isEqualTo(20);
+            assertThat(infos.getTotalPages()).isEqualTo(2);
+            assertThat(infos.getPageNumber()).isEqualTo(2);
+            assertThat(infos.getPageSize()).isEqualTo(10);
+            assertThat(infos.getContent().size()).isEqualTo(10);
+            assertThat(infos.getContent().get(0).productId()).isEqualTo(11L);
+            assertThat(infos.getContent().get(0).rank()).isEqualTo(11L);
+            assertThat(infos.getContent().get(9).productId()).isEqualTo(20L);
+            assertThat(infos.getContent().get(9).rank()).isEqualTo(20L);
+        }
+
+        @Test
+        @DisplayName("사이즈보다 적게 존재하는 경우, 존재하는 만큼만 반환한다.")
+        void getMonthlyRanking_withLessSize() {
+            for (int i = 1; i <= 3; i++) {
+                MonthlyRankingProductMv mv = new MonthlyRankingProductMv((long) i, i, 100 - (i - 1) * 5.0, LocalDate.now());
+                rankingMvRepository.save(mv);
+            }
+
+            PageResponse<RankingInfo> infos = rankingService.getMonthlyRankings(new RankingCommand.Rankings(10, 1, LocalDate.now()));
+
+            assertThat(infos.getTotalElements()).isEqualTo(3);
+            assertThat(infos.getTotalPages()).isEqualTo(1);
+            assertThat(infos.getPageNumber()).isEqualTo(1);
+            assertThat(infos.getPageSize()).isEqualTo(10);
+            assertThat(infos.getContent().size()).isEqualTo(3);
+            assertThat(infos.getContent().get(0).productId()).isEqualTo(1L);
+            assertThat(infos.getContent().get(0).rank()).isEqualTo(1L);
+            assertThat(infos.getContent().get(2).productId()).isEqualTo(3L);
+            assertThat(infos.getContent().get(2).rank()).isEqualTo(3L);
+        }
+
+        @Test
+        @DisplayName("1 미만의 페이지를 요청하는 경우, 1페이지를 반환한다.")
+        void getMonthlyRanking_withPageLessThanOne() {
+            for (int i = 1; i <= 20; i++) {
+                MonthlyRankingProductMv mv = new MonthlyRankingProductMv((long) i, i, 100 - (i - 1) * 5.0, LocalDate.now());
+                rankingMvRepository.save(mv);
+            }
+
+            PageResponse<RankingInfo> infos = rankingService.getMonthlyRankings(new RankingCommand.Rankings(10, 0, LocalDate.now()));
+
+            assertThat(infos.getTotalElements()).isEqualTo(20);
+            assertThat(infos.getTotalPages()).isEqualTo(2);
+            assertThat(infos.getPageNumber()).isEqualTo(1);
+            assertThat(infos.getPageSize()).isEqualTo(10);
+            assertThat(infos.getContent().size()).isEqualTo(10);
+            assertThat(infos.getContent().get(0).productId()).isEqualTo(1L);
+            assertThat(infos.getContent().get(0).rank()).isEqualTo(1L);
+            assertThat(infos.getContent().get(9).productId()).isEqualTo(10L);
+            assertThat(infos.getContent().get(9).rank()).isEqualTo(10L);
+        }
+
+        @Test
+        @DisplayName("페이지 사이즈가 5 미만인 경우, 5로 고정하여 반환한다.")
+        void getMonthlyRanking_withSizeLessThanFive() {
+            for (int i = 1; i <= 20; i++) {
+                MonthlyRankingProductMv mv = new MonthlyRankingProductMv((long) i, i, 100 - (i - 1) * 5.0, LocalDate.now());
+                rankingMvRepository.save(mv);
+            }
+
+            PageResponse<RankingInfo> infos = rankingService.getMonthlyRankings(new RankingCommand.Rankings(3, 1, LocalDate.now()));
+
+            assertThat(infos.getTotalElements()).isEqualTo(20);
+            assertThat(infos.getTotalPages()).isEqualTo(4);
+            assertThat(infos.getPageNumber()).isEqualTo(1);
+            assertThat(infos.getPageSize()).isEqualTo(5);
+            assertThat(infos.getContent().size()).isEqualTo(5);
+            assertThat(infos.getContent().get(0).productId()).isEqualTo(1L);
+            assertThat(infos.getContent().get(0).rank()).isEqualTo(1L);
+            assertThat(infos.getContent().get(4).productId()).isEqualTo(5L);
+            assertThat(infos.getContent().get(4).rank()).isEqualTo(5L);
+        }
+    }
+
+    @Nested
     @DisplayName("상품 랭킹 조회 시,")
     class ProductRank {
         @Test
