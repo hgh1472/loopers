@@ -1,6 +1,5 @@
 package com.loopers.batch.job;
 
-import com.loopers.application.ranking.MonthlyRankingJobListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -14,12 +13,10 @@ public class RankingJobConfig {
     @Bean
     public Job rankingJob(JobRepository jobRepository,
                           Step weeklyRankingStep,
-                          Step monthlyRankingStep,
-                          MonthlyRankingJobListener listener) {
+                          Step monthlyRankingStep) {
         return new JobBuilder("rankingJob", jobRepository)
                 .start(weeklyRankingStep)
                 .next(monthlyRankingStep)
-                .listener(listener)
                 .build();
     }
 }

@@ -6,19 +6,18 @@ import com.loopers.domain.ranking.RankingBuffer;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.stereotype.Component;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.StepExecutionListener;
 
-@Component
 @RequiredArgsConstructor
-public class MonthlyRankingJobListener implements JobExecutionListener {
+public class MonthlyRankingStepListener implements StepExecutionListener {
     private final RankingBuffer rankingBuffer;
     private final RankMvRepository rankMvRepository;
 
     @Override
-    public void afterJob(JobExecution jobExecution) {
-        String dateStr = jobExecution.getJobParameters().getString("date");
+    public ExitStatus afterStep(StepExecution stepExecution) {
+        String dateStr = stepExecution.getJobParameters().getString("date");
         LocalDate date = LocalDate.parse(dateStr);
 
         List<MonthlyProductRankMv> mvs = rankingBuffer.getMonthlyRankings(300).stream()
@@ -26,7 +25,8 @@ public class MonthlyRankingJobListener implements JobExecutionListener {
                 .toList();
 
         rankMvRepository.saveMonthlyRankingMvs(mvs);
-
         rankingBuffer.clearMonthlyBuffer();
+
+        return ExitStatus.COMPLETED;
     }
 }

@@ -5,19 +5,12 @@ import jakarta.persistence.EntityManagerFactory;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.database.JpaPagingItemReader;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-@Slf4j
-@StepScope
-@Component
 public class MonthlyRankingReader extends JpaPagingItemReader<WeeklyProductRankMv> {
 
     public MonthlyRankingReader(EntityManagerFactory emf,
-                                @Value("#{jobParameters['date']}") String dateStr) {
+                                String dateStr) {
         setEntityManagerFactory(emf);
         setQueryString("SELECT w "
                 + "FROM WeeklyProductRankMv w "
