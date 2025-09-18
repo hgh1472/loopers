@@ -37,6 +37,31 @@ public class RankingStepConfig {
     }
 
     @Bean
+    @StepScope
+    public WeeklyRankingReader weeklyRankingReader(EntityManagerFactory emf,
+                                                   @Value("#{jobParameters['date']}") String dateStr) {
+        return new WeeklyRankingReader(emf, dateStr);
+    }
+
+    @Bean
+    @StepScope
+    public WeeklyRankingProcessor weeklyRankingProcessor(@Value("#{jobParameters['date']}") String dateStr) {
+        return new WeeklyRankingProcessor(dateStr);
+    }
+
+    @Bean
+    @StepScope
+    public WeeklyRankingWriter weeklyRankingWriter(RankingBuffer rankingBuffer) {
+        return new WeeklyRankingWriter(rankingBuffer);
+    }
+
+    @Bean
+    @StepScope
+    public WeeklyRankingStepListener weeklyRankingStepListener(RankingBuffer rankingBuffer, RankMvRepository rankMvRepository) {
+        return new WeeklyRankingStepListener(rankingBuffer, rankMvRepository);
+    }
+
+    @Bean
     public Step monthlyRankingStep(JobRepository jobRepository,
                                    PlatformTransactionManager tm,
                                    MonthlyRankingReader reader,
