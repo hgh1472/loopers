@@ -21,7 +21,7 @@ public class MonthlyRankingStepListener implements StepExecutionListener {
         LocalDate date = LocalDate.parse(dateStr);
 
         List<MonthlyProductRankMv> mvs = rankingBuffer.getMonthlyRankings(300).stream()
-                .map(info -> new MonthlyProductRankMv(info.productId(), info.score(), info.rank(), date.plusDays(1)))
+                .map(r -> new MonthlyProductRankMv(r.productId(), r.score(), r.weightedScore(), r.rank(), date.plusDays(1)))
                 .toList();
 
         rankMvRepository.saveMonthlyRankingMvs(mvs);

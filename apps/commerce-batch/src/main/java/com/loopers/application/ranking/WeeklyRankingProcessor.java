@@ -17,6 +17,6 @@ public class WeeklyRankingProcessor implements ItemProcessor<DailyMetric, Weekly
     public WeeklyRankingScore process(DailyMetric item) {
         int daysDiff = (int) (date.toEpochDay() - item.getDate().toEpochDay());
         WeeklyWeight weeklyWeight = WeeklyWeight.fromDaysDiff(daysDiff);
-        return new WeeklyRankingScore(item.getProductId(), weeklyWeight.applyWeight(item.calculateScore()));
+        return new WeeklyRankingScore(item.getProductId(), item.calculateScore(), weeklyWeight.applyWeight(item.calculateScore()));
     }
 }

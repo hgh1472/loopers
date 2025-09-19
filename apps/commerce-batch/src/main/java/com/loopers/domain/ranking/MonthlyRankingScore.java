@@ -2,6 +2,7 @@ package com.loopers.domain.ranking;
 
 public record MonthlyRankingScore(
         Long productId,
-        Double score
+        Double score,
+        Double weightedScore
 ) {
 }

@@ -7,7 +7,7 @@ public interface RankingBuffer {
 
     List<RankingBoardInfo> getWeeklyRankings(int limit);
 
-    void record(MonthlyRankingScore score);
+    void recordMonthly(MonthlyRankingScore score);
 
     List<RankingBoardInfo> getMonthlyRankings(int limit);
 

@@ -16,8 +16,8 @@ public class MonthlyRankingProcessor implements ItemProcessor<WeeklyProductRankM
 
     @Override
     public MonthlyRankingScore process(WeeklyProductRankMv item) throws Exception {
-        int weeksDiff = (int) ChronoUnit.WEEKS.between(date, item.getDate());
+        int weeksDiff = (int) ChronoUnit.WEEKS.between(item.getDate(), date);
         MonthlyWeight monthlyWeight = MonthlyWeight.fromWeeksDiff(weeksDiff);
-        return new MonthlyRankingScore(item.getProductId(), monthlyWeight.applyWeight(item.getScore()));
+        return new MonthlyRankingScore(item.getProductId(), item.getScore(), monthlyWeight.applyWeight(item.getScore()));
     }
 }
