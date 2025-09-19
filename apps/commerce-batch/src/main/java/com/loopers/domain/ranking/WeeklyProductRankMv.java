@@ -6,12 +6,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "mv_product_rank_weekly")
+@Table(name = "mv_product_rank_weekly", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"ref_product_id", "date"})
+})
 public class WeeklyProductRankMv {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
