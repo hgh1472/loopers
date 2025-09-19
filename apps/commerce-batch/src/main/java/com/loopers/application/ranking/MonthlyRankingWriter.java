@@ -13,7 +13,7 @@ public class MonthlyRankingWriter implements ItemWriter<MonthlyRankingScore> {
     @Override
     public void write(Chunk<? extends MonthlyRankingScore> chunk) throws Exception {
         for (MonthlyRankingScore item : chunk) {
-            rankingBuffer.record(item);
+            rankingBuffer.recordMonthly(item);
         }
     }
 }

@@ -20,13 +20,14 @@ public class RankMvRepositoryImpl implements RankMvRepository {
 
     @Override
     public void saveWeeklyRankingMvs(Iterable<WeeklyProductRankMv> entities) {
-        String sql = "INSERT INTO mv_product_rank_weekly (ref_product_id, weekly_rank, score, date) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO mv_product_rank_weekly (ref_product_id, weekly_rank, score, weighted_score, date) VALUES (?, ?, ?, ?, ?)";
         List<Object[]> batchArgs = new ArrayList<>();
         for (WeeklyProductRankMv entity : entities) {
             batchArgs.add(new Object[]{
                     entity.getProductId(),
                     entity.getRank(),
                     entity.getScore(),
+                    entity.getWeightedScore(),
                     entity.getDate()
             });
         }
@@ -35,13 +36,14 @@ public class RankMvRepositoryImpl implements RankMvRepository {
 
     @Override
     public void saveMonthlyRankingMvs(Iterable<MonthlyProductRankMv> entities) {
-        String sql = "INSERT INTO mv_product_rank_monthly (ref_product_id, monthly_rank, score, date) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO mv_product_rank_monthly (ref_product_id, monthly_rank, score, weighted_score, date) VALUES (?, ?, ?, ?, ?)";
         List<Object[]> batchArgs = new ArrayList<>();
         for (MonthlyProductRankMv entity : entities) {
             batchArgs.add(new Object[]{
                     entity.getProductId(),
                     entity.getRank(),
                     entity.getScore(),
+                    entity.getWeightedScore(),
                     entity.getDate()
             });
         }

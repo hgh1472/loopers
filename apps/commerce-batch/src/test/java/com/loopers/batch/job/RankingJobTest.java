@@ -1,5 +1,6 @@
 package com.loopers.batch.job;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
@@ -99,7 +100,7 @@ class RankingJobTest {
             LocalDate date = LocalDate.of(2025, 9, 18);
             List<WeeklyProductRankMv> weeklyMvs = new ArrayList<>();
             for (long i = 1; i <= 350; i++) {
-                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, (int) (351 - i), 1 * (double) i, date);
+                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, (int) (351 - i), 1 * (double) i, 1 * (double) i, date);
                 weeklyMvs.add(mv);
             }
             rankMvRepository.saveWeeklyRankingMvs(weeklyMvs);
@@ -124,7 +125,7 @@ class RankingJobTest {
             LocalDate date = LocalDate.of(2025, 9, 18);
             List<WeeklyProductRankMv> weeklyMvs = new ArrayList<>();
             for (long i = 1; i <= 10; i++) {
-                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, (int) (11 - i), 1 * (double) i, date);
+                WeeklyProductRankMv mv = new WeeklyProductRankMv(i, (int) (11 - i), 1 * (double) i, 1 * (double) i, date);
                 weeklyMvs.add(mv);
             }
             rankMvRepository.saveWeeklyRankingMvs(weeklyMvs);
@@ -137,6 +138,28 @@ class RankingJobTest {
 
             Boolean hasKey = redisTemplate.hasKey("monthly_ranking");
             assertThat(hasKey).isFalse();
+        }
+
+        @Test
+        @DisplayName("월간 랭킹 가중치에 주간 랭킹 가중치는 적용되지 않는다.")
+        void notApplyWeeklyWeight() throws Exception {
+            LocalDate date = LocalDate.of(2025, 9, 18);
+            WeeklyProductRankMv weeklyProductRankMv1 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date);
+            WeeklyProductRankMv weeklyProductRankMv2 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date.minusWeeks(1));
+            WeeklyProductRankMv weeklyProductRankMv3 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date.minusWeeks(2));
+            WeeklyProductRankMv weeklyProductRankMv4 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date.minusWeeks(3));
+            rankMvRepository.saveWeeklyRankingMvs(List.of(weeklyProductRankMv1, weeklyProductRankMv2, weeklyProductRankMv3, weeklyProductRankMv4));
+
+            JobParameters jobParameters = new JobParametersBuilder()
+                    .addString("date", date.toString())
+                    .addString("batch-id", UUID.randomUUID().toString())
+                    .toJobParameters();
+
+            rankingJob.launchJob(jobParameters);
+
+            List<MonthlyProductRankMv> monthlyRankMv = rankMvRepository.findMonthlyRankMv(date.plusDays(1));
+            assertThat(monthlyRankMv).hasSize(1);
+            assertThat(monthlyRankMv.get(0).getWeightedScore()).isEqualTo(100.0 + 80.0 + 50.0 + 20.0);
         }
     }
 }

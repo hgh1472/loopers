@@ -46,6 +46,6 @@ public class DailyMetric {
     }
 
     public Double calculateScore() {
-        return likeCount * 0.2 + salesCount * 1.0 + viewCount * 0.1;
+        return likeCount * 0.2 + salesCount * 0.7 + viewCount * 0.1;
     }
 }

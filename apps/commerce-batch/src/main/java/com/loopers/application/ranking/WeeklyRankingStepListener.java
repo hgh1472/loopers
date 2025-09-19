@@ -21,7 +21,7 @@ public class WeeklyRankingStepListener implements StepExecutionListener {
         LocalDate date = LocalDate.parse(dateStr);
 
         List<WeeklyProductRankMv> mvs = rankingBuffer.getWeeklyRankings(300).stream()
-                .map(r -> new WeeklyProductRankMv(r.productId(), r.rank(), r.score(), date.plusDays(1)))
+                .map(r -> new WeeklyProductRankMv(r.productId(), r.rank(), r.score(), r.weightedScore(), date.plusDays(1)))
                 .toList();
 
         rankMvRepository.saveWeeklyRankingMvs(mvs);

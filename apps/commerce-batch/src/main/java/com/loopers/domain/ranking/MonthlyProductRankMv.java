@@ -27,15 +27,19 @@ public class MonthlyProductRankMv {
     @Column(name = "score", nullable = false)
     private Double score;
 
+    @Column(name = "weighted_score", nullable = false)
+    private Double weightedScore;
+
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
     protected MonthlyProductRankMv() {
     }
 
-    public MonthlyProductRankMv(Long productId, Double score, Integer rank, LocalDate date) {
+    public MonthlyProductRankMv(Long productId, Double score, Double weightedScore, Integer rank, LocalDate date) {
         this.productId = productId;
         this.score = score;
+        this.weightedScore = weightedScore;
         this.rank = rank;
         this.date = date;
     }

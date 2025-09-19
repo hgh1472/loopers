@@ -1,8 +1,8 @@
 package com.loopers.infrastructure.ranking;
 
 import com.loopers.domain.ranking.MonthlyRankingScore;
-import com.loopers.domain.ranking.RankingBuffer;
 import com.loopers.domain.ranking.RankingBoardInfo;
+import com.loopers.domain.ranking.RankingBuffer;
 import com.loopers.domain.ranking.WeeklyRankingScore;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +17,15 @@ import org.springframework.stereotype.Component;
 public class RedisRankingBuffer implements RankingBuffer {
     public static final String WEEKLY_BUFFER_KEY = "weekly_ranking";
     public static final String MONTHLY_BUFFER_KEY = "monthly_ranking";
+    public static final String WEEKLY_ORIGINAL_SCORE = "weekly:original_score:";
+    public static final String MONTHLY_ORIGINAL_SCORE = "monthly:original_score:";
     private final RedisTemplate<String, String> materRedisTemplate;
     private final RedisTemplate<String, String> defaultRedisTemplate;
 
     @Override
     public void recordWeekly(WeeklyRankingScore metric) {
-        materRedisTemplate.opsForZSet().incrementScore(WEEKLY_BUFFER_KEY, metric.productId().toString(), metric.score());
+        materRedisTemplate.opsForZSet().incrementScore(WEEKLY_BUFFER_KEY, metric.productId().toString(), metric.weightedScore());
+        materRedisTemplate.opsForValue().increment(WEEKLY_ORIGINAL_SCORE + metric.productId(), metric.score());
     }
 
     @Override
@@ -35,15 +38,17 @@ public class RedisRankingBuffer implements RankingBuffer {
 
         for (TypedTuple<String> tuple : weeklyRanking) {
             Long productId = Long.parseLong(tuple.getValue());
-            Double score = tuple.getScore();
-            rankingBoardInfos.add(new RankingBoardInfo(productId, score, rank++));
+            Double weightedScore = tuple.getScore();
+            Double score = Double.parseDouble(defaultRedisTemplate.opsForValue().get(WEEKLY_ORIGINAL_SCORE + productId));
+            rankingBoardInfos.add(new RankingBoardInfo(productId, score, weightedScore, rank++));
         }
         return rankingBoardInfos;
     }
 
     @Override
-    public void record(MonthlyRankingScore score) {
-        materRedisTemplate.opsForZSet().incrementScore(MONTHLY_BUFFER_KEY, score.productId().toString(), score.score());
+    public void recordMonthly(MonthlyRankingScore score) {
+        materRedisTemplate.opsForZSet().incrementScore(MONTHLY_BUFFER_KEY, score.productId().toString(), score.weightedScore());
+        materRedisTemplate.opsForValue().increment(MONTHLY_ORIGINAL_SCORE + score.productId(), score.score());
     }
 
     @Override
@@ -56,8 +61,9 @@ public class RedisRankingBuffer implements RankingBuffer {
 
         for (TypedTuple<String> tuple : monthlyRanking) {
             Long productId = Long.parseLong(tuple.getValue());
-            Double score = tuple.getScore();
-            rankingBoardInfos.add(new RankingBoardInfo(productId, score, rank++));
+            Double weightedScore = tuple.getScore();
+            Double score = Double.parseDouble(defaultRedisTemplate.opsForValue().get(MONTHLY_ORIGINAL_SCORE + productId));
+            rankingBoardInfos.add(new RankingBoardInfo(productId, score, weightedScore, rank++));
         }
         return rankingBoardInfos;
     }
@@ -65,10 +71,12 @@ public class RedisRankingBuffer implements RankingBuffer {
     @Override
     public void clearMonthlyBuffer() {
         materRedisTemplate.delete(MONTHLY_BUFFER_KEY);
+        materRedisTemplate.delete(MONTHLY_ORIGINAL_SCORE + "*");
     }
 
     @Override
     public void clearWeeklyBuffer() {
         materRedisTemplate.delete(WEEKLY_BUFFER_KEY);
+        materRedisTemplate.delete(WEEKLY_ORIGINAL_SCORE + "*");
     }
 }
