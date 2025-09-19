@@ -161,5 +161,71 @@ class RankingJobTest {
             assertThat(monthlyRankMv).hasSize(1);
             assertThat(monthlyRankMv.get(0).getWeightedScore()).isEqualTo(100.0 + 80.0 + 50.0 + 20.0);
         }
+
+        @Test
+        @DisplayName("날짜별로 주간 랭킹 배치를 여러 번 실행해도 중복 저장되지 않고, 덮어씌워진다.")
+        void upsertWeeklyRankingMv() throws Exception {
+            LocalDate date = LocalDate.of(2025, 9, 18);
+            for (int i = 0; i <= 6; i++) {
+                DailyMetric metric = new DailyMetric(1L, 10L, 10L, 10L, date.minusDays(i));
+                dailyMetricJpaRepository.save(metric);
+            }
+
+            JobParameters jobParameters1 = new JobParametersBuilder()
+                    .addString("date", date.toString())
+                    .addString("batch-id", UUID.randomUUID().toString())
+                    .toJobParameters();
+            rankingJob.launchJob(jobParameters1);
+
+            databaseCleanUp.truncateAllTables();
+
+            for (int i = 0; i <= 6; i++) {
+                DailyMetric metric = new DailyMetric(1L, 100L, 100L, 100L, date.minusDays(i));
+                dailyMetricJpaRepository.save(metric);
+            }
+            JobParameters jobParameters2 = new JobParametersBuilder()
+                    .addString("date", date.toString())
+                    .addString("batch-id", UUID.randomUUID().toString())
+                    .toJobParameters();
+            rankingJob.launchJob(jobParameters2);
+
+            List<WeeklyProductRankMv> weeklyRankMv = rankMvRepository.findWeeklyRankMv(date.plusDays(1));
+            assertThat(weeklyRankMv).hasSize(1);
+            assertThat(weeklyRankMv.get(0).getWeightedScore()).isEqualTo(410.0);
+        }
+
+        @Test
+        @DisplayName("날짜별로 월간 랭킹 배치를 여러 번 실행해도 중복 저장되지 않고, 덮어씌워진다.")
+        void upsertMonthlyRankingMv() throws Exception {
+            LocalDate date = LocalDate.of(2025, 9, 18);
+            WeeklyProductRankMv before1 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date);
+            WeeklyProductRankMv before2 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date.minusWeeks(1));
+            WeeklyProductRankMv before3 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date.minusWeeks(2));
+            WeeklyProductRankMv before4 = new WeeklyProductRankMv(1L, 1, 100.0, 50.0, date.minusWeeks(3));
+            rankMvRepository.saveWeeklyRankingMvs(List.of(before1, before2, before3, before4));
+
+            JobParameters jobParameters1 = new JobParametersBuilder()
+                    .addString("date", date.toString())
+                    .addString("batch-id", UUID.randomUUID().toString())
+                    .toJobParameters();
+            rankingJob.launchJob(jobParameters1);
+
+            databaseCleanUp.truncateAllTables();
+
+            WeeklyProductRankMv after1 = new WeeklyProductRankMv(1L, 1, 1000.0, 50.0, date);
+            WeeklyProductRankMv after2 = new WeeklyProductRankMv(1L, 1, 1000.0, 50.0, date.minusWeeks(1));
+            WeeklyProductRankMv after3 = new WeeklyProductRankMv(1L, 1, 1000.0, 50.0, date.minusWeeks(2));
+            WeeklyProductRankMv after4 = new WeeklyProductRankMv(1L, 1, 1000.0, 50.0, date.minusWeeks(3));
+            rankMvRepository.saveWeeklyRankingMvs(List.of(after1, after2, after3, after4));
+            JobParameters jobParameters2 = new JobParametersBuilder()
+                    .addString("date", date.toString())
+                    .addString("batch-id", UUID.randomUUID().toString())
+                    .toJobParameters();
+            rankingJob.launchJob(jobParameters2);
+
+            List<MonthlyProductRankMv> monthlyRankMv = rankMvRepository.findMonthlyRankMv(date.plusDays(1));
+            assertThat(monthlyRankMv).hasSize(1);
+            assertThat(monthlyRankMv.get(0).getWeightedScore()).isEqualTo(1000.0 + 800.0 + 500.0 + 200.0);
+        }
     }
 }
