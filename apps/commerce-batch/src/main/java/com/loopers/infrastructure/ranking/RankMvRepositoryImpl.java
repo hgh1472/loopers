@@ -52,7 +52,7 @@ public class RankMvRepositoryImpl implements RankMvRepository {
                 "score = VALUES(score), " +
                 "weighted_score = VALUES(weighted_score), " +
                 "date = VALUES(date)";
-
+      
         List<Object[]> batchArgs = new ArrayList<>();
 
         for (MonthlyProductRankMv entity : entities) {
