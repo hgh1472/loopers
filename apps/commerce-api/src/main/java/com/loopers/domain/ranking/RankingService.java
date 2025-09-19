@@ -1,18 +1,19 @@
 package com.loopers.domain.ranking;
 
 import com.loopers.domain.PageResponse;
-import com.loopers.domain.ranking.RankingCommand.Rankings;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class RankingService {
     private final RankingBoard rankingBoard;
+    private final RankingMvRepository rankingMvRepository;
 
-    public PageResponse<RankingInfo> getRankings(Rankings command) {
+    public PageResponse<RankingInfo> getRankings(RankingCommand.Rankings command) {
         int page = Math.max(command.page(), 1);
         int size = Math.min(Math.max(command.size(), 5), 20);
         int offset = (page - 1) * size;
@@ -26,6 +27,26 @@ public class RankingService {
         Long totalCount = rankingBoard.getTotalCount(command.date());
         int totalPages = totalCount % size == 0 ? (int) (totalCount / size) : (int) (totalCount / size) + 1;
         return new PageResponse<>(rankingInfos, page, size, totalCount, totalPages);
+    }
+
+    public PageResponse<RankingInfo> getWeeklyRankings(RankingCommand.Rankings command) {
+        int page = Math.max(command.page(), 1);
+        int size = Math.min(Math.max(command.size(), 5), 20);
+
+        Page<WeeklyRankingProductMv> products = rankingMvRepository.findWeeklyRankingProducts(page, size, command.date());
+
+        return PageResponse.from(products)
+                .map(product -> new RankingInfo(product.getProductId(), product.getRank().longValue()));
+    }
+
+    public PageResponse<RankingInfo> getMonthlyRankings(RankingCommand.Rankings command) {
+        int page = Math.max(command.page(), 1);
+        int size = Math.min(Math.max(command.size(), 5), 20);
+
+        Page<MonthlyRankingProductMv> products = rankingMvRepository.findMonthlyRankingProducts(page, size, command.date());
+
+        return PageResponse.from(products)
+                .map(product -> new RankingInfo(product.getProductId(), product.getRank().longValue()));
     }
 
     public RankingInfo getProductRank(RankingCommand.Ranking command) {

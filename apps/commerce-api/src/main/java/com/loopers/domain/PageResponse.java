@@ -28,7 +28,7 @@ public class PageResponse<T> {
 
     private PageResponse(Page<T> page) {
         this.content = page.getContent();
-        this.pageNumber = page.getNumber();
+        this.pageNumber = page.getNumber() + 1;
         this.pageSize = page.getSize();
         this.totalElements = page.getTotalElements();
         this.totalPages = page.getTotalPages();
