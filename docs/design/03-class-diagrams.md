@@ -4,12 +4,6 @@
 ```mermaid
 classDiagram
     %% 사용자 및 포인트 관련
-    class User {
-        - Id
-        - LoginId
-        - Email
-        - Gender
-    }
     class Point {
         - User
         - Amount
@@ -34,18 +28,17 @@ classDiagram
     class Type {
         CHARGED, USED
     }
+    class User {
+        - Id
+        - LoginId
+        - Email
+        - Gender
+    }
 
     %% 상품 관련
     class Brand {
         - name
         - description
-    }
-    class Category {
-        - name
-    }
-    class ProductCategory {
-        - Product
-        - Category
     }
     class ProductStatus {
         ON_SALE, OUT_OF_STOCK, HOLD, DELETED
@@ -60,7 +53,6 @@ classDiagram
         - brand
         - name
         - Price
-        - List Categories
         - Stock
         - ProductStatus
         - createdAt
@@ -89,38 +81,31 @@ classDiagram
         - createdAt
         + calculateLineAmount() : BigDecimal
     }
-    class Address {
+    class OrderDelivery {
+        - receiverName
+        - phoneNumber
         - baseAddress
         - detailAddress
-    }
-    class Receiver {
-        - name
-        - phoneNumber
-    }
-    class DeliveryInfo {
-        - Receiver
-        - Address
-        - requirement
+        - requirements
     }
     class PaymentStatus {
         PENDING, COMPLETED, INSUFFICIENT_FUNDS,
         DUPLICATED, TIMEOUT, FAILED, REFUNDED
     }
     class Payment {
-        - paymentKey
+        - transactionKey
         - Order
-        - totalAmount
+        - amount
         - PaymentStatus
-        - requestedAt
-        - approvedAt
+        - reason
         + refund()
-        + reject()
+        + success()
+        + fail(reason)
     }
-    class PaymentInfo {
-        - Order
+    class OrderPayment {
         - originalAmount
-        - usedPointAmount
         - discountAmount
+        - pointAmount
         - paymentAmount
     }
     class Order {
@@ -129,18 +114,36 @@ classDiagram
         - OrderStatus
         - Orderer
         - PaymentInfo
+        - Coupon
         + cancel() : void
         + calculateTotalAmount() : BigDecimal
+    }
+    
+    class Coupon {
+        - name
+        - discountPolicy
+        - minumumOrderAmount
+        - expireHours
+        - remainingQuantity
+        - issuedQuantity
+        + issue(User, LocalDateTime) : UserCoupon
+    }
+    
+    class UserCoupon {
+        - User
+        - Coupon
+        - discountPolicy
+        + use()
+        + restore()
     }
 
     %% 관계 정의
     Point -- User
+    Point -- Amount
     PointHistory "N" -- Point
     PointHistory -- Type
 
     Product -- Brand
-    Product -- "N" ProductCategory
-    ProductCategory "N" -- Category
     Product -- Stock
     Product -- ProductStatus
     ProductLike "N" -- Product
@@ -150,15 +153,15 @@ classDiagram
     Order -- Orderer
     Order -- "N" OrderLine
     Order -- OrderStatus
-    Order -- DeliveryInfo
-    Order -- PaymentInfo
+    Order -- OrderDelivery
+    Order -- OrderPayment
     OrderLine "N" -- Product
 
-    DeliveryInfo -- Receiver
-    DeliveryInfo -- Address
-
-    PaymentInfo -- Payment
+    OrderPayment -- Payment
     Payment -- PaymentStatus
     Payment -- Order
     
+    Coupon -- "N" UserCoupon
+    Order "N" -- Coupon
+    UserCoupon "N" -- User
 ```
