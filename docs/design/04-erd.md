@@ -2,9 +2,23 @@
 erDiagram
   user {
     bigint id PK
-    varchar email
-    varchar login_id
+    varchar login_id UNIQUE
+    varchar email UNIQUE
+    date birth_date
     varchar gender
+  }
+
+  point {
+    bigint id PK
+    bigint amount
+    bigint ref_user_id
+  }
+
+  point_history {
+    bigint id PK
+    bigint ref_point_id
+    bigint amount
+    varchar type
   }
 
   brand {
@@ -13,97 +27,88 @@ erDiagram
     varchar description
   }
 
-  category {
-    bigint id PK
-    varchar name
-  }
-
   product {
     bigint id PK
     bigint ref_brand_id
     varchar name
-    int price
+    decimal price
     varchar product_status
-    datetime created_at
-  }
-
-  product_category {
-    bigint id PK
-    bigint ref_product_id
-    bigint ref_category_id
-  }
-
-  product_like {
-    bigint id PK
-    bigint ref_user_id
-    bigint ref_product_id
-    datetime created_at
   }
 
   stock {
     bigint id PK
     bigint ref_product_id
-    int quantity
+    bigint quantity
+    }
+
+  product_like {
+    bigint id PK
+    bigint ref_product_id
+    bigint ref_user_id
   }
 
-  order {
-    bigint id PK
-    bigint ref_user_id FK
+  orders {
+    varchar id PK
+    bigint ref_user_id
+    bigint ref_coupon_id
     varchar order_status
     varchar receiver_name
-    varchar receiver_phone_number
+    varchar phone_number
     varchar base_address
     varchar detail_address
-    varchar delivery_requirement
+    varchar requirements
     decimal original_amount
-    decimal used_point_amount
-    decimal discount_amount
-    decimal payment_amountdd
   }
 
   order_line {
     bigint id PK
     bigint ref_order_id
     bigint ref_product_id
-    int quantity
+    bigint quantity
     decimal amount
-    datetime created_at
   }
 
   payment {
     bigint id PK
-    varchar payment_key
-    bigint ref_order_id
-    decimal total_amount
+    varchar transaction_key
+    varchar ref_order_id
+    decimal amount
     varchar payment_status
-    localtime requested_at
-    localtime approved_at
+    varchar reason
   }
 
-  point {
+  coupon {
+    bigint id PK
+    varchar name
+    varchar value
+    varchar type
+    decimal minimum_order_amount
+    int expire_hours
+    bigint remaining_quantity
+    bigint issued_quantity
+  }
+
+  user_coupon {
     bigint id PK
     bigint ref_user_id
-    int amount
-  }
-
-  point_history {
-    bigint id PK
-    bigint ref_point_id
-    int amount
-    varchar point_type
-    datetime created_at
+    bigint ref_coupon_id
+    varchar value
+    varchar type
+    datetime used_at
+    datetime expired_at
   }
 
   %% 관계 정의
-  user ||--o{ product_like : ""
-  user ||--o{ order : ""
-  user ||--|| point : ""
-  brand ||--o{ product : ""
-  category ||--o{ product_category : ""
-  product ||--o{ product_category : ""
-  product ||--o{ product_like : ""
-  product ||--o{ order_line : ""
-  product ||--o{ stock : ""
-  order ||--o{ order_line : ""
-  order ||--|| payment : ""
+  user ||--|{ point : ""
   point ||--o{ point_history : ""
+  user ||--o{ product_like : ""
+  brand ||--o{ product : ""
+  product ||--|{ stock : ""
+  product ||--o{ product_like : ""
+  user ||--o{ orders : ""
+  orders ||--|{ order_line : ""
+  order_line }o--|| product : ""
+  orders ||--|| payment : ""
+  coupon ||--o{ user_coupon : ""
+  user ||--o{ user_coupon : ""
+  orders ||--o| coupon : ""
