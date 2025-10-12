@@ -198,7 +198,7 @@ sequenceDiagram
     deactivate PF
 ```
 
-# 주문 생성 및 결제 흐름
+# 주문 생성 API
 
 ```mermaid
 sequenceDiagram
@@ -207,9 +207,8 @@ sequenceDiagram
   Participant U as User
   Participant Pd as Product
   Participant O as Order
-  Participant Pay as Payment
-  Participant P as Point
-  Participant S as Stock
+  Participant C as Coupon
+  participant E as Event
   
   A->>OF: 주문 요청
   activate OF
@@ -219,7 +218,6 @@ sequenceDiagram
   opt 미로그인 / 유효하지 않은 사용자
     U-->>A: 401 Unauthorized
   end
-  
   U-->>OF: 사용자 정보 반환
   deactivate U
   OF->>Pd: 주문 상품 조회 요청
@@ -231,82 +229,71 @@ sequenceDiagram
     Pd-->>A: 409 Conflict
   end
   Pd-->>OF: 상품 정보 반환
-  deactivate Pd     
+  deactivate Pd
+  opt 쿠폰 사용
+    OF->>C: 쿠폰 조회
+    activate C
+    C-->>OF: 쿠폰 정보 반환
+    deactivate C
+  end
   OF->>O: 주문 생성
   activate O
   O-->>OF: 주문 반환
   deactivate O
+  OF->>E: 주문 생성 이벤트 발행
+    OF-->>A: 주문 생성 응답
+    deactivate OF
     
-  OF->>Pay: 결제 요청
-  activate Pay
-  opt 중복 결제
-    Pay-->>OF: 중복 결제 응답
-    OF->>O: 주문 취소 처리
-    activate O
-    O-->>OF: 주문 취소 완료
-    deactivate O
-    OF-->>A: 409 Conflict
-  end
-  opt 결제 잔액 부족
-    Pay-->>OF: 잔액 부족 응답
-    OF->>O: 주문 취소 처리
-    activate O
-    O-->>OF: 주문 취소 완료
-    deactivate O
-    OF-->>A: 403 Forbidden
-  end
-  opt 결제 실패
-    Pay-->>OF: 결제 실패 응답
-    OF->>O: 주문 취소 처리
-    activate O
-    O-->>OF: 주문 취소 완료
-    deactivate O
-    OF-->>A: 409 Conflict
-  end
-  Pay-->>OF: 결제 성공
-  deactivate Pay
-  opt 포인트 사용
-    OF->>P: 사용 포인트 차감
-    activate P
-    opt 포인트 부족
-      P-->>OF: 차감 실패
-      OF->>Pay: 결제 환불 요청
-   activate Pay
-   Pay-->>OF: 결제 환불 성공
-   deactivate Pay
-   OF->>O: 주문 취소 처리
-   activate O
-   O-->>OF: 주문 취소 완료
-   deactivate O
-   OF-->>A: 409 Conflict
-  end
-  P-->>OF: 포인트 차감 결과 반환
-  deactivate P
-  end
-  OF->>S: 재고 차감 시도
-  activate S
-  opt 재고 차감 실패
-    S-->>OF: 차감 실패 응답
-    opt 주문 시 포인트 사용
-    OF->>P: 사용 포인트 반환 요청
-    activate P
-    P-->>OF: 포인트 반환 성공
-    deactivate P
+  
+```
+
+# 결제 시도 요청 API
+```mermaid
+sequenceDiagram
+    Actor A as Actor
+    participant PF as PaymentFacade
+    participant O as Order
+    participant P as Payment
+    participant PG as PaymentGateway
+    A->>PF: 결제 시도 요청
+    activate PF
+    PF->>O: 주문 정보 조회
+    opt 존재하지 않는 주문
+      O-->>A: 404 Not Found
     end
-    OF->>Pay: 결제 환불 요청
-    activate Pay
-    Pay-->>OF: 결제 환불 성공
-    deactivate Pay
-    OF->>O: 주문 취소 처리
-    activate O
-    O-->>OF: 주문 취소 완료
-    deactivate O
-    OF->>A: 409 Conflict
-  end
-  S-->>OF: 재고 차감 결과 반환
-  deactivate S
-  OF-->>A: 주문 결과 반환
-  deactivate OF
+    PF->>P: 결제 시도 요청
+    activate P
+    P->>PG: 결제 요청
+    activate PG
+    alt 결제 실패
+        PG-->>P: 결제 요청 실패 응답
+    else 결제 요청 성공
+        PG-->>P: 결제 요청 성공 응답 
+    end
+    deactivate PG
+    P-->>PF: 결제 시도 결과 응답
+    deactivate P
+    PF-->>A: 결제 시도 결과 응답
+    deactivate PF
+```
+
+# 결제 콜백 or 스케쥴러
+```mermaid
+sequenceDiagram
+    participant C as Callback or Scheduler
+    participant P as Payment
+    participant E as Event
+    
+    C->>P: 결제 결과 처리 요청
+    activate P
+    alt 결제 성공
+        P->>E: 결제 성공 이벤트 발행
+        P-->>C: 결제 성공 처리 완료
+    else 결제 실패
+        P->>E: 결제 실패 이벤트 발행
+        P-->>C: 결제 실패 처리 완료
+    end
+    
 ```
 
 # 유저의 주문 목록 조회
